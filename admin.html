@@ -82,6 +82,14 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .badge.blue{background:#dbeafe;color:#1e40af}
 
 .login-shell{max-width:440px;margin:48px auto;background:#fff;border:1px solid var(--line);border-radius:16px;padding:24px;box-shadow:var(--shadow)}
+.modal{position:fixed;inset:0;background:rgba(10,25,18,.58);display:none;align-items:center;justify-content:center;padding:16px;z-index:70}
+.modal.show{display:flex}
+.dialog{background:#fff;border-radius:16px;padding:22px;width:min(740px,100%);max-height:92vh;overflow:auto;box-shadow:0 20px 50px rgba(0,0,0,.25)}
+.dialog-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.inv-paper{background:#fff;border:1px solid var(--line);border-radius:12px;padding:22px;color:#111}
+.inv-table{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.inv-table th,.inv-table td{border-bottom:1px solid #e2e8f0;padding:8px 6px;text-align:left}
+.inv-table th{background:#f8faf9;color:var(--muted);font-size:12px;text-transform:uppercase}
 .toast{position:fixed;bottom:20px;right:20px;background:#0f291c;color:#fff;padding:12px 18px;border-radius:10px;display:none;z-index:90;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.22)}
 .hidden{display:none!important}
 .muted{color:var(--muted)}
@@ -93,6 +101,13 @@ button:disabled{opacity:.5;cursor:not-allowed}
 @media(max-width:600px){
   .stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
   .form-row{grid-template-columns:1fr}
+}
+@media print{
+  body>*:not(#invoiceModal){display:none!important}
+  #invoiceModal{position:static!important;display:block!important;background:#fff!important;padding:0!important}
+  #invoiceModal .dialog{box-shadow:none!important;border:0!important;width:100%!important;max-height:none!important;padding:0!important}
+  .no-print{display:none!important}
+  .inv-paper{border:0!important;padding:0!important}
 }
 </style>
 </head>
@@ -310,6 +325,16 @@ button:disabled{opacity:.5;cursor:not-allowed}
         <h3 style="margin-bottom:10px">Record Received Payment SMS</h3>
         <p class="muted" style="font-size:12px;margin:0 0 10px">Customers paying with matching Sender Number &amp; TrxID are automatically confirmed and locked from cancellation.</p>
         <form id="smsInboxForm">
+          <div class="field">
+            <label>Auto-fill from Order (Optional)</label>
+            <select id="smsOrderPreset">
+              <option value="">-- Select a Pending Order (or enter manually) --</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <div class="field"><label>Product Name</label><input id="smsProductName" placeholder="e.g. Milk Bread x2"></div>
+            <div class="field"><label>Grand Total Price (৳)</label><input id="smsGrandTotal" type="number" min="0" placeholder="Order Grand Total"></div>
+          </div>
           <div class="form-row">
             <div class="field">
               <label>Provider *</label>
@@ -326,6 +351,28 @@ button:disabled{opacity:.5;cursor:not-allowed}
             <div class="field"><label>Transaction ID (TrxID) *</label><input id="smsTrxId" required placeholder="BL74K9M2PQ" style="text-transform:uppercase"></div>
           </div>
           <button type="submit" style="width:100%">➕ Add Verified Payment SMS</button>
+        </form>
+
+        <hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
+        <h3 style="margin-bottom:10px">Courier Pickup Hub &amp; API Settings</h3>
+        <form id="courierSettingsForm">
+          <div class="form-row">
+            <div class="field">
+              <label>Default Courier Service</label>
+              <select id="setCourierDefault">
+                <option>Steadfast</option><option>Pathao</option><option>RedX</option>
+                <option>Paperfly</option><option>Sundarban</option><option>SA Paribahan</option><option>eCourier</option>
+              </select>
+            </div>
+            <div class="field"><label>Pickup Hub Phone</label><input id="setCourierPhone" placeholder="017XXXXXXXX"></div>
+          </div>
+          <div class="field"><label>Merchant Pickup Address</label><input id="setCourierHub" placeholder="House, Road, Area, Dhaka"></div>
+          <div class="field"><label>Courier Webhook / API URL (Optional)</label><input id="setCourierApiUrl" placeholder="https://portal.packzy.com/api/v1/create_order"></div>
+          <div class="form-row">
+            <div class="field"><label>Courier API Key</label><input id="setCourierApiKey" placeholder="Api-Key (Optional)"></div>
+            <div class="field"><label>Courier Secret Key</label><input id="setCourierSecret" placeholder="Secret-Key (Optional)"></div>
+          </div>
+          <button type="submit" class="secondary" style="width:100%">🚚 Save Courier Settings</button>
         </form>
       </div>
 
@@ -402,6 +449,61 @@ button:disabled{opacity:.5;cursor:not-allowed}
   </div>
 </main>
 
+<!-- Invoice Print Modal -->
+<div class="modal" id="invoiceModal">
+  <div class="dialog">
+    <div class="dialog-head no-print">
+      <h2>🖨️ Customer Order Invoice</h2>
+      <div style="display:flex;gap:8px">
+        <button type="button" id="printInvoiceBtn">🖨️ Print / Save PDF</button>
+        <button type="button" class="outline sm" onclick="closeModal('invoiceModal')">✕</button>
+      </div>
+    </div>
+    <div id="invoicePrintArea" class="inv-paper"></div>
+  </div>
+</div>
+
+<!-- Courier Pickup Request Modal -->
+<div class="modal" id="courierModal">
+  <div class="dialog" style="width:min(560px,100%)">
+    <div class="dialog-head">
+      <h2>🚚 Request Courier Pickup</h2>
+      <button type="button" class="outline sm" onclick="closeModal('courierModal')">✕</button>
+    </div>
+    <form id="courierRequestForm">
+      <input type="hidden" id="cpOrderId">
+      <div id="cpOrderBanner" style="background:#f8faf9;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:13px"></div>
+      <div class="form-row">
+        <div class="field">
+          <label>BD Courier Service *</label>
+          <select id="cpCourierName" required>
+            <option>Steadfast</option><option>Pathao</option><option>RedX</option>
+            <option>Paperfly</option><option>Sundarban</option><option>SA Paribahan</option><option>eCourier</option>
+          </select>
+        </div>
+        <div class="field"><label>COD Collection Amount (৳) *</label><input id="cpCodAmount" type="number" min="0" required></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>Recipient Name *</label><input id="cpRecipientName" required></div>
+        <div class="field"><label>Recipient Phone *</label><input id="cpRecipientPhone" required></div>
+      </div>
+      <div class="field"><label>Delivery Address *</label><textarea id="cpDeliveryAddr" rows="2" required></textarea></div>
+      <div class="form-row">
+        <div class="field"><label>Consignment / Tracking ID (Optional)</label><input id="cpConsignmentId" placeholder="Auto-generated if blank"></div>
+        <div class="field"><label>Pickup Hub / Phone</label><input id="cpPickupHub" placeholder="Dhaka Hub"></div>
+      </div>
+      <div class="field"><label>Parcel / Pickup Note</label><input id="cpPickupNote" placeholder="e.g. Fragile, handle with care"></div>
+      <label style="display:flex;align-items:center;gap:8px;font-weight:600;margin-bottom:12px">
+        <input type="checkbox" id="cpMarkPacked" checked style="width:auto"> Update order status to "Packed" after pickup request
+      </label>
+      <div style="display:flex;gap:8px">
+        <button type="submit" id="cpSubmitBtn" style="flex:1">🚚 Send Courier Pickup Request</button>
+        <button type="button" class="secondary" id="cpPrintAfterBtn">🖨️ Print Invoice</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script type="module">
@@ -444,11 +546,21 @@ let coupons = {};
 let orders = {};
 let smsInbox = {};
 let customers = {};
+let courierSettings = {
+  defaultCourier: "Steadfast",
+  hubAddress: "Dhaka, Bangladesh",
+  hubPhone: "09678-123456",
+  apiUrl: "",
+  apiKey: "",
+  secretKey: ""
+};
 let listenersStarted = false;
 
 const $ = (id) => document.getElementById(id);
 const money = (n) => "৳" + Number(n || 0).toLocaleString("en-BD");
 const safe = (s = "") => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+window.closeModal = (id) => $(id).classList.remove("show");
+function openModal(id) { $(id).classList.add("show"); }
 
 function toast(msg) {
   const el = $("toast");
@@ -660,14 +772,137 @@ function resetCouponForm() {
   $("cpMinOrder").value = "0";
 }
 
+function orderProductSummaryText(o) {
+  if (Array.isArray(o.items) && o.items.length) {
+    return o.items.map((i) => `${i.name} ×${i.qty}`).join(", ");
+  }
+  return o.itemsSummary || "Order Items";
+}
+
+function populateSmsOrderPreset() {
+  const sel = $("smsOrderPreset");
+  if (!sel) return;
+  const cur = sel.value;
+  const entries = Object.entries(orders)
+    .filter(([_, o]) => o.status !== "Cancelled")
+    .sort((a, b) => (b[1].createdAt || 0) - (a[1].createdAt || 0));
+  sel.innerHTML = `<option value="">-- Select an Order to auto-fill Product & Grand Total (or type below) --</option>` +
+    entries.map(([id, o]) => `<option value="${safe(id)}">${safe(id)} · ${safe(orderProductSummaryText(o))} · Grand Total: ${money(o.total)}</option>`).join("");
+  if (cur && orders[cur]) sel.value = cur;
+}
+
+function openInvoiceModal(orderId) {
+  const o = orders[orderId];
+  if (!o) return toast("Order not found");
+  const items = Array.isArray(o.items) && o.items.length
+    ? o.items
+    : [{ name: o.itemsSummary || "Store Item", variant: "-", qty: 1, price: Number(o.subtotal || o.total || 0) }];
+
+  $("invoicePrintArea").innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;border-bottom:2px solid var(--emerald);padding-bottom:14px;flex-wrap:wrap">
+      <div>
+        <img src="assets/logo.svg" alt="SPR ZONE BD" style="height:44px;margin-bottom:6px">
+        <div style="font-size:12.5px;color:var(--muted)">Hotline: 09678-123456 · support@sprzonebd.com<br>Dhaka, Bangladesh</div>
+      </div>
+      <div style="text-align:right">
+        <h2 style="color:var(--emerald-dark);font-size:22px">INVOICE</h2>
+        <div style="font-size:13px"><b>Invoice No:</b> INV-${safe(orderId)}</div>
+        <div style="font-size:13px"><b>Order ID:</b> ${safe(orderId)}</div>
+        <div style="font-size:12.5px;color:var(--muted)">Date: ${new Date(o.createdAt || Date.now()).toLocaleString()}</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:14px;font-size:13px">
+      <div style="background:#f8faf9;padding:12px;border-radius:10px;border:1px solid var(--line)">
+        <div style="font-size:11.5px;font-weight:800;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Customer &amp; Delivery Address</div>
+        <div><b>${safe(o.customer?.name || "Customer")}</b></div>
+        <div>Phone: ${safe(o.customer?.phone || "-")}</div>
+        <div>${safe(o.customer?.address || "")}${o.customer?.division ? `, ${safe(o.customer.division)}` : ""}</div>
+      </div>
+      <div style="background:#f8faf9;padding:12px;border-radius:10px;border:1px solid var(--line)">
+        <div style="font-size:11.5px;font-weight:800;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Payment &amp; Status</div>
+        <div><b>Order Status:</b> ${safe(o.status || "Pending")}</div>
+        <div><b>Payment:</b> ${safe(o.paymentMethod || "-")} (${safe(o.paymentStatus || "Pending")})</div>
+        ${o.senderNumber ? `<div><b>Sender:</b> ${safe(o.senderNumber)} · <b>TrxID:</b> ${safe(o.trxId || "-")}</div>` : ""}
+        ${o.courier ? `<div><b>Courier:</b> ${safe(o.courier.courierName)} · ${safe(o.courier.consignmentId || o.courier.pickupStatus)}</div>` : ""}
+      </div>
+    </div>
+
+    <table class="inv-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Product Name</th>
+          <th>Variant</th>
+          <th>Qty</th>
+          <th>Unit Price</th>
+          <th style="text-align:right">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${items.map((it, idx) => `
+          <tr>
+            <td>${idx + 1}</td>
+            <td><b>${safe(it.name)}</b></td>
+            <td>${safe(it.variant || "Standard")}</td>
+            <td>${Number(it.qty || 1)}</td>
+            <td>${money(it.price)}</td>
+            <td style="text-align:right"><b>${money(Number(it.price || 0) * Number(it.qty || 1))}</b></td>
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>
+
+    <div style="display:flex;justify-content:flex-end">
+      <div style="width:min(300px,100%);display:grid;gap:6px;font-size:13.5px">
+        <div style="display:flex;justify-content:space-between"><span>Subtotal</span><b>${money(o.subtotal || o.total)}</b></div>
+        ${Number(o.discount || 0) > 0 ? `<div style="display:flex;justify-content:space-between;color:var(--emerald)"><span>Discount ${o.promoCode ? `(${safe(o.promoCode)})` : ""}</span><b>-${money(o.discount)}</b></div>` : ""}
+        <div style="display:flex;justify-content:space-between"><span>Delivery Fee</span><b>${Number(o.deliveryFee || 0) === 0 ? "FREE" : money(o.deliveryFee)}</b></div>
+        <div style="display:flex;justify-content:space-between;font-size:17px;border-top:2px solid var(--ink);padding-top:6px;margin-top:4px">
+          <b>Grand Total</b><b style="color:var(--crimson)">${money(o.total)}</b>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:18px;padding-top:12px;border-top:1px dashed var(--line);font-size:12px;color:var(--muted);text-align:center">
+      Thank you for shopping with <b>SPR ZONE BD</b>! Confirmed orders cannot be cancelled. Keep this invoice for courier verification.
+    </div>
+  `;
+  openModal("invoiceModal");
+}
+
+function openCourierModal(orderId) {
+  const o = orders[orderId];
+  if (!o) return toast("Order not found");
+  const isPaid = String(o.paymentStatus || "").toLowerCase().includes("verified") || String(o.paymentMethod || "") === "Card";
+  const defaultCod = isPaid ? 0 : Number(o.total || 0);
+
+  $("cpOrderId").value = orderId;
+  $("cpOrderBanner").innerHTML = `
+    <div><b>Order:</b> ${safe(orderId)} · <b>Products:</b> ${safe(orderProductSummaryText(o))}</div>
+    <div><b>Grand Total:</b> <b style="color:var(--crimson)">${money(o.total)}</b> · <b>Payment:</b> ${safe(o.paymentMethod)} (${safe(o.paymentStatus || "Pending")})</div>
+  `;
+  $("cpCourierName").value = o.courier?.courierName || courierSettings.defaultCourier || "Steadfast";
+  $("cpCodAmount").value = o.courier?.codAmount ?? defaultCod;
+  $("cpRecipientName").value = o.courier?.recipientName || o.customer?.name || "";
+  $("cpRecipientPhone").value = o.courier?.recipientPhone || o.customer?.phone || "";
+  $("cpDeliveryAddr").value = o.courier?.address || `${o.customer?.address || ""}${o.customer?.division ? `, ${o.customer.division}` : ""}`;
+  $("cpConsignmentId").value = o.courier?.consignmentId || "";
+  $("cpPickupHub").value = o.courier?.pickupHub || `${courierSettings.hubAddress || "Dhaka Hub"} (${courierSettings.hubPhone || "09678-123456"})`;
+  $("cpPickupNote").value = o.courier?.pickupNote || `Order ${orderId}: ${orderProductSummaryText(o)}`;
+  $("cpMarkPacked").checked = o.status === "Pending" || o.status === "Confirmed";
+  openModal("courierModal");
+}
+
 function renderAdminOrders() {
+  populateSmsOrderPreset();
   const q = $("adminOrderSearch").value.trim().toLowerCase();
   const st = $("adminOrderStatusFilter").value;
   const entries = Object.entries(orders)
     .filter(([id, o]) => {
       if (st !== "All" && (o.status || "Pending") !== st) return false;
       if (!q) return true;
-      return `${id} ${o.customer?.name || ""} ${o.customer?.phone || ""} ${o.senderNumber || ""} ${o.trxId || ""}`.toLowerCase().includes(q);
+      return `${id} ${o.customer?.name || ""} ${o.customer?.phone || ""} ${o.senderNumber || ""} ${o.trxId || ""} ${orderProductSummaryText(o)}`.toLowerCase().includes(q);
     })
     .sort((a, b) => (b[1].createdAt || 0) - (a[1].createdAt || 0));
 
@@ -686,14 +921,16 @@ function renderAdminOrders() {
             <b style="font-size:15px">${safe(id)}</b>
             <span class="badge ${badgeCls}">${safe(status)}</span>
             <span class="badge blue">${safe(o.paymentMethod || "")} · ${safe(o.paymentStatus || "Pending")}</span>
+            ${o.courier ? `<span class="badge green">🚚 ${safe(o.courier.courierName)} · ${safe(o.courier.pickupStatus || "Pickup Requested")} (${safe(o.courier.consignmentId || "")})</span>` : ""}
           </div>
           <div style="font-size:12px;color:var(--muted)">${new Date(o.createdAt || Date.now()).toLocaleString()}</div>
         </div>
         <div style="font-size:13px;display:grid;gap:4px">
           <div><b>Customer:</b> ${safe(o.customer?.name || "")} (${safe(o.customer?.phone || "")}) · ${safe(o.customer?.address || "")}, ${safe(o.customer?.division || "")}</div>
-          <div><b>Items:</b> ${(o.items || []).map((i) => `${safe(i.name)} ×${i.qty}`).join(", ") || safe(o.itemsSummary || "")}</div>
+          <div><b>Products:</b> ${safe(orderProductSummaryText(o))}</div>
           ${o.senderNumber || o.trxId ? `<div><b>Payment Sender:</b> ${safe(o.senderNumber || "-")} · <b>TrxID:</b> <code>${safe(o.trxId || "-")}</code></div>` : ""}
-          <div><b>Total:</b> <b style="color:var(--crimson)">${money(o.total)}</b> (Delivery: ${money(o.deliveryFee || 0)})</div>
+          <div><b>Grand Total:</b> <b style="color:var(--crimson)">${money(o.total)}</b> (Subtotal: ${money(o.subtotal || o.total)} · Delivery: ${money(o.deliveryFee || 0)})</div>
+          ${o.courier ? `<div style="font-size:12.5px;color:var(--emerald-dark)"><b>Courier Pickup:</b> ${safe(o.courier.courierName)} · Consignment: <code>${safe(o.courier.consignmentId)}</code> · COD: ${money(o.courier.codAmount)} · Hub: ${safe(o.courier.pickupHub || "-")}</div>` : ""}
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding-top:8px;border-top:1px solid var(--line)">
           ${status === "Pending" || status === "Placed"
@@ -702,6 +939,8 @@ function renderAdminOrders() {
           <select data-status-ord="${safe(id)}" style="padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-size:12.5px">
             ${["Pending","Confirmed","Packed","Out for Delivery","Delivered","Cancelled"].map((s) => `<option value="${s}" ${s === status ? "selected" : ""}>${s}</option>`).join("")}
           </select>
+          <button type="button" class="secondary sm" data-print-inv="${safe(id)}">🖨️ Print Invoice</button>
+          <button type="button" class="gold sm" data-courier-req="${safe(id)}">${o.courier ? "🚚 Update Courier Pickup" : "🚚 Courier Pickup Request"}</button>
           <button type="button" class="crimson sm" data-del-ord="${safe(id)}">🗑️ Delete Order</button>
         </div>
       </div>
@@ -728,6 +967,14 @@ function renderAdminOrders() {
     };
   });
 
+  $("adminOrderList").querySelectorAll("[data-print-inv]").forEach((b) => {
+    b.onclick = () => openInvoiceModal(b.dataset.printInv);
+  });
+
+  $("adminOrderList").querySelectorAll("[data-courier-req]").forEach((b) => {
+    b.onclick = () => openCourierModal(b.dataset.courierReq);
+  });
+
   $("adminOrderList").querySelectorAll("[data-del-ord]").forEach((b) => {
     b.onclick = async () => {
       if (!confirm("Delete this order record permanently?")) return;
@@ -743,8 +990,9 @@ function renderAdminSmsList() {
     ? entries.map(([trxId, s]) => `
       <div class="list-item">
         <div>
-          <div style="font-weight:800">${safe(trxId)} <span class="badge blue">${safe(s.provider || "bKash")}</span> <span class="badge green">${money(s.amount)}</span></div>
-          <div style="font-size:12.5px;color:var(--muted)">Sender: <b>${safe(s.senderNumber)}</b> · ${s.matchedOrderId ? `Matched Order: <b>${safe(s.matchedOrderId)}</b>` : "Available for Auto-Verify"}</div>
+          <div style="font-weight:800">${safe(trxId)} <span class="badge blue">${safe(s.provider || "bKash")}</span> <span class="badge green">Received: ${money(s.amount)}</span></div>
+          ${s.productName || s.grandTotal ? `<div style="font-size:12.5px;margin-top:2px"><b>Product:</b> ${safe(s.productName || "-")} · <b>Grand Total:</b> <b style="color:var(--crimson)">${money(s.grandTotal || s.amount)}</b></div>` : ""}
+          <div style="font-size:12.5px;color:var(--muted)">Sender: <b>${safe(s.senderNumber)}</b> · ${s.matchedOrderId ? `Matched &amp; Confirmed Order: <b>${safe(s.matchedOrderId)}</b>` : "Available for Auto-Verify"}</div>
         </div>
         <button type="button" class="crimson sm" data-del-sms="${safe(trxId)}">Delete</button>
       </div>
@@ -911,6 +1159,16 @@ function startAdminListeners() {
     $("setSmsKey").value = v.smsApiKey || "";
     $("setAutoVerify").checked = v.autoVerifyEnabled !== false;
   });
+  onValue(ref(db, "settings/courier"), (snap) => {
+    const v = snap.val() || {};
+    courierSettings = { ...courierSettings, ...v };
+    $("setCourierDefault").value = courierSettings.defaultCourier || "Steadfast";
+    $("setCourierPhone").value = courierSettings.hubPhone || "";
+    $("setCourierHub").value = courierSettings.hubAddress || "";
+    $("setCourierApiUrl").value = courierSettings.apiUrl || "";
+    $("setCourierApiKey").value = courierSettings.apiKey || "";
+    $("setCourierSecret").value = courierSettings.secretKey || "";
+  });
 }
 
 /* ---------- Auth ---------- */
@@ -1063,19 +1321,164 @@ $("paymentSettingsForm").onsubmit = async (e) => {
   toast("Payment & SMS API settings saved!");
 };
 
+$("smsOrderPreset").onchange = () => {
+  const orderId = $("smsOrderPreset").value;
+  const o = orders[orderId];
+  if (!o) return;
+  $("smsProductName").value = orderProductSummaryText(o);
+  $("smsGrandTotal").value = Number(o.total || 0);
+  if (o.paymentMethod === "bKash" || o.paymentMethod === "Nagad" || o.paymentMethod === "Rocket") {
+    $("smsProvider").value = o.paymentMethod;
+  }
+  $("smsAmount").value = Number(o.total || 0);
+  if (o.senderNumber) $("smsSender").value = o.senderNumber;
+  if (o.trxId) $("smsTrxId").value = o.trxId;
+};
+
 $("smsInboxForm").onsubmit = async (e) => {
   e.preventDefault();
   const trxId = $("smsTrxId").value.trim().toUpperCase();
+  const senderNumber = normalizeBdPhone($("smsSender").value);
+  const amount = Number($("smsAmount").value);
+  const productName = $("smsProductName").value.trim();
+  const grandTotal = Number($("smsGrandTotal").value || amount);
+
+  // Auto-match any pending order with matching Sender Number & TrxID
+  let matchedOrderId = "";
+  for (const [oid, o] of Object.entries(orders)) {
+    const oSender = normalizeBdPhone(o.senderNumber || "");
+    const oTrx = String(o.trxId || "").trim().toUpperCase();
+    if ((o.status === "Pending" || o.status === "Placed") && oSender === senderNumber && oTrx === trxId && amount >= Number(o.total || 0)) {
+      matchedOrderId = oid;
+      await update(ref(db, "orders/" + oid), {
+        status: "Confirmed",
+        paymentStatus: "Verified (Auto SMS)",
+        updatedAt: Date.now()
+      });
+      break;
+    }
+  }
+
   await set(ref(db, "sms_inbox/" + trxId), {
+    productName,
+    grandTotal,
     provider: $("smsProvider").value,
-    amount: Number($("smsAmount").value),
-    senderNumber: normalizeBdPhone($("smsSender").value),
+    amount,
+    senderNumber,
     trxId,
-    matchedOrderId: "",
+    matchedOrderId,
     receivedAt: Date.now()
   });
   $("smsInboxForm").reset();
-  toast(`Payment SMS ${trxId} saved to verification inbox!`);
+  toast(matchedOrderId
+    ? `SMS ${trxId} saved & Order ${matchedOrderId} auto-confirmed!`
+    : `Payment SMS ${trxId} saved to verification inbox!`);
+};
+
+$("courierSettingsForm").onsubmit = async (e) => {
+  e.preventDefault();
+  await set(ref(db, "settings/courier"), {
+    defaultCourier: $("setCourierDefault").value,
+    hubPhone: normalizeBdPhone($("setCourierPhone").value),
+    hubAddress: $("setCourierHub").value.trim(),
+    apiUrl: $("setCourierApiUrl").value.trim(),
+    apiKey: $("setCourierApiKey").value.trim(),
+    secretKey: $("setCourierSecret").value.trim(),
+    updatedAt: Date.now()
+  });
+  toast("Courier hub & API settings saved!");
+};
+
+$("printInvoiceBtn").onclick = () => window.print();
+
+$("cpPrintAfterBtn").onclick = () => {
+  const id = $("cpOrderId").value;
+  closeModal("courierModal");
+  if (id) openInvoiceModal(id);
+};
+
+$("courierRequestForm").onsubmit = async (e) => {
+  e.preventDefault();
+  const orderId = $("cpOrderId").value;
+  const o = orders[orderId];
+  if (!o) return;
+
+  const courierName = $("cpCourierName").value;
+  const codAmount = Number($("cpCodAmount").value || 0);
+  const recipientName = $("cpRecipientName").value.trim();
+  const recipientPhone = normalizeBdPhone($("cpRecipientPhone").value);
+  const address = $("cpDeliveryAddr").value.trim();
+  const pickupHub = $("cpPickupHub").value.trim();
+  const pickupNote = $("cpPickupNote").value.trim();
+  let consignmentId = $("cpConsignmentId").value.trim();
+
+  $("cpSubmitBtn").disabled = true;
+  $("cpSubmitBtn").textContent = "Dispatching Pickup Request...";
+
+  let apiNote = "Saved in SPR ZONE BD Order Dispatch";
+  if (courierSettings.apiUrl) {
+    try {
+      const headers = { "Content-Type": "application/json" };
+      if (courierSettings.apiKey) headers["Api-Key"] = courierSettings.apiKey;
+      if (courierSettings.secretKey) headers["Secret-Key"] = courierSettings.secretKey;
+      const resp = await fetch(courierSettings.apiUrl, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          invoice: orderId,
+          recipient_name: recipientName,
+          recipient_phone: recipientPhone,
+          recipient_address: address,
+          cod_amount: codAmount,
+          note: pickupNote
+        })
+      });
+      if (resp.ok) {
+        const data = await resp.json().catch(() => ({}));
+        const remoteId = data?.consignment?.tracking_code || data?.consignment?.consignment_id || data?.tracking_code || data?.consignment_id;
+        if (remoteId) consignmentId = String(remoteId);
+        apiNote = "Dispatched to Courier API";
+      } else {
+        apiNote = `Courier API HTTP ${resp.status} (Saved locally)`;
+      }
+    } catch (_) {
+      apiNote = "Courier pickup logged (API unreachable from browser CORS)";
+    }
+  }
+
+  if (!consignmentId) {
+    consignmentId = `${courierName.slice(0, 3).toUpperCase()}-${Date.now().toString().slice(-6)}`;
+  }
+
+  const orderUpdate = {
+    courier: {
+      courierName,
+      pickupStatus: "Pickup Requested",
+      consignmentId,
+      codAmount,
+      recipientName,
+      recipientPhone,
+      address,
+      pickupHub,
+      pickupNote,
+      apiNote,
+      requestedAt: Date.now()
+    },
+    updatedAt: Date.now()
+  };
+
+  if ($("cpMarkPacked").checked && (o.status === "Pending" || o.status === "Confirmed")) {
+    orderUpdate.status = "Packed";
+  }
+
+  try {
+    await update(ref(db, "orders/" + orderId), orderUpdate);
+    closeModal("courierModal");
+    toast(`Courier pickup requested (${courierName} · ${consignmentId})!`);
+  } finally {
+    $("cpSubmitBtn").disabled = false;
+    $("cpSubmitBtn").textContent = "🚚 Send Courier Pickup Request";
+  }
 };
 
 $("customerForm").onsubmit = async (e) => {

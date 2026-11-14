@@ -1191,7 +1191,8 @@ function renderSingleOrderCard(id, o) {
       <div><b>Items:</b> ${(o.items || []).map((it) => `${safe(it.name)} ×${it.qty}`).join(", ") || safe(o.itemsSummary || "")}</div>
       <div><b>Payment:</b> ${safe(o.paymentMethod)} · <span style="color:var(--emerald-dark);font-weight:700">${safe(o.paymentStatus || "Pending")}</span></div>
       ${o.senderNumber ? `<div><b>Sender:</b> ${safe(o.senderNumber)} · <b>TrxID:</b> ${safe(o.trxId)}</div>` : ""}
-      <div><b>Total:</b> <b style="color:var(--crimson)">${money(o.total)}</b></div>
+      ${o.courier ? `<div><b>Courier:</b> ${safe(o.courier.courierName)} · <span class="badge green">${safe(o.courier.pickupStatus || "Pickup Requested")}</span> · <b>ID:</b> <code>${safe(o.courier.consignmentId || "-")}</code></div>` : ""}
+      <div><b>Grand Total:</b> <b style="color:var(--crimson)">${money(o.total)}</b></div>
     </div>
     <div style="margin-top:10px">
       ${allowedCancel
