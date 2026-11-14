@@ -30,7 +30,7 @@
       ".read": "auth != null && (auth.token.email == 'mail.sajjadahmed@gmail.com' || auth.token.admin === true)",
       "$trxId": {
         ".read": true,
-        ".write": "auth != null && (auth.token.email == 'mail.sajjadahmed@gmail.com' || auth.token.admin === true) || (!data.child('matchedOrderId').exists() && newData.child('matchedOrderId').exists())"
+        ".write": "(auth != null && (auth.token.email == 'mail.sajjadahmed@gmail.com' || auth.token.admin === true)) || (data.exists() && (!data.child('matchedOrderId').exists() || data.child('matchedOrderId').val() == '') && newData.child('matchedOrderId').val() != '')"
       }
     },
     "customers": {

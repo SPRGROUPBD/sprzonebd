@@ -21,6 +21,7 @@ import com.example.data.model.ReviewEntity
 import com.example.data.model.StoreConstants
 import com.example.data.model.UserAccountEntity
 import com.example.data.model.WishlistEntity
+import com.example.data.remote.RemoteCouponDto
 import com.example.data.remote.RemoteCustomerDto
 import com.example.data.remote.RemoteOrderDto
 import com.example.data.remote.RemoteOrderItemDto
@@ -70,17 +71,14 @@ class SprZoneRepository(
     private val _paymentSettings = MutableStateFlow(MerchantPaymentSettings())
     val paymentSettings: StateFlow<MerchantPaymentSettings> = _paymentSettings.asStateFlow()
 
+    private val _coupons = MutableStateFlow<Map<String, RemoteCouponDto>>(emptyMap())
+    val coupons: StateFlow<Map<String, RemoteCouponDto>> = _coupons.asStateFlow()
+
     val loggedInEmailFlow: Flow<String?> = prefs.loggedInEmail
     val deliveryZoneFlow: Flow<DeliveryZone> = prefs.deliveryZone
     val isDarkModeFlow: Flow<Boolean> = prefs.isDarkMode
 
     suspend fun ensureSeededAndSync() {
-        if (productDao.getProductCount() == 0) {
-            productDao.insertAll(CatalogSeeder.initialProducts())
-        }
-        if (reviewDao.getReviewCount() == 0) {
-            reviewDao.insertAll(CatalogSeeder.initialReviews())
-        }
         syncRemoteCatalogAndSettings()
     }
 
@@ -94,14 +92,25 @@ class SprZoneRepository(
             }
         } catch (t: Throwable) {
             if (t is CancellationException) throw t
-            // Keep default or previously synced settings when offline
+            // Keep previously synced settings when offline
+        }
+
+        try {
+            val couponsResp = rtdb.getCoupons()
+            if (couponsResp.isSuccessful) {
+                _coupons.value = couponsResp.body().orEmpty()
+            }
+        } catch (t: Throwable) {
+            if (t is CancellationException) throw t
         }
 
         try {
             val productsResp = rtdb.getProducts()
             if (productsResp.isSuccessful) {
                 val remoteMap = productsResp.body()
-                if (!remoteMap.isNullOrEmpty()) {
+                if (remoteMap.isNullOrEmpty()) {
+                    productDao.clearAllProducts()
+                } else {
                     val mapped = remoteMap.entries.mapNotNull { (id, dto) ->
                         val safeId = id.trim().take(120)
                         if (safeId.isBlank()) return@mapNotNull null
@@ -148,6 +157,7 @@ class SprZoneRepository(
                             createdAt = dto.updatedAt ?: System.currentTimeMillis()
                         )
                     }
+                    productDao.clearAllProducts()
                     if (mapped.isNotEmpty()) {
                         productDao.insertAll(mapped)
                     }
@@ -332,6 +342,43 @@ class SprZoneRepository(
         return Result.success(user)
     }
 
+    suspend fun updateProfile(
+        email: String,
+        fullName: String,
+        phone: String,
+        bio: String
+    ): Result<UserAccountEntity> {
+        val normalizedEmail = email.trim().lowercase()
+        val existing = userDao.getUserByEmail(normalizedEmail)
+            ?: return Result.failure(IllegalStateException("Account not found."))
+        val trimmedName = fullName.trim()
+        if (trimmedName.isBlank()) {
+            return Result.failure(IllegalArgumentException("Full name is required."))
+        }
+        val cleanPhone = phone.trim()
+        if (cleanPhone.isNotBlank() && !StoreConstants.isValidBdPhone(cleanPhone)) {
+            return Result.failure(IllegalArgumentException("Enter a valid 11-digit BD mobile number (01XXXXXXXXX)."))
+        }
+        val normalizedPhone = if (cleanPhone.isNotBlank()) StoreConstants.normalizeBdPhone(cleanPhone) else ""
+        val updated = existing.copy(
+            fullName = trimmedName.take(120),
+            phone = normalizedPhone,
+            bio = bio.trim().take(240)
+        )
+        userDao.upsertUser(updated)
+        return Result.success(updated)
+    }
+
+    suspend fun deleteProfile(email: String): Result<Unit> {
+        val normalizedEmail = email.trim().lowercase()
+        addressDao.deleteAllForUser(normalizedEmail)
+        cartDao.clearCart(normalizedEmail)
+        wishlistDao.clearWishlist(normalizedEmail)
+        userDao.deleteUserByEmail(normalizedEmail)
+        prefs.setLoggedInEmail(null)
+        return Result.success(Unit)
+    }
+
     suspend fun signOut() {
         prefs.setLoggedInEmail(null)
     }
@@ -442,6 +489,39 @@ class SprZoneRepository(
         return Result.success(id)
     }
 
+    suspend fun updateAddress(
+        userEmail: String,
+        addressId: Long,
+        label: String,
+        recipientName: String,
+        phone: String,
+        division: String,
+        districtThana: String,
+        streetAddress: String,
+        makeDefault: Boolean
+    ): Result<Unit> {
+        if (recipientName.isBlank() || phone.isBlank() || districtThana.isBlank() || streetAddress.isBlank()) {
+            return Result.failure(IllegalArgumentException("Please fill in all shipping address fields."))
+        }
+        val existing = addressDao.getAddressById(addressId, userEmail)
+            ?: return Result.failure(IllegalArgumentException("Address not found."))
+        if (makeDefault) {
+            addressDao.clearDefaultAddresses(userEmail)
+        }
+        addressDao.updateAddress(
+            existing.copy(
+                label = label.ifBlank { "Home" }.trim(),
+                recipientName = recipientName.trim(),
+                phone = phone.trim(),
+                division = division,
+                districtThana = districtThana.trim(),
+                streetAddress = streetAddress.trim(),
+                isDefault = makeDefault || existing.isDefault
+            )
+        )
+        return Result.success(Unit)
+    }
+
     suspend fun setDefaultAddress(userEmail: String, addressId: Long) {
         addressDao.clearDefaultAddresses(userEmail)
         addressDao.setDefaultAddress(addressId, userEmail)
@@ -452,23 +532,36 @@ class SprZoneRepository(
     // --- Promo & Checkout with Auto TrxID Verification ---
 
     fun evaluatePromo(codeRaw: String, subtotalBdt: Long): PromoResult? {
-        return when (codeRaw.trim().uppercase()) {
-            "SPR10" -> PromoResult(
-                code = "SPR10",
-                discountBdt = (subtotalBdt * 0.10).roundToInt().toLong(),
-                freeShipping = false,
-                message = "10% Eid & Tech Promo applied"
-            )
-            "DHAKA100" -> if (subtotalBdt >= 1000L) {
+        val cleanCode = codeRaw.trim().uppercase()
+        if (cleanCode.isBlank()) return null
+        val coupon = _coupons.value[cleanCode] ?: _coupons.value.values.firstOrNull {
+            it.code.equals(cleanCode, ignoreCase = true)
+        } ?: return null
+
+        val minOrder = (coupon.minOrder ?: 0.0).toLong()
+        if (subtotalBdt < minOrder) return null
+
+        return when (coupon.type?.lowercase()) {
+            "percent" -> {
+                val pct = (coupon.value ?: 0.0).coerceIn(0.0, 95.0)
                 PromoResult(
-                    code = "DHAKA100",
-                    discountBdt = 100L,
+                    code = cleanCode,
+                    discountBdt = (subtotalBdt * (pct / 100.0)).roundToInt().toLong(),
                     freeShipping = false,
-                    message = "৳100 instant discount applied"
+                    message = "${pct.roundToInt()}% discount applied"
                 )
-            } else null
-            "FREESHIP" -> PromoResult(
-                code = "FREESHIP",
+            }
+            "flat" -> {
+                val flat = (coupon.value ?: 0.0).toLong().coerceAtLeast(0L)
+                PromoResult(
+                    code = cleanCode,
+                    discountBdt = flat.coerceAtMost(subtotalBdt),
+                    freeShipping = false,
+                    message = "৳$flat instant discount applied"
+                )
+            }
+            "freeship" -> PromoResult(
+                code = cleanCode,
                 discountBdt = 0L,
                 freeShipping = true,
                 message = "Free nationwide Bangladesh shipping applied"
@@ -481,7 +574,6 @@ class SprZoneRepository(
         userEmail: String,
         address: AddressEntity,
         cartItems: List<CartItemEntity>,
-        deliveryZone: DeliveryZone,
         promoCode: String,
         paymentMethod: PaymentMethod,
         senderNumberInput: String,
@@ -497,7 +589,7 @@ class SprZoneRepository(
         val rawDeliveryFee = if (subtotal >= StoreConstants.FREE_DELIVERY_THRESHOLD_BDT || promo?.freeShipping == true) {
             0L
         } else {
-            deliveryZone.feeBdt
+            StoreConstants.deliveryFeeForDivision(address.division)
         }
         val total = (subtotal - discount + rawDeliveryFee).coerceAtLeast(0L)
 

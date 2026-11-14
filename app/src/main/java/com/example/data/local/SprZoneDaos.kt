@@ -39,6 +39,9 @@ interface ProductDao {
 
     @Query("UPDATE products SET rating = :rating, reviewCount = :reviewCount WHERE id = :productId")
     suspend fun updateRatingSummary(productId: String, rating: Double, reviewCount: Int)
+
+    @Query("DELETE FROM products")
+    suspend fun clearAllProducts()
 }
 
 @Dao
@@ -80,6 +83,9 @@ interface WishlistDao {
 
     @Query("DELETE FROM wishlist_items WHERE userEmail = :userEmail AND productId = :productId")
     suspend fun delete(userEmail: String, productId: String)
+
+    @Query("DELETE FROM wishlist_items WHERE userEmail = :userEmail")
+    suspend fun clearWishlist(userEmail: String)
 }
 
 @Dao
@@ -92,6 +98,9 @@ interface UserDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertUser(user: UserAccountEntity)
+
+    @Query("DELETE FROM user_accounts WHERE email = :email")
+    suspend fun deleteUserByEmail(email: String)
 }
 
 @Dao
@@ -99,11 +108,17 @@ interface AddressDao {
     @Query("SELECT * FROM addresses WHERE userEmail = :userEmail ORDER BY isDefault DESC, id DESC")
     fun observeAddresses(userEmail: String): Flow<List<AddressEntity>>
 
+    @Query("SELECT * FROM addresses WHERE id = :id AND userEmail = :userEmail LIMIT 1")
+    suspend fun getAddressById(id: Long, userEmail: String): AddressEntity?
+
     @Query("SELECT COUNT(*) FROM addresses WHERE userEmail = :userEmail")
     suspend fun countAddresses(userEmail: String): Int
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAddress(address: AddressEntity): Long
+
+    @Update
+    suspend fun updateAddress(address: AddressEntity)
 
     @Query("UPDATE addresses SET isDefault = 0 WHERE userEmail = :userEmail")
     suspend fun clearDefaultAddresses(userEmail: String)
@@ -113,6 +128,9 @@ interface AddressDao {
 
     @Query("DELETE FROM addresses WHERE id = :id")
     suspend fun deleteAddress(id: Long)
+
+    @Query("DELETE FROM addresses WHERE userEmail = :userEmail")
+    suspend fun deleteAllForUser(userEmail: String)
 }
 
 @Dao

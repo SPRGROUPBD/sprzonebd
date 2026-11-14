@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.util.Base64
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
+import com.example.data.local.CatalogSeeder
 import com.example.data.local.SessionPreferences
 import com.example.data.local.SprZoneDatabase
 import com.example.data.model.ProductEntity
@@ -13,6 +14,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -47,6 +49,61 @@ class SprZoneDatabaseTest {
     @After
     fun tearDown() {
         db.close()
+    }
+
+    @Test
+    fun noDemoProductsOrReviewsAreSeeded() {
+        assertTrue(CatalogSeeder.initialProducts().isEmpty())
+        assertTrue(CatalogSeeder.initialReviews().isEmpty())
+    }
+
+    @Test
+    fun userCanAddEditAndDeleteProfileAndAddresses() = runTest {
+        val email = "customer@example.com"
+        val reg = repo.registerUser("Rahim Uddin", email, "01711223344", "secret123")
+        assertTrue(reg.isSuccess)
+
+        val upd = repo.updateProfile(email, "Rahim Ahmed", "+8801811223344", "Dhaka buyer")
+        assertTrue(upd.isSuccess)
+        assertEquals("Rahim Ahmed", upd.getOrThrow().fullName)
+        assertEquals("01811223344", upd.getOrThrow().phone)
+        assertEquals("Dhaka buyer", upd.getOrThrow().bio)
+
+        val addrRes = repo.saveAddress(
+            userEmail = email,
+            label = "Home",
+            recipientName = "Rahim Ahmed",
+            phone = "01811223344",
+            division = "Dhaka",
+            districtThana = "Banani",
+            streetAddress = "Road 11, House 4",
+            makeDefault = true
+        )
+        assertTrue(addrRes.isSuccess)
+        val addrId = addrRes.getOrThrow()
+
+        val editAddrRes = repo.updateAddress(
+            userEmail = email,
+            addressId = addrId,
+            label = "Office",
+            recipientName = "Rahim Office",
+            phone = "01811223344",
+            division = "Chattogram",
+            districtThana = "Agrabad",
+            streetAddress = "Suite 302",
+            makeDefault = true
+        )
+        assertTrue(editAddrRes.isSuccess)
+        val savedAddr = db.addressDao().observeAddresses(email).first().single()
+        assertEquals("Office", savedAddr.label)
+        assertEquals("Chattogram", savedAddr.division)
+
+        repo.deleteAddress(addrId)
+        assertTrue(db.addressDao().observeAddresses(email).first().isEmpty())
+
+        val delProfile = repo.deleteProfile(email)
+        assertTrue(delProfile.isSuccess)
+        assertNull(db.userDao().getUserByEmail(email))
     }
 
     @Test

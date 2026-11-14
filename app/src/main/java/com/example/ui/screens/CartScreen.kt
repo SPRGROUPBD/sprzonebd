@@ -53,7 +53,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.R
 import com.example.data.model.CartItemEntity
-import com.example.data.model.DeliveryZone
 import com.example.data.model.StoreConstants
 import com.example.ui.components.EmptyStatePanel
 import com.example.ui.components.ProductThumbnail
@@ -66,7 +65,7 @@ import com.example.ui.viewmodel.CartSummary
 fun CartScreen(
     cartItems: List<CartItemEntity>,
     summary: CartSummary,
-    deliveryZone: DeliveryZone,
+    availableCoupons: List<String>,
     isSignedIn: Boolean,
     onUpdateQuantity: (CartItemEntity, Int) -> Unit,
     onRemoveItem: (Long) -> Unit,
@@ -85,7 +84,7 @@ fun CartScreen(
         if (cartItems.isEmpty()) {
             EmptyStatePanel(
                 title = "Your SPR Zone cart is empty",
-                subtitle = "Explore electronics, authentic Dhakai Jamdani, organic groceries, and more.",
+                subtitle = "Browse live products from SPR Zone BD and add items to your cart.",
                 icon = Icons.Filled.ShoppingCart,
                 actionLabel = "Start Shopping",
                 onAction = onBrowseShop,
@@ -256,7 +255,7 @@ fun CartScreen(
                             OutlinedTextField(
                                 value = promoInput,
                                 onValueChange = { promoInput = it.uppercase() },
-                                placeholder = { Text("Enter SPR10, DHAKA100...") },
+                                placeholder = { Text("Enter promo code") },
                                 singleLine = true,
                                 modifier = Modifier
                                     .weight(1f)
@@ -271,16 +270,18 @@ fun CartScreen(
                                 Text("Apply")
                             }
                         }
-                        Spacer(modifier = Modifier.height(8.dp))
-                        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            items(listOf("SPR10", "DHAKA100", "FREESHIP")) { code ->
-                                AssistChip(
-                                    onClick = {
-                                        promoInput = code
-                                        onApplyPromo(code)
-                                    },
-                                    label = { Text(code) }
-                                )
+                        if (availableCoupons.isNotEmpty()) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                items(availableCoupons) { code ->
+                                    AssistChip(
+                                        onClick = {
+                                            promoInput = code
+                                            onApplyPromo(code)
+                                        },
+                                        label = { Text(code) }
+                                    )
+                                }
                             }
                         }
                         if (summary.appliedPromo != null) {
@@ -312,7 +313,7 @@ fun CartScreen(
                             SummaryRow("Promo Discount", "-${formatBdt(summary.discountBdt)}", valueColor = VerifiedGreen)
                         }
                         SummaryRow(
-                            label = "Delivery (${deliveryZone.label})",
+                            label = "Estimated Delivery",
                             value = if (summary.deliveryFeeBdt == 0L) "FREE" else formatBdt(summary.deliveryFeeBdt),
                             valueColor = if (summary.deliveryFeeBdt == 0L) VerifiedGreen else MaterialTheme.colorScheme.onSurface
                         )

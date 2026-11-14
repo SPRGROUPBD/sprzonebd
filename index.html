@@ -18,7 +18,6 @@
   --crimson:#E11D48;
   --crimson-dark:#BE123C;
   --gold:#F59E0B;
-  --gold-soft:#FEF3C7;
   --ink:#141C18;
   --muted:#526059;
   --bg:#F3F6F4;
@@ -53,9 +52,9 @@ button:disabled{opacity:.5;cursor:not-allowed}
 /* Top Utility Bar */
 .topbar{background:var(--emerald-dark);color:#fff;font-size:12.5px}
 .topbar-inner{max-width:1420px;margin:auto;padding:8px 18px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
-.topbar-left,.topbar-right{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.topbar-left,.topbar-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .topbar-sep{opacity:.4}
-.top-pill{background:rgba(255,255,255,.14);padding:4px 10px;border-radius:20px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;border:0;color:#fff;min-height:28px}
+.top-pill{background:rgba(255,255,255,.14);padding:4px 10px;border-radius:20px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;border:0;color:#fff;min-height:28px;font-size:12.5px}
 .top-pill:hover{background:rgba(255,255,255,.24)}
 .top-pill.admin-pill{background:var(--gold);color:#1a1200}
 
@@ -172,24 +171,6 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .social-row{display:flex;gap:8px;margin-top:10px}
 .social-pill{flex:1;text-align:center;padding:8px;border-radius:9px;background:var(--emerald-soft);color:var(--emerald-dark);font-weight:700;font-size:12px}
 
-/* Admin Panel (Website Only) */
-.admin-section{display:none;max-width:1420px;margin:20px auto;padding:0 18px}
-.admin-section.show{display:block}
-.admin-shell{background:#fff;border:2px solid var(--emerald);border-radius:18px;padding:20px;box-shadow:0 12px 32px rgba(0,50,25,.09)}
-.admin-header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding-bottom:14px;border-bottom:1px solid var(--line)}
-.admin-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
-.admin-tab{background:#f1f5f3;color:var(--ink);padding:9px 14px;border-radius:9px;font-weight:700;font-size:13px;min-height:38px}
-.admin-tab.active{background:var(--emerald);color:#fff}
-.admin-stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:16px}
-.stat-box{background:var(--emerald-soft);border:1px solid #c3e6d1;border-radius:12px;padding:12px 14px}
-.stat-box small{color:var(--emerald-dark);font-weight:700;display:block}
-.stat-box b{font-size:22px;color:var(--ink)}
-.admin-grid-2{display:grid;grid-template-columns:380px minmax(0,1fr);gap:18px;align-items:start}
-.panel-box{background:#fafcfb;border:1px solid var(--line);border-radius:12px;padding:14px}
-.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:12px;background:#fff}
-table{width:100%;border-collapse:collapse;font-size:13px}
-th,td{padding:10px 12px;border-bottom:1px solid #eef2ef;text-align:left;vertical-align:middle}
-th{background:#f5f9f6;color:var(--emerald-dark);font-weight:700;white-space:nowrap}
 .badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11.5px;font-weight:700}
 .badge.green{background:#dcfce7;color:#166534}
 .badge.amber{background:#fef3c7;color:#92400e}
@@ -203,7 +184,7 @@ th{background:#f5f9f6;color:var(--emerald-dark);font-weight:700;white-space:nowr
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .modal{position:fixed;inset:0;background:rgba(10,25,18,.58);display:none;align-items:center;justify-content:center;padding:16px;z-index:60}
 .modal.show{display:flex}
-.dialog{background:#fff;border-radius:16px;padding:22px;width:min(620px,100%);max-height:92vh;overflow:auto;box-shadow:0 20px 50px rgba(0,0,0,.25)}
+.dialog{background:#fff;border-radius:16px;padding:22px;width:min(660px,100%);max-height:92vh;overflow:auto;box-shadow:0 20px 50px rgba(0,0,0,.25)}
 .dialog-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--line)}
 .drawer-wrap{position:fixed;inset:0;background:rgba(10,25,18,.52);display:none;justify-content:flex-end;z-index:55}
 .drawer-wrap.show{display:flex}
@@ -211,6 +192,11 @@ th{background:#f5f9f6;color:var(--emerald-dark);font-weight:700;white-space:nowr
 .drawer-body{flex:1;overflow:auto;padding:8px 0}
 .cart-row{display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid #eef2ef}
 .cart-row img{width:56px;height:56px;object-fit:contain;background:#f8faf9;border-radius:8px;border:1px solid var(--line)}
+
+.tab-row{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.tab-btn{background:#f1f5f3;color:var(--ink);padding:8px 14px;border-radius:9px;font-weight:700;font-size:13px;min-height:36px}
+.tab-btn.active{background:var(--emerald);color:#fff}
+.addr-item{background:#f8faf9;border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
 
 .pay-box{background:#f8faf9;border:1.5px solid var(--emerald);border-radius:12px;padding:12px;margin:10px 0}
 .copy-chip{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px dashed var(--emerald);padding:6px 10px;border-radius:8px;font-weight:800;color:var(--emerald-dark);margin-top:6px}
@@ -232,8 +218,6 @@ th{background:#f5f9f6;color:var(--emerald-dark);font-weight:700;white-space:nowr
   .store-grid{grid-template-columns:220px minmax(0,1fr)}
   .right-col{grid-column:1 / -1;display:grid;grid-template-columns:repeat(3,1fr)}
   .products-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
-  .admin-grid-2{grid-template-columns:1fr}
-  .admin-stats{grid-template-columns:repeat(3,1fr)}
 }
 @media(max-width:900px){
   .trust-badges{display:none}
@@ -248,7 +232,6 @@ th{background:#f5f9f6;color:var(--emerald-dark);font-weight:700;white-space:nowr
   .products-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
   .right-col{grid-template-columns:1fr}
   .footer-inner{grid-template-columns:1fr 1fr}
-  .admin-stats{grid-template-columns:repeat(2,1fr)}
 }
 @media(max-width:520px){
   .topbar-inner{font-size:11.5px;justify-content:center}
@@ -265,7 +248,7 @@ th{background:#f5f9f6;color:var(--emerald-dark);font-weight:700;white-space:nowr
 <div class="topbar">
   <div class="topbar-inner">
     <div class="topbar-left">
-      <span>🇧🇩 Free Home Delivery all over Bangladesh</span>
+      <span>🇧🇩 Free Home Delivery over ৳3,000</span>
       <span class="topbar-sep">|</span>
       <span>🛡️ Secure Payment</span>
       <span class="topbar-sep">|</span>
@@ -274,7 +257,7 @@ th{background:#f5f9f6;color:var(--emerald-dark);font-weight:700;white-space:nowr
     <div class="topbar-right">
       <button class="top-pill" id="myOrdersBtn">📦 My Orders</button>
       <button class="top-pill" id="accountBtn">👤 Login | Register</button>
-      <button class="top-pill admin-pill hidden" id="adminToggleBtn">⚙️ Admin Panel</button>
+      <a class="top-pill admin-pill hidden" id="adminPortalLink" href="admin.html">⚙️ Admin Portal</a>
       <button class="top-pill" id="cartBtn">🛒 <span id="cartCount">0</span> · <span id="cartTopTotal">৳0</span></button>
     </div>
   </div>
@@ -286,7 +269,7 @@ th{background:#f5f9f6;color:var(--emerald-dark);font-weight:700;white-space:nowr
     <button class="mobile-menu-btn" id="mobileCatToggle" aria-label="Categories">☰ Categories</button>
     <a class="brand" href="#top"><img src="assets/logo.svg" alt="SPR ZONE BD"></a>
     <form class="search-box" id="searchForm">
-      <input id="searchInput" placeholder="Search for products, phones, earbuds, sarees..." aria-label="Search products">
+      <input id="searchInput" placeholder="Search for products..." aria-label="Search products">
       <button type="submit">🔍 Search</button>
     </form>
     <div class="trust-badges">
@@ -319,7 +302,7 @@ th{background:#f5f9f6;color:var(--emerald-dark);font-weight:700;white-space:nowr
     <aside class="left-col" id="leftSidebar">
       <div class="card">
         <div class="cat-card-head">
-          <span>☰ All Categories</span>
+          <span>☰ Categories</span>
         </div>
         <div class="cat-list" id="categoryList"></div>
       </div>
@@ -328,7 +311,7 @@ th{background:#f5f9f6;color:var(--emerald-dark);font-weight:700;white-space:nowr
         <div class="big-title">BIG SALE</div>
         <div style="font-size:13px;opacity:.9;margin-top:4px">Up to</div>
         <div class="pct">70% OFF</div>
-        <p style="font-size:12.5px;margin:0 0 12px;color:#dcfce7">Flash Deals across Electronics, Fashion & Daily Needs</p>
+        <p style="font-size:12.5px;margin:0 0 12px;color:#dcfce7">Flash Deals across SPR ZONE BD</p>
         <button class="crimson" style="width:100%" id="bigSaleBtn">Shop Now →</button>
       </div>
     </aside>
@@ -346,19 +329,15 @@ th{background:#f5f9f6;color:var(--emerald-dark);font-weight:700;white-space:nowr
             <button class="secondary" id="heroTrackBtn">📍 Track Order</button>
           </div>
         </div>
-        <!-- Patriotic Bangladesh Memorial + Shopping SVG Artwork -->
         <div style="display:flex;justify-content:center;align-items:center">
           <svg viewBox="0 0 260 175" width="100%" style="max-width:260px" aria-hidden="true">
             <rect x="0" y="148" width="260" height="27" rx="8" fill="rgba(255,255,255,.16)"/>
-            <!-- National Martyrs' Monument (Jatiyo Smriti Soudho) silhouette -->
             <polygon points="150,148 182,24 214,148" fill="#E2EFE7" opacity=".95"/>
             <polygon points="134,148 182,42 230,148" fill="#CBE4D5" opacity=".75"/>
             <polygon points="118,148 182,66 246,148" fill="#B2D8C2" opacity=".55"/>
-            <!-- Bangladesh Flag -->
             <rect x="218" y="34" width="3.5" height="114" fill="#FEF08A"/>
             <rect x="221" y="36" width="36" height="23" rx="2" fill="#006A4E" stroke="#fff" stroke-width="1"/>
             <circle cx="237" cy="47.5" r="6.5" fill="#F42A41"/>
-            <!-- Shopping Bags -->
             <rect x="22" y="64" width="54" height="66" rx="10" fill="#F59E0B"/>
             <path d="M36 64v-8a13 13 0 0 1 26 0v8" fill="none" stroke="#FEF3C7" stroke-width="4.5" stroke-linecap="round"/>
             <rect x="64" y="78" width="50" height="58" rx="10" fill="#E11D48"/>
@@ -378,9 +357,9 @@ th{background:#f5f9f6;color:var(--emerald-dark);font-weight:700;white-space:nowr
         <div class="benefit"><div class="benefit-ic">📱</div><div><b>bKash · Nagad</b><span>Rocket · Auto TrxID</span></div></div>
       </div>
 
-      <!-- Popular Products -->
+      <!-- Products Header & Grid -->
       <div class="section-head" id="productsSection">
-        <h2 id="catalogHeading">🔥 Popular Products <span class="muted" id="productCount" style="font-size:13px;font-weight:600"></span></h2>
+        <h2 id="catalogHeading">🔥 Products <span class="muted" id="productCount" style="font-size:13px;font-weight:600"></span></h2>
         <div class="filter-tools">
           <select id="sortSelect" aria-label="Sort products">
             <option value="featured">Sort: Popular</option>
@@ -427,219 +406,6 @@ th{background:#f5f9f6;color:var(--emerald-dark);font-weight:700;white-space:nowr
   </div>
 </main>
 
-<!-- Website-Only Full Admin Panel (mail.sajjadahmed@gmail.com) -->
-<section class="admin-section" id="adminSection">
-  <div class="admin-shell">
-    <div class="admin-header">
-      <div>
-        <h2 style="color:var(--emerald-dark)">⚙️ SPR ZONE BD — Website Admin Panel</h2>
-        <div style="font-size:13px;color:var(--muted)">Signed in as <b id="adminEmailLabel"></b> · Add, Edit & Delete all store data</div>
-      </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="gold sm" id="seedCatalogBtn">🌱 Seed BD Catalog</button>
-        <button class="secondary sm" id="refreshAdminBtn">↻ Sync Live Data</button>
-        <button class="crimson sm" id="closeAdminBtn">Hide Panel</button>
-      </div>
-    </div>
-
-    <div class="admin-stats">
-      <div class="stat-box"><small>Products</small><b id="statProducts">0</b></div>
-      <div class="stat-box"><small>Categories</small><b id="statCategories">0</b></div>
-      <div class="stat-box"><small>Total Orders</small><b id="statOrders">0</b></div>
-      <div class="stat-box"><small>Confirmed Revenue</small><b id="statRevenue">৳0</b></div>
-      <div class="stat-box"><small>Customers</small><b id="statCustomers">0</b></div>
-    </div>
-
-    <div class="admin-tabs">
-      <button class="admin-tab active" data-atab="products">📦 Products</button>
-      <button class="admin-tab" data-atab="categories">🗂️ Categories</button>
-      <button class="admin-tab" data-atab="deals">🏷️ Deals & Coupons</button>
-      <button class="admin-tab" data-atab="orders">🧾 Orders</button>
-      <button class="admin-tab" data-atab="payments">💳 Payment & SMS API</button>
-      <button class="admin-tab" data-atab="customers">👥 Customers</button>
-    </div>
-
-    <!-- Tab: Products -->
-    <div class="admin-tab-pane" id="atab-products">
-      <div class="admin-grid-2">
-        <div class="panel-box">
-          <h3 id="prodFormTitle" style="margin-bottom:10px">Add / Edit Product</h3>
-          <form id="adminProductForm">
-            <input type="hidden" id="apId">
-            <div class="field"><label>Product Name *</label><input id="apName" required placeholder="e.g. Samsung Galaxy A16"></div>
-            <div class="form-row">
-              <div class="field"><label>Category *</label><select id="apCategory"></select></div>
-              <div class="field"><label>Brand</label><input id="apBrand" placeholder="Samsung / SPR"></div>
-            </div>
-            <div class="form-row">
-              <div class="field"><label>Price (৳) *</label><input id="apPrice" type="number" min="1" required></div>
-              <div class="field"><label>Old Price (৳)</label><input id="apOldPrice" type="number" min="0"></div>
-            </div>
-            <div class="form-row">
-              <div class="field"><label>Stock Qty *</label><input id="apStock" type="number" min="0" value="20" required></div>
-              <div class="field"><label>Variants (comma)</label><input id="apVariants" placeholder="Black, White"></div>
-            </div>
-            <div class="field"><label>Image URL</label><input id="apImage" type="url" placeholder="https://..."></div>
-            <div class="field"><label>Specs Summary</label><input id="apSpecs" placeholder="1-Year Official Warranty"></div>
-            <div class="field"><label>Description</label><textarea id="apDesc" rows="2"></textarea></div>
-            <div class="form-row" style="margin-bottom:10px">
-              <label style="display:flex;align-items:center;gap:6px;font-weight:600"><input type="checkbox" id="apFlash" style="width:auto"> Flash / Hot Deal</label>
-              <label style="display:flex;align-items:center;gap:6px;font-weight:600"><input type="checkbox" id="apFeatured" checked style="width:auto"> Featured Popular</label>
-            </div>
-            <div style="display:flex;gap:8px">
-              <button type="submit" style="flex:1">💾 Save Product</button>
-              <button type="button" class="secondary" id="apResetBtn">Clear</button>
-            </div>
-          </form>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Product</th><th>Category</th><th>Price</th><th>Stock</th><th>Actions</th></tr></thead>
-            <tbody id="adminProductsTable"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- Tab: Categories -->
-    <div class="admin-tab-pane hidden" id="atab-categories">
-      <div class="admin-grid-2">
-        <div class="panel-box">
-          <h3 style="margin-bottom:10px">Add / Edit Category</h3>
-          <form id="adminCategoryForm">
-            <input type="hidden" id="acId">
-            <div class="field"><label>Category Name *</label><input id="acName" required placeholder="e.g. Electronics & Gadgets"></div>
-            <div class="form-row">
-              <div class="field"><label>Icon Emoji</label><input id="acIcon" value="🛍️" maxlength="4"></div>
-              <div class="field"><label>Sort Order</label><input id="acOrder" type="number" value="1"></div>
-            </div>
-            <div style="display:flex;gap:8px">
-              <button type="submit" style="flex:1">💾 Save Category</button>
-              <button type="button" class="secondary" id="acResetBtn">Clear</button>
-            </div>
-          </form>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Icon</th><th>Category Name</th><th>Order</th><th>Actions</th></tr></thead>
-            <tbody id="adminCategoriesTable"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- Tab: Deals & Coupons -->
-    <div class="admin-tab-pane hidden" id="atab-deals">
-      <div class="admin-grid-2">
-        <div class="panel-box">
-          <h3 style="margin-bottom:10px">Hero Banner Text</h3>
-          <form id="adminHeroForm">
-            <div class="field"><label>Red Promo Tag (Bangla/English)</label><input id="ahBadge" required></div>
-            <div class="field"><label>Hero Headline</label><input id="ahTitle" required></div>
-            <div class="field"><label>Hero Subtitle</label><input id="ahSub" required></div>
-            <button type="submit" style="width:100%">💾 Update Hero Banner</button>
-          </form>
-          <hr style="border:0;border-top:1px solid var(--line);margin:16px 0">
-          <h3 style="margin-bottom:10px">Add / Edit Coupon Code</h3>
-          <form id="adminCouponForm">
-            <input type="hidden" id="aqId">
-            <div class="form-row">
-              <div class="field"><label>Code *</label><input id="aqCode" required placeholder="EID20" style="text-transform:uppercase"></div>
-              <div class="field"><label>Type</label><select id="aqType"><option value="percent">% Discount</option><option value="flat">Flat ৳ Off</option><option value="freeship">Free Shipping</option></select></div>
-            </div>
-            <div class="form-row">
-              <div class="field"><label>Value (% or ৳)</label><input id="aqValue" type="number" min="0" value="10"></div>
-              <div class="field"><label>Min Order (৳)</label><input id="aqMin" type="number" min="0" value="0"></div>
-            </div>
-            <div style="display:flex;gap:8px">
-              <button type="submit" style="flex:1">💾 Save Coupon</button>
-              <button type="button" class="secondary" id="aqResetBtn">Clear</button>
-            </div>
-          </form>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Coupon Code</th><th>Discount</th><th>Min Order</th><th>Actions</th></tr></thead>
-            <tbody id="adminCouponsTable"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- Tab: Orders -->
-    <div class="admin-tab-pane hidden" id="atab-orders">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:10px;flex-wrap:wrap">
-        <div style="font-size:13px;color:var(--muted)">Review TrxIDs, confirm pending orders, update delivery stages, or delete test orders. <b>Note:</b> Confirmed orders are locked against customer cancellation.</div>
-        <select id="adminOrderFilter" style="padding:7px 12px;border:1px solid var(--line);border-radius:8px">
-          <option value="All">All Statuses</option>
-          <option value="Pending">Pending</option>
-          <option value="Confirmed">Confirmed</option>
-          <option value="Packed">Packed</option>
-          <option value="Out for Delivery">Out for Delivery</option>
-          <option value="Delivered">Delivered</option>
-          <option value="Cancelled">Cancelled</option>
-        </select>
-      </div>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Order ID</th><th>Customer</th><th>Total</th><th>Payment & TrxID</th><th>Status</th><th>Actions</th></tr></thead>
-          <tbody id="adminOrdersTable"></tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Tab: Payment & SMS Auto-Verification -->
-    <div class="admin-tab-pane hidden" id="atab-payments">
-      <div class="admin-grid-2">
-        <div class="panel-box">
-          <h3 style="margin-bottom:10px">Merchant Numbers & SMS API</h3>
-          <form id="adminPaymentSettingsForm">
-            <div class="field"><label>bKash Merchant / Personal Number</label><input id="psBkash" placeholder="01700000000" required></div>
-            <div class="field"><label>Nagad Number</label><input id="psNagad" placeholder="01700000000" required></div>
-            <div class="field"><label>Rocket (DBBL) Number</label><input id="psRocket" placeholder="017000000009" required></div>
-            <div class="field"><label>External SMS Verification API URL (Optional)</label><input id="psSmsUrl" type="url" placeholder="https://your-sms-api.com/verify"></div>
-            <div class="field"><label>SMS API Secret Key (Header x-api-key)</label><input id="psSmsKey" placeholder="Optional API key"></div>
-            <label style="display:flex;align-items:center;gap:8px;font-weight:700;margin-bottom:12px">
-              <input type="checkbox" id="psAutoVerify" checked style="width:auto"> Enable Auto TrxID Verification
-            </label>
-            <button type="submit" style="width:100%">💾 Save Payment & SMS Settings</button>
-          </form>
-        </div>
-
-        <div>
-          <div class="panel-box" style="margin-bottom:14px">
-            <h3 style="margin-bottom:8px">Add / Record Incoming Payment SMS (RTDB /sms_inbox)</h3>
-            <p style="font-size:12.5px;color:var(--muted);margin:0 0 10px">When your Android SMS forwarder or webhook writes an incoming bKash/Nagad/Rocket SMS here, customer checkout automatically matches <b>TrxID + Sender Number + Amount</b> and marks the order <b>Confirmed</b>.</p>
-            <form id="adminAddSmsForm" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;align-items:end">
-              <div class="field" style="margin:0"><label>Provider</label><select id="smsProvider"><option>bKash</option><option>Nagad</option><option>Rocket</option></select></div>
-              <div class="field" style="margin:0"><label>Sender Number</label><input id="smsSender" required placeholder="017XXXXXXXX"></div>
-              <div class="field" style="margin:0"><label>TrxID *</label><input id="smsTrxId" required placeholder="BL74K9M2PQ" style="text-transform:uppercase"></div>
-              <div class="field" style="margin:0"><label>Amount (৳)</label><input id="smsAmount" type="number" min="1" required></div>
-              <button type="submit" style="grid-column:1 / -1">➕ Save Payment SMS to Inbox</button>
-            </form>
-          </div>
-          <div class="table-wrap">
-            <table>
-              <thead><tr><th>TrxID</th><th>Provider</th><th>Sender</th><th>Amount</th><th>Matched Order</th><th>Action</th></tr></thead>
-              <tbody id="adminSmsTable"></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Tab: Customers -->
-    <div class="admin-tab-pane hidden" id="atab-customers">
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Joined</th><th>Action</th></tr></thead>
-          <tbody id="adminCustomersTable"></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-</section>
-
 <!-- Footer -->
 <footer class="footer" id="footer">
   <div class="footer-inner">
@@ -652,9 +418,9 @@ th{background:#f5f9f6;color:var(--emerald-dark);font-weight:700;white-space:nowr
       <h4>Customer Service</h4>
       <ul>
         <li><a href="#" onclick="document.getElementById('trackOrderNavBtn').click();return false">Track Your Order</a></li>
-        <li>Delivery Zones & Fees</li>
-        <li>Easy Return & Refund Policy</li>
-        <li>Privacy & Security</li>
+        <li>Easy Return &amp; Refund Policy</li>
+        <li>Privacy &amp; Security</li>
+        <li><a href="admin.html">Admin Portal →</a></li>
       </ul>
     </div>
     <div>
@@ -663,7 +429,7 @@ th{background:#f5f9f6;color:var(--emerald-dark);font-weight:700;white-space:nowr
         <li>bKash (Auto TrxID Verify)</li>
         <li>Nagad (Auto TrxID Verify)</li>
         <li>Rocket DBBL (Auto TrxID Verify)</li>
-        <li>Visa / Mastercard & Cash on Delivery</li>
+        <li>Visa / Mastercard &amp; Cash on Delivery</li>
       </ul>
     </div>
     <div>
@@ -710,7 +476,7 @@ th{background:#f5f9f6;color:var(--emerald-dark);font-weight:700;white-space:nowr
   </div>
 </div>
 
-<!-- Auth Modal -->
+<!-- Auth Modal (Login / Register) -->
 <div class="modal" id="authModal">
   <div class="dialog" style="width:min(440px,100%)">
     <div class="dialog-head">
@@ -728,7 +494,78 @@ th{background:#f5f9f6;color:var(--emerald-dark);font-weight:700;white-space:nowr
   </div>
 </div>
 
-<!-- Slide-Over Cart Drawer -->
+<!-- Customer Profile & Addresses Modal (Add / Edit / Delete) -->
+<div class="modal" id="accountModal">
+  <div class="dialog">
+    <div class="dialog-head">
+      <div>
+        <h2>👤 My Profile &amp; Saved Addresses</h2>
+        <div id="accountUserEmail" style="font-size:12.5px;color:var(--muted)"></div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="crimson sm" id="signOutBtn">Sign Out</button>
+        <button class="outline sm" onclick="closeModal('accountModal')">✕</button>
+      </div>
+    </div>
+
+    <div class="tab-row">
+      <button type="button" class="tab-btn active" data-ac-tab="profile">👤 Profile</button>
+      <button type="button" class="tab-btn" data-ac-tab="addresses">📍 Addresses</button>
+    </div>
+
+    <!-- Tab: Profile Add / Edit / Delete -->
+    <div id="acTab-profile">
+      <form id="profileForm">
+        <div class="form-row">
+          <div class="field"><label>Full Name *</label><input id="profName" required placeholder="Your Full Name"></div>
+          <div class="field"><label>BD Mobile Number</label><input id="profPhone" placeholder="017XXXXXXXX"></div>
+        </div>
+        <div class="field"><label>Bio / Note (Optional)</label><textarea id="profBio" rows="2" placeholder="Delivery preferences or short bio"></textarea></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button type="submit" style="flex:1">💾 Save Profile</button>
+          <button type="button" class="outline" id="deleteProfileDataBtn" style="color:var(--crimson);border-color:#fecdd3">🗑️ Delete Profile Info</button>
+          <button type="button" class="crimson" id="deleteAccountBtn">⚠️ Delete Account</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Tab: Addresses Add / Edit / Delete -->
+    <div id="acTab-addresses" class="hidden">
+      <form id="addressForm" style="background:#f8faf9;border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:14px">
+        <input type="hidden" id="addrEditId">
+        <h4 id="addrFormHeading" style="margin-bottom:8px">Add New Address</h4>
+        <div class="form-row">
+          <div class="field"><label>Label *</label><input id="addrLabel" value="Home" required placeholder="Home / Office"></div>
+          <div class="field"><label>Recipient Name *</label><input id="addrRecipient" required placeholder="Recipient Full Name"></div>
+        </div>
+        <div class="form-row">
+          <div class="field"><label>BD Mobile Phone *</label><input id="addrPhone" required placeholder="017XXXXXXXX"></div>
+          <div class="field">
+            <label>Division *</label>
+            <select id="addrDivision">
+              <option>Dhaka</option><option>Chattogram</option><option>Sylhet</option><option>Rajshahi</option>
+              <option>Khulna</option><option>Barishal</option><option>Rangpur</option><option>Mymensingh</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="field"><label>District / Thana *</label><input id="addrThana" required placeholder="e.g. Banani, Dhaka"></div>
+          <div class="field"><label>Street / House / Area *</label><input id="addrStreet" required placeholder="House, Road, Block"></div>
+        </div>
+        <label style="display:flex;align-items:center;gap:6px;font-weight:600;margin-bottom:10px">
+          <input type="checkbox" id="addrDefault" style="width:auto"> Set as default shipping address
+        </label>
+        <div style="display:flex;gap:8px">
+          <button type="submit" style="flex:1" id="addrSaveBtn">➕ Save Address</button>
+          <button type="button" class="secondary" id="addrResetBtn">Clear</button>
+        </div>
+      </form>
+      <div id="savedAddressesList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Slide-Over Cart Drawer (NO Default Delivery Zone selector) -->
 <div class="drawer-wrap" id="cartDrawer">
   <div class="drawer">
     <div class="dialog-head" style="margin-bottom:6px">
@@ -737,16 +574,8 @@ th{background:#f5f9f6;color:var(--emerald-dark);font-weight:700;white-space:nowr
     </div>
     <div class="drawer-body" id="cartItems"></div>
     <div style="border-top:1px solid var(--line);padding-top:12px">
-      <div class="field">
-        <label>Delivery Zone (Free over ৳3,000)</label>
-        <select id="cartZoneSelect">
-          <option value="60">Dhaka Metro — ৳60 (Same-day / 24h)</option>
-          <option value="90">Dhaka Suburbs — ৳90 (1-2 days)</option>
-          <option value="120">All Bangladesh (64 Districts) — ৳120</option>
-        </select>
-      </div>
       <div style="display:flex;gap:6px;margin-bottom:10px">
-        <input id="promoInput" placeholder="Promo code (SPR10, DHAKA100, FREESHIP)" style="flex:1;padding:8px 10px;border:1px solid var(--line);border-radius:8px;text-transform:uppercase">
+        <input id="promoInput" placeholder="Enter promo code" style="flex:1;padding:8px 10px;border:1px solid var(--line);border-radius:8px;text-transform:uppercase">
         <button class="secondary sm" id="applyPromoBtn" type="button">Apply</button>
       </div>
       <div id="cartSummaryBox" style="font-size:13.5px;display:grid;gap:4px;margin-bottom:10px"></div>
@@ -755,7 +584,7 @@ th{background:#f5f9f6;color:var(--emerald-dark);font-weight:700;white-space:nowr
   </div>
 </div>
 
-<!-- Checkout Modal with bKash/Nagad/Rocket Auto TrxID Verification -->
+<!-- Checkout Modal with Saved Address Picker + bKash/Nagad/Rocket Auto TrxID Verification -->
 <div class="modal" id="checkoutModal">
   <div class="dialog">
     <div class="dialog-head">
@@ -763,6 +592,10 @@ th{background:#f5f9f6;color:var(--emerald-dark);font-weight:700;white-space:nowr
       <button class="outline sm" onclick="closeModal('checkoutModal')">✕</button>
     </div>
     <form id="checkoutForm">
+      <div class="field hidden" id="checkoutSavedAddrWrap">
+        <label>Use Saved Address</label>
+        <select id="checkoutSavedAddr"></select>
+      </div>
       <div class="form-row">
         <div class="field"><label>Full Name *</label><input id="cName" required></div>
         <div class="field"><label>Receiver Phone (01XXXXXXXXX) *</label><input id="cPhone" required pattern="01[3-9][0-9]{8}" placeholder="017XXXXXXXX"></div>
@@ -794,7 +627,7 @@ th{background:#f5f9f6;color:var(--emerald-dark);font-weight:700;white-space:nowr
           Step 1: Send <span id="payExactAmount" style="color:var(--crimson)">৳0</span> via <span id="payMethodLabel">bKash</span> to:
         </div>
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-          <span class="copy-chip" id="merchantPayNumber">01700-000000</span>
+          <span class="copy-chip" id="merchantPayNumber">Not set yet</span>
           <button type="button" class="secondary sm" id="copyMerchantNumBtn">📋 Copy Number</button>
         </div>
         <div style="font-size:12px;color:var(--muted);margin:8px 0 6px">
@@ -816,7 +649,7 @@ th{background:#f5f9f6;color:var(--emerald-dark);font-weight:700;white-space:nowr
 <div class="modal" id="ordersModal">
   <div class="dialog" style="width:min(680px,100%)">
     <div class="dialog-head">
-      <h2>📍 Track Your Order & Order History</h2>
+      <h2>📍 Track Your Order &amp; Order History</h2>
       <button class="outline sm" onclick="closeModal('ordersModal')">✕</button>
     </div>
     <form id="trackOrderForm" style="display:flex;gap:8px;margin-bottom:14px">
@@ -832,10 +665,9 @@ th{background:#f5f9f6;color:var(--emerald-dark);font-weight:700;white-space:nowr
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, updateProfile, deleteUser } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import { getDatabase, ref, get, set, push, update, remove, onValue } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js";
 
-// User's e-commarcebd Firebase Configuration
 const firebaseConfig = {
   apiKey: "AIzaSyBmogqpXzirZC-aUHZrFMwutSJ5fmbyDXk",
   authDomain: "e-commarcebd.firebaseapp.com",
@@ -848,142 +680,39 @@ const firebaseConfig = {
 };
 
 const ADMIN_EMAIL = "mail.sajjadahmed@gmail.com";
-const DEFAULT_CATEGORIES = {
-  cat_electronics: { name: "Electronics & Gadgets", icon: "🔌", order: 1 },
-  cat_mobile: { name: "Mobile & Accessories", icon: "📱", order: 2 },
-  cat_computer: { name: "Computer & Accessories", icon: "💻", order: 3 },
-  cat_home: { name: "Home & Kitchen", icon: "🏠", order: 4 },
-  cat_fashion: { name: "Fashion & Apparel", icon: "👕", order: 5 },
-  cat_beauty: { name: "Health & Beauty", icon: "🌿", order: 6 },
-  cat_sports: { name: "Sports & Outdoors", icon: "⚽", order: 7 },
-  cat_toys: { name: "Toys & Baby Care", icon: "🧸", order: 8 },
-  cat_books: { name: "Books & Stationery", icon: "📚", order: 9 },
-  cat_groceries: { name: "Groceries & Daily Needs", icon: "🛒", order: 10 }
-};
-
-const DEFAULT_PRODUCTS = {
-  prod_earbuds_m10: {
-    name: "Bluetooth Earbuds TWS M10",
-    category: "Electronics & Gadgets",
-    brand: "M10 Pro",
-    price: 1250, oldPrice: 1800, stock: 45, rating: 4.6, reviewCount: 1200,
-    isFlashDeal: true, isFeatured: true, variants: "Matte Black, Midnight Blue",
-    specs: "LED Power Bank Case • Bluetooth 5.3 • IPX7 Waterproof",
-    image: "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=500&q=80",
-    description: "Crystal clear wireless stereo sound with 2000mAh charging dock that doubles as an emergency phone power bank."
-  },
-  prod_galaxy_a16: {
-    name: "Samsung Galaxy A16 (6GB + 128GB)",
-    category: "Mobile & Accessories",
-    brand: "Samsung",
-    price: 18999, oldPrice: 22999, stock: 18, rating: 4.7, reviewCount: 800,
-    isFlashDeal: true, isFeatured: true, variants: "Light Green, Black, Blue",
-    specs: "6.7\" Super AMOLED 90Hz • 50MP Triple Cam • 5000mAh",
-    image: "https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=500&q=80",
-    description: "Official Bangladesh warranty smartphone with vibrant Super AMOLED display and all-day battery life."
-  },
-  prod_hp_15s: {
-    name: "HP Laptop 15s (Core i5, 12GB, 512GB SSD)",
-    category: "Computer & Accessories",
-    brand: "HP",
-    price: 49999, oldPrice: 62000, stock: 9, rating: 4.5, reviewCount: 500,
-    isFlashDeal: false, isFeatured: true, variants: "Natural Silver",
-    specs: "Intel Core i5 12th Gen • 15.6\" FHD Anti-Glare • Backlit KB",
-    image: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=500&q=80",
-    description: "Thin & light workstation laptop built for students, freelancers, and office productivity across Bangladesh."
-  },
-  prod_watch_t900: {
-    name: "Smart Watch T900 Ultra",
-    category: "Electronics & Gadgets",
-    brand: "UltraWear",
-    price: 1950, oldPrice: 2500, stock: 50, rating: 4.5, reviewCount: 750,
-    isFlashDeal: true, isFeatured: true, variants: "Orange Strap, Black Strap, Silver",
-    specs: "2.09\" HD Display • Bluetooth Calling • Wireless Charging",
-    image: "https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=500&q=80",
-    description: "Rugged titanium-look smart watch with heart rate tracking, step counter, and Bangla/English notifications."
-  },
-  prod_airfryer_6l: {
-    name: "Air Fryer 6L Digital",
-    category: "Home & Kitchen",
-    brand: "Walton / Miyako",
-    price: 6999, oldPrice: 8500, stock: 16, rating: 4.5, reviewCount: 420,
-    isFlashDeal: false, isFeatured: true, variants: "Matte Black 6L",
-    specs: "1500W Rapid Air • Digital Touch • 85% Less Oil",
-    image: "https://images.unsplash.com/photo-1585515320310-259814833e62?w=500&q=80",
-    description: "Cook crispy chicken, fries, and healthy family snacks with zero excess oil and non-stick easy clean basket."
-  },
-  prod_handbag_ladies: {
-    name: "Ladies Hand Bag Fashion",
-    category: "Fashion & Apparel",
-    brand: "Aarong / Apex Style",
-    price: 1550, oldPrice: 2200, stock: 34, rating: 4.4, reviewCount: 620,
-    isFlashDeal: true, isFeatured: true, variants: "Dusty Rose, Classic Black, Cream",
-    specs: "Premium Vegan Leather • Detachable Strap • 3 Compartments",
-    image: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=500&q=80",
-    description: "Elegant everyday tote & crossbody handbag crafted for office, university, and festive occasions."
-  },
-  prod_jamdani_saree: {
-    name: "Authentic Dhakai Jamdani Saree",
-    category: "Fashion & Apparel",
-    brand: "Narayanganj Loom",
-    price: 4850, oldPrice: 6500, stock: 14, rating: 4.9, reviewCount: 215,
-    isFlashDeal: false, isFeatured: true, variants: "Emerald Gold, Crimson Red",
-    specs: "84 Count Half-Silk • Handwoven • 12 Haat + Blouse Piece",
-    image: "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=500&q=80",
-    description: "Genuine handloom Dhakai Jamdani woven by master weavers of Rupganj."
-  },
-  prod_sundarbans_honey: {
-    name: "Pure Sundarbans Raw Honey (1 KG)",
-    category: "Groceries & Daily Needs",
-    brand: "Sundarbans Harvest",
-    price: 920, oldPrice: 1150, stock: 65, rating: 4.9, reviewCount: 410,
-    isFlashDeal: false, isFeatured: true, variants: "500g Jar, 1 KG Jar",
-    specs: "100% Natural Khalisha Flower • Lab Tested • No Added Sugar",
-    image: "https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=500&q=80",
-    description: "Harvested sustainably from the Sundarbans mangrove forest and packed in food-grade glass jars."
-  }
-};
-
-const DEFAULT_COUPONS = {
-  SPR10: { code: "SPR10", type: "percent", value: 10, minOrder: 0 },
-  DHAKA100: { code: "DHAKA100", type: "flat", value: 100, minOrder: 1000 },
-  FREESHIP: { code: "FREESHIP", type: "freeship", value: 0, minOrder: 0 }
-};
-
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getDatabase(app);
 
 let currentUser = null;
-let isAdmin = false;
-let products = { ...DEFAULT_PRODUCTS };
-let categories = { ...DEFAULT_CATEGORIES };
-let coupons = { ...DEFAULT_COUPONS };
+let userProfile = null;
+let userAddresses = {};
+let products = {};
+let categories = {};
+let coupons = {};
 let heroData = {
   badge: "সাশ্রয়ে সেরা অনলাইন শপিং সারা বাংলাদেশে!",
   title: "SPR ZONE BD",
   subtitle: "এখন আরও কাছে, আরও সাশ্রয়ী!"
 };
 let paymentSettings = {
-  bkashNumber: "01700-000000",
-  nagadNumber: "01700-000000",
-  rocketNumber: "01700-0000009",
+  bkashNumber: "",
+  nagadNumber: "",
+  rocketNumber: "",
   smsApiUrl: "",
   smsApiKey: "",
   autoVerifyEnabled: true
 };
-let allOrders = {};
-let smsInbox = {};
-let allCustomers = {};
 
 let cart = JSON.parse(localStorage.getItem("spr_web_cart") || "[]");
 let wishlist = JSON.parse(localStorage.getItem("spr_web_wish") || "[]");
 let selectedCategory = "All";
-let navMode = "home"; // home | all | deals | new
+let navMode = "home";
 let searchTerm = "";
 let sortMode = "featured";
 let appliedPromoCode = "";
 let registerMode = false;
+let unsubscribeCustomer = null;
 
 const $ = (id) => document.getElementById(id);
 const money = (n) => "৳" + Number(n || 0).toLocaleString("en-BD");
@@ -1022,6 +751,10 @@ function canCancelOrder(status = "") {
   return status === "Pending" || status === "Placed";
 }
 
+function deliveryFeeForDivision(division = "Dhaka") {
+  return String(division).trim().toLowerCase() === "dhaka" ? 60 : 120;
+}
+
 function saveCart() {
   localStorage.setItem("spr_web_cart", JSON.stringify(cart));
   const count = cart.reduce((s, x) => s + x.qty, 0);
@@ -1043,7 +776,7 @@ function evaluateCoupon(codeRaw, subtotal) {
     return { code, discount: Math.round(subtotal * (Number(c.value || 0) / 100)), freeShip: false };
   }
   if (c.type === "flat") {
-    return { code, discount: Number(c.value || 0), freeShip: false };
+    return { code, discount: Math.min(subtotal, Number(c.value || 0)), freeShip: false };
   }
   if (c.type === "freeship") {
     return { code, discount: 0, freeShip: true };
@@ -1051,23 +784,28 @@ function evaluateCoupon(codeRaw, subtotal) {
   return null;
 }
 
-function computeTotals() {
+function computeTotals(division = "") {
   const subtotal = cart.reduce((s, x) => s + x.price * x.qty, 0);
   const promo = evaluateCoupon(appliedPromoCode, subtotal);
   const discount = promo ? promo.discount : 0;
-  const zoneFee = Number($("cartZoneSelect").value || 60);
-  const deliveryFee = cart.length === 0 || subtotal >= 3000 || promo?.freeShip ? 0 : zoneFee;
+  const divFee = division ? deliveryFeeForDivision(division) : 60;
+  const deliveryFee = cart.length === 0 || subtotal >= 3000 || promo?.freeShip ? 0 : divFee;
   const total = Math.max(0, subtotal - discount + deliveryFee);
   return { subtotal, discount, deliveryFee, total, promo };
 }
 
 /* ---------- Storefront Rendering ---------- */
 function renderCategories() {
-  const catArr = Object.entries(categories)
+  const prodValues = Object.values(products);
+  let catArr = Object.entries(categories)
     .map(([id, c]) => ({ id, ...c }))
     .sort((a, b) => (a.order || 99) - (b.order || 99));
 
-  const prodValues = Object.values(products);
+  if (!catArr.length && prodValues.length) {
+    const names = [...new Set(prodValues.map((p) => p.category).filter(Boolean))];
+    catArr = names.map((name, idx) => ({ id: "dyn_" + idx, name, icon: "📦", order: idx + 1 }));
+  }
+
   const allBtn = `<button class="cat-btn ${selectedCategory === "All" ? "active" : ""}" data-cat="All">
     <span>🛍️ All Categories</span><span class="cat-count">${prodValues.length}</span>
   </button>`;
@@ -1089,17 +827,10 @@ function renderCategories() {
       $("productsSection").scrollIntoView({ behavior: "smooth" });
     };
   });
-
-  // Also sync Admin product category dropdown
-  const apCat = $("apCategory");
-  if (apCat) {
-    const cur = apCat.value;
-    apCat.innerHTML = catArr.map((c) => `<option value="${safe(c.name)}">${safe(c.name)}</option>`).join("");
-    if (cur) apCat.value = cur;
-  }
 }
 
 function renderProducts() {
+  const totalLive = Object.keys(products).length;
   let list = Object.entries(products).map(([id, p]) => ({ id, ...p }));
 
   if (selectedCategory !== "All") {
@@ -1120,30 +851,37 @@ function renderProducts() {
   else if (navMode === "new") list.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
   else list.sort((a, b) => Number(!!b.isFeatured) - Number(!!a.isFeatured));
 
-  const titlePrefix = navMode === "deals" ? "🔥 Big Sale Deals" : navMode === "new" ? "✨ New Arrivals" : (selectedCategory === "All" ? "🔥 Popular Products" : `📦 ${selectedCategory}`);
+  const titlePrefix = navMode === "deals" ? "🔥 Big Sale Deals" : navMode === "new" ? "✨ New Arrivals" : (selectedCategory === "All" ? "🔥 Products" : `📦 ${selectedCategory}`);
   $("catalogHeading").innerHTML = `${safe(titlePrefix)} <span class="muted" style="font-size:13px;font-weight:600">(${list.length} items)</span>`;
 
   if (!list.length) {
-    $("productGrid").innerHTML = `<div style="grid-column:1/-1;background:#fff;padding:34px;border-radius:14px;text-align:center;border:1px solid var(--line)">
-      <p style="font-weight:700;margin:0 0 8px">No matching products found</p>
-      <button class="secondary sm" onclick="resetStoreFilters()">Reset Filters</button>
-    </div>`;
+    $("productGrid").innerHTML = totalLive === 0
+      ? `<div style="grid-column:1/-1;background:#fff;padding:36px;border-radius:14px;text-align:center;border:1px solid var(--line)">
+          <p style="font-weight:700;font-size:16px;margin:0 0 6px">No products in store yet</p>
+          <p style="color:var(--muted);margin:0 0 12px">Products added from the Website Admin Panel (admin.html) will appear here live.</p>
+          <a href="admin.html"><button type="button" class="secondary sm">Open Admin Panel →</button></a>
+        </div>`
+      : `<div style="grid-column:1/-1;background:#fff;padding:34px;border-radius:14px;text-align:center;border:1px solid var(--line)">
+          <p style="font-weight:700;margin:0 0 8px">No matching products found</p>
+          <button class="secondary sm" onclick="resetStoreFilters()">Reset Filters</button>
+        </div>`;
     return;
   }
 
   $("productGrid").innerHTML = list.map((p) => {
     const disc = p.oldPrice > p.price ? Math.round(((p.oldPrice - p.price) / p.oldPrice) * 100) : 0;
     const liked = wishlist.includes(p.id);
+    const imgSrc = p.image || "assets/favicon.svg";
     return `<article class="product-card">
       <div class="p-img-wrap" data-open="${safe(p.id)}">
         ${disc > 0 ? `<span class="p-badge">-${disc}%</span>` : ""}
         <button class="p-wish ${liked ? "liked" : ""}" data-wish="${safe(p.id)}" title="Save to wishlist">${liked ? "♥" : "♡"}</button>
-        <img src="${safe(p.image || "https://placehold.co/400x340?text=SPR+ZONE+BD")}" alt="${safe(p.name)}" onerror="this.src='https://placehold.co/400x340?text=SPR+ZONE+BD'">
+        <img src="${safe(imgSrc)}" alt="${safe(p.name)}" onerror="this.src='assets/favicon.svg'">
       </div>
       <div class="p-body">
         <div class="p-cat">${safe(p.category || "General")}</div>
         <div class="p-title" data-open="${safe(p.id)}">${safe(p.name)}</div>
-        <div class="p-rating">★ ${Number(p.rating || 4.6).toFixed(1)} <span>(${Number(p.reviewCount || 120)})</span></div>
+        <div class="p-rating">★ ${Number(p.rating || 4.6).toFixed(1)} <span>(${Number(p.reviewCount || 0)})</span></div>
         <div class="p-price-row">
           <span class="p-price">${money(p.price)}</span>
           ${p.oldPrice > p.price ? `<span class="p-old">${money(p.oldPrice)}</span>` : ""}
@@ -1181,11 +919,11 @@ function openProductModal(id) {
   if (!p) return;
   $("pmCategory").textContent = p.category || "SPR Zone BD";
   $("pmTitle").textContent = p.name;
-  $("pmImg").src = p.image || "https://placehold.co/400x340?text=SPR+ZONE+BD";
-  $("pmRating").innerHTML = `★ ${Number(p.rating || 4.7).toFixed(1)} <span>(${Number(p.reviewCount || 100)} reviews · Stock: ${Number(p.stock || 0)})</span>`;
+  $("pmImg").src = p.image || "assets/favicon.svg";
+  $("pmRating").innerHTML = `★ ${Number(p.rating || 4.7).toFixed(1)} <span>(${Number(p.reviewCount || 0)} reviews · Stock: ${Number(p.stock || 0)})</span>`;
   $("pmPrice").textContent = money(p.price);
   $("pmOldPrice").textContent = p.oldPrice > p.price ? money(p.oldPrice) : "";
-  $("pmSpecs").textContent = p.specs || "100% Original Product • Bangladesh Warranty";
+  $("pmSpecs").textContent = p.specs || "100% Original Product";
   $("pmDesc").textContent = p.description || "";
   const vars = String(p.variants || "Standard").split(",").map((s) => s.trim()).filter(Boolean);
   $("pmVariant").innerHTML = vars.map((v) => `<option value="${safe(v)}">${safe(v)}</option>`).join("");
@@ -1220,7 +958,7 @@ function renderCartDrawer() {
   } else {
     $("cartItems").innerHTML = cart.map((x, idx) => `
       <div class="cart-row">
-        <img src="${safe(x.image || "https://placehold.co/100?text=Item")}" alt="${safe(x.name)}">
+        <img src="${safe(x.image || "assets/favicon.svg")}" alt="${safe(x.name)}" onerror="this.src='assets/favicon.svg'">
         <div style="flex:1;min-width:0">
           <div style="font-weight:700;font-size:13px">${safe(x.name)}</div>
           <div style="font-size:11.5px;color:var(--muted)">${safe(x.variant)} · ${money(x.price)}</div>
@@ -1249,37 +987,129 @@ function renderCartDrawer() {
   $("cartSummaryBox").innerHTML = `
     <div style="display:flex;justify-content:space-between"><span>Subtotal</span><b>${money(t.subtotal)}</b></div>
     ${t.discount > 0 ? `<div style="display:flex;justify-content:space-between;color:var(--emerald)"><span>Promo (${safe(t.promo.code)})</span><b>-${money(t.discount)}</b></div>` : ""}
-    <div style="display:flex;justify-content:space-between"><span>Delivery Fee</span><b>${t.deliveryFee === 0 ? "FREE" : money(t.deliveryFee)}</b></div>
-    <div style="display:flex;justify-content:space-between;font-size:16px;padding-top:4px;border-top:1px solid var(--line)"><b>Total Payable</b><b style="color:var(--crimson)">${money(t.total)}</b></div>
+    <div style="display:flex;justify-content:space-between;color:var(--muted);font-size:12px"><span>Delivery</span><span>Calculated at checkout (Free over ৳3,000)</span></div>
+    <div style="display:flex;justify-content:space-between;font-size:16px;padding-top:4px;border-top:1px solid var(--line)"><b>Estimated Total</b><b style="color:var(--crimson)">${money(t.subtotal - t.discount)}</b></div>
   `;
+}
+
+/* ---------- Customer Profile & Addresses (Add / Edit / Delete) ---------- */
+function renderAccountModalData() {
+  if (!currentUser) return;
+  $("accountUserEmail").textContent = currentUser.email;
+  $("profName").value = userProfile?.name ?? currentUser.displayName ?? "";
+  $("profPhone").value = userProfile?.phone ?? "";
+  $("profBio").value = userProfile?.bio ?? "";
+
+  const addrEntries = Object.entries(userAddresses || {});
+  $("savedAddressesList").innerHTML = addrEntries.length
+    ? addrEntries.map(([id, a]) => `
+      <div class="addr-item">
+        <div>
+          <div style="font-weight:700">${safe(a.recipientName)} <span class="badge ${a.isDefault ? "green" : "blue"}">${safe(a.label || "Home")}${a.isDefault ? " • Default" : ""}</span></div>
+          <div style="font-size:12.5px;color:var(--muted)">${safe(a.phone)}</div>
+          <div style="font-size:13px">${safe(a.street)}, ${safe(a.thana)}, ${safe(a.division)}</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          ${!a.isDefault ? `<button type="button" class="outline sm" data-def-addr="${safe(id)}">Default</button>` : ""}
+          <button type="button" class="secondary sm" data-edit-addr="${safe(id)}">Edit</button>
+          <button type="button" class="crimson sm" data-del-addr="${safe(id)}">Delete</button>
+        </div>
+      </div>
+    `).join("")
+    : `<p style="color:var(--muted);text-align:center;margin:12px 0">No saved addresses yet. Add your first Bangladesh delivery address above.</p>`;
+
+  $("savedAddressesList").querySelectorAll("[data-edit-addr]").forEach((b) => {
+    b.onclick = () => {
+      const id = b.dataset.editAddr;
+      const a = userAddresses[id];
+      if (!a) return;
+      $("addrEditId").value = id;
+      $("addrFormHeading").textContent = "Edit Address";
+      $("addrSaveBtn").textContent = "💾 Update Address";
+      $("addrLabel").value = a.label || "Home";
+      $("addrRecipient").value = a.recipientName || "";
+      $("addrPhone").value = a.phone || "";
+      $("addrDivision").value = a.division || "Dhaka";
+      $("addrThana").value = a.thana || "";
+      $("addrStreet").value = a.street || "";
+      $("addrDefault").checked = !!a.isDefault;
+    };
+  });
+
+  $("savedAddressesList").querySelectorAll("[data-def-addr]").forEach((b) => {
+    b.onclick = async () => {
+      const targetId = b.dataset.defAddr;
+      const updates = {};
+      Object.keys(userAddresses).forEach((k) => {
+        updates[`customers/${currentUser.uid}/addresses/${k}/isDefault`] = k === targetId;
+      });
+      await update(ref(db), updates);
+      toast("Default address updated");
+    };
+  });
+
+  $("savedAddressesList").querySelectorAll("[data-del-addr]").forEach((b) => {
+    b.onclick = async () => {
+      if (!confirm("Delete this saved address?")) return;
+      await remove(ref(db, `customers/${currentUser.uid}/addresses/${b.dataset.delAddr}`));
+      toast("Address deleted");
+    };
+  });
+}
+
+function resetAddressForm() {
+  $("addressForm").reset();
+  $("addrEditId").value = "";
+  $("addrFormHeading").textContent = "Add New Address";
+  $("addrSaveBtn").textContent = "➕ Save Address";
+  $("addrLabel").value = "Home";
 }
 
 /* ---------- Checkout & Auto TrxID Verification ---------- */
 function syncCheckoutPaymentUI() {
   const method = $("cPayment").value;
+  const division = $("cDivision").value || "Dhaka";
   const isMobile = method === "bKash" || method === "Nagad" || method === "Rocket";
   $("mobilePayBox").classList.toggle("hidden", !isMobile);
   $("cSenderNumber").required = isMobile;
   $("cTrxId").required = isMobile;
 
-  const t = computeTotals();
+  const t = computeTotals(division);
   $("payExactAmount").textContent = money(t.total);
   $("payMethodLabel").textContent = method;
   const num = method === "bKash" ? paymentSettings.bkashNumber : method === "Nagad" ? paymentSettings.nagadNumber : paymentSettings.rocketNumber;
-  $("merchantPayNumber").textContent = num || "01700-000000";
+  $("merchantPayNumber").textContent = num || "Not configured in Admin yet";
 
   $("checkoutTotals").innerHTML = `
     <div style="display:flex;justify-content:space-between"><span>Items (${cart.reduce((s, x) => s + x.qty, 0)})</span><b>${money(t.subtotal)}</b></div>
     ${t.discount > 0 ? `<div style="display:flex;justify-content:space-between;color:var(--emerald)"><span>Discount</span><b>-${money(t.discount)}</b></div>` : ""}
-    <div style="display:flex;justify-content:space-between"><span>Delivery</span><b>${t.deliveryFee === 0 ? "FREE" : money(t.deliveryFee)}</b></div>
+    <div style="display:flex;justify-content:space-between"><span>Delivery (${safe(division)})</span><b>${t.deliveryFee === 0 ? "FREE" : money(t.deliveryFee)}</b></div>
     <div style="display:flex;justify-content:space-between;font-size:16px;margin-top:4px;padding-top:4px;border-top:1px solid var(--line)"><b>Payable Amount</b><b style="color:var(--crimson)">${money(t.total)}</b></div>
   `;
 }
 
 function openCheckout() {
   if (!cart.length) return toast("Your cart is empty");
-  if (currentUser) {
-    $("cName").value = $("cName").value || currentUser.displayName || "";
+
+  const addrEntries = Object.entries(userAddresses || {});
+  const wrap = $("checkoutSavedAddrWrap");
+  if (addrEntries.length) {
+    wrap.classList.remove("hidden");
+    $("checkoutSavedAddr").innerHTML = `<option value="">-- Enter custom address --</option>` +
+      addrEntries.map(([id, a]) => `<option value="${safe(id)}" ${a.isDefault ? "selected" : ""}>${safe(a.label || "Address")}: ${safe(a.recipientName)} (${safe(a.division)})</option>`).join("");
+    const def = addrEntries.find(([_, a]) => a.isDefault) || addrEntries[0];
+    if (def) {
+      $("cName").value = def[1].recipientName || "";
+      $("cPhone").value = def[1].phone || "";
+      $("cDivision").value = def[1].division || "Dhaka";
+      $("cAddress").value = `${def[1].street}, ${def[1].thana}, ${def[1].division}`;
+    }
+  } else {
+    wrap.classList.add("hidden");
+    if (currentUser) {
+      $("cName").value = $("cName").value || userProfile?.name || currentUser.displayName || "";
+      $("cPhone").value = $("cPhone").value || userProfile?.phone || "";
+    }
   }
   syncCheckoutPaymentUI();
   openModal("checkoutModal");
@@ -1288,7 +1118,6 @@ function openCheckout() {
 async function autoVerifyTransaction(method, senderNorm, trxUpper, totalAmount) {
   if (!paymentSettings.autoVerifyEnabled) return false;
 
-  // 1) Check merchant's configured external SMS API endpoint if provided
   if (paymentSettings.smsApiUrl) {
     try {
       const url = new URL(paymentSettings.smsApiUrl);
@@ -1305,10 +1134,9 @@ async function autoVerifyTransaction(method, senderNorm, trxUpper, totalAmount) 
           return true;
         }
       }
-    } catch (_) { /* Fall back to RTDB /sms_inbox */ }
+    } catch (_) {}
   }
 
-  // 2) Check RTDB /sms_inbox/{trxId} (senderNumber + amount >= total + unmatched)
   try {
     const snap = await get(ref(db, "sms_inbox/" + trxUpper));
     if (snap.exists()) {
@@ -1408,240 +1236,21 @@ async function openOrdersModal(highlightId = "") {
   });
 }
 
-/* ---------- Website Admin Panel (Add / Edit / Delete Everything) ---------- */
-function renderAdminDashboard() {
-  if (!isAdmin) return;
-  $("adminEmailLabel").textContent = currentUser?.email || ADMIN_EMAIL;
-  $("statProducts").textContent = Object.keys(products).length;
-  $("statCategories").textContent = Object.keys(categories).length;
-  const orderEntries = Object.entries(allOrders);
-  $("statOrders").textContent = orderEntries.length;
-  const rev = orderEntries.filter(([_, o]) => o.status !== "Cancelled").reduce((s, [_, o]) => s + Number(o.total || 0), 0);
-  $("statRevenue").textContent = money(rev);
-  $("statCustomers").textContent = Object.keys(allCustomers).length;
-
-  renderAdminProducts();
-  renderAdminCategories();
-  renderAdminCoupons();
-  renderAdminOrders();
-  renderAdminPaymentSettings();
-  renderAdminCustomers();
-}
-
-function renderAdminProducts() {
-  const rows = Object.entries(products);
-  $("adminProductsTable").innerHTML = rows.length ? rows.map(([id, p]) => `
-    <tr>
-      <td><b>${safe(p.name)}</b><br><small style="color:var(--muted)">${safe(p.brand || "")}</small></td>
-      <td>${safe(p.category)}</td>
-      <td><b style="color:var(--crimson)">${money(p.price)}</b></td>
-      <td>${Number(p.stock || 0)}</td>
-      <td>
-        <button class="secondary sm" data-edit-prod="${safe(id)}">Edit</button>
-        <button class="crimson sm" data-del-prod="${safe(id)}">Delete</button>
-      </td>
-    </tr>
-  `).join("") : `<tr><td colspan="5">No products yet. Click "Seed BD Catalog" or add one on the left.</td></tr>`;
-
-  $("adminProductsTable").querySelectorAll("[data-edit-prod]").forEach((b) => b.onclick = () => {
-    const id = b.dataset.editProd, p = products[id];
-    $("apId").value = id;
-    $("apName").value = p.name || "";
-    $("apCategory").value = p.category || "";
-    $("apBrand").value = p.brand || "";
-    $("apPrice").value = p.price || 0;
-    $("apOldPrice").value = p.oldPrice || 0;
-    $("apStock").value = p.stock ?? 10;
-    $("apVariants").value = p.variants || "Standard";
-    $("apImage").value = p.image || "";
-    $("apSpecs").value = p.specs || "";
-    $("apDesc").value = p.description || "";
-    $("apFlash").checked = !!p.isFlashDeal;
-    $("apFeatured").checked = p.isFeatured !== false;
-    $("prodFormTitle").textContent = "Edit Product";
-  });
-  $("adminProductsTable").querySelectorAll("[data-del-prod]").forEach((b) => b.onclick = async () => {
-    if (!confirm("Delete this product?")) return;
-    await remove(ref(db, "products/" + b.dataset.delProd));
-    toast("Product deleted");
-  });
-}
-
-function renderAdminCategories() {
-  const rows = Object.entries(categories).sort((a, b) => (a[1].order || 99) - (b[1].order || 99));
-  $("adminCategoriesTable").innerHTML = rows.map(([id, c]) => `
-    <tr>
-      <td style="font-size:18px">${safe(c.icon || "📦")}</td>
-      <td><b>${safe(c.name)}</b></td>
-      <td>${Number(c.order || 1)}</td>
-      <td>
-        <button class="secondary sm" data-edit-cat="${safe(id)}">Edit</button>
-        <button class="crimson sm" data-del-cat="${safe(id)}">Delete</button>
-      </td>
-    </tr>
-  `).join("");
-
-  $("adminCategoriesTable").querySelectorAll("[data-edit-cat]").forEach((b) => b.onclick = () => {
-    const id = b.dataset.editCat, c = categories[id];
-    $("acId").value = id;
-    $("acName").value = c.name || "";
-    $("acIcon").value = c.icon || "🛍️";
-    $("acOrder").value = c.order || 1;
-  });
-  $("adminCategoriesTable").querySelectorAll("[data-del-cat]").forEach((b) => b.onclick = async () => {
-    if (!confirm("Delete this category?")) return;
-    await remove(ref(db, "categories/" + b.dataset.delCat));
-    toast("Category deleted");
-  });
-}
-
-function renderAdminCoupons() {
-  $("ahBadge").value = heroData.badge || "";
-  $("ahTitle").value = heroData.title || "";
-  $("ahSub").value = heroData.subtitle || "";
-
-  const rows = Object.entries(coupons);
-  $("adminCouponsTable").innerHTML = rows.map(([id, q]) => `
-    <tr>
-      <td><b>${safe(q.code || id)}</b></td>
-      <td>${q.type === "freeship" ? "Free Shipping" : q.type === "percent" ? `${q.value}% Off` : `${money(q.value)} Off`}</td>
-      <td>${money(q.minOrder || 0)}</td>
-      <td>
-        <button class="secondary sm" data-edit-coupon="${safe(id)}">Edit</button>
-        <button class="crimson sm" data-del-coupon="${safe(id)}">Delete</button>
-      </td>
-    </tr>
-  `).join("");
-
-  $("adminCouponsTable").querySelectorAll("[data-edit-coupon]").forEach((b) => b.onclick = () => {
-    const id = b.dataset.editCoupon, q = coupons[id];
-    $("aqId").value = id;
-    $("aqCode").value = q.code || id;
-    $("aqType").value = q.type || "percent";
-    $("aqValue").value = q.value || 0;
-    $("aqMin").value = q.minOrder || 0;
-  });
-  $("adminCouponsTable").querySelectorAll("[data-del-coupon]").forEach((b) => b.onclick = async () => {
-    if (!confirm("Delete this coupon?")) return;
-    await remove(ref(db, "coupons/" + b.dataset.delCoupon));
-    toast("Coupon deleted");
-  });
-}
-
-function renderAdminOrders() {
-  const filter = $("adminOrderFilter").value;
-  const rows = Object.entries(allOrders)
-    .filter(([_, o]) => filter === "All" || o.status === filter)
-    .sort((a, b) => (b[1].createdAt || 0) - (a[1].createdAt || 0));
-
-  $("adminOrdersTable").innerHTML = rows.length ? rows.map(([id, o]) => `
-    <tr>
-      <td><b>${safe(id)}</b><br><small style="color:var(--muted)">${new Date(o.createdAt || Date.now()).toLocaleDateString()}</small></td>
-      <td><b>${safe(o.customer?.name || "Customer")}</b><br><small>${safe(o.customer?.phone || "")} · ${safe(o.customer?.division || "")}</small></td>
-      <td><b>${money(o.total)}</b></td>
-      <td>
-        <b>${safe(o.paymentMethod || "")}</b><br>
-        <small>${o.senderNumber ? `From: ${safe(o.senderNumber)}<br>TrxID: <b>${safe(o.trxId)}</b>` : safe(o.paymentStatus || "")}</small>
-      </td>
-      <td>
-        <select data-ord-status="${safe(id)}" style="padding:6px;border-radius:7px;border:1px solid var(--line)">
-          ${["Pending", "Confirmed", "Packed", "Out for Delivery", "Delivered", "Cancelled"].map((st) =>
-            `<option value="${st}" ${o.status === st ? "selected" : ""}>${st}</option>`
-          ).join("")}
-        </select>
-      </td>
-      <td style="white-space:nowrap">
-        ${o.status === "Pending" ? `<button class="sm" data-confirm-ord="${safe(id)}">✓ Confirm</button>` : ""}
-        <button class="crimson sm" data-del-ord="${safe(id)}">Delete</button>
-      </td>
-    </tr>
-  `).join("") : `<tr><td colspan="6">No orders found.</td></tr>`;
-
-  $("adminOrdersTable").querySelectorAll("[data-ord-status]").forEach((sel) => sel.onchange = async () => {
-    await update(ref(db, "orders/" + sel.dataset.ordStatus), { status: sel.value, updatedAt: Date.now() });
-    toast("Order status updated");
-  });
-  $("adminOrdersTable").querySelectorAll("[data-confirm-ord]").forEach((b) => b.onclick = async () => {
-    await update(ref(db, "orders/" + b.dataset.confirmOrd), {
-      status: "Confirmed",
-      paymentStatus: "Verified by Admin",
-      updatedAt: Date.now()
-    });
-    toast("Order Confirmed! Cancellation is now locked.");
-  });
-  $("adminOrdersTable").querySelectorAll("[data-del-ord]").forEach((b) => b.onclick = async () => {
-    if (!confirm("Delete this order permanently?")) return;
-    await remove(ref(db, "orders/" + b.dataset.delOrd));
-    toast("Order deleted");
-  });
-}
-
-function renderAdminPaymentSettings() {
-  $("psBkash").value = paymentSettings.bkashNumber || "";
-  $("psNagad").value = paymentSettings.nagadNumber || "";
-  $("psRocket").value = paymentSettings.rocketNumber || "";
-  $("psSmsUrl").value = paymentSettings.smsApiUrl || "";
-  $("psSmsKey").value = paymentSettings.smsApiKey || "";
-  $("psAutoVerify").checked = paymentSettings.autoVerifyEnabled !== false;
-
-  const smsRows = Object.entries(smsInbox).sort((a, b) => (b[1].receivedAt || 0) - (a[1].receivedAt || 0));
-  $("adminSmsTable").innerHTML = smsRows.length ? smsRows.map(([trx, s]) => `
-    <tr>
-      <td><b>${safe(trx)}</b></td>
-      <td>${safe(s.provider || "")}</td>
-      <td>${safe(s.senderNumber || "")}</td>
-      <td><b>${money(s.amount)}</b></td>
-      <td>${s.matchedOrderId ? `<span class="badge green">${safe(s.matchedOrderId)}</span>` : `<span class="badge amber">Unmatched</span>`}</td>
-      <td><button class="crimson sm" data-del-sms="${safe(trx)}">Delete</button></td>
-    </tr>
-  `).join("") : `<tr><td colspan="6">No SMS records in /sms_inbox yet.</td></tr>`;
-
-  $("adminSmsTable").querySelectorAll("[data-del-sms]").forEach((b) => b.onclick = async () => {
-    await remove(ref(db, "sms_inbox/" + b.dataset.delSms));
-    toast("SMS record deleted");
-  });
-}
-
-function renderAdminCustomers() {
-  const rows = Object.entries(allCustomers);
-  $("adminCustomersTable").innerHTML = rows.length ? rows.map(([uid, c]) => `
-    <tr>
-      <td><b>${safe(c.name || "Customer")}</b></td>
-      <td>${safe(c.email || "")}</td>
-      <td>${safe(c.phone || "—")}</td>
-      <td>${c.createdAt ? new Date(c.createdAt).toLocaleDateString() : "—"}</td>
-      <td><button class="crimson sm" data-del-cust="${safe(uid)}">Delete</button></td>
-    </tr>
-  `).join("") : `<tr><td colspan="5">No registered customers loaded yet.</td></tr>`;
-
-  $("adminCustomersTable").querySelectorAll("[data-del-cust]").forEach((b) => b.onclick = async () => {
-    if (!confirm("Remove this customer record?")) return;
-    await remove(ref(db, "customers/" + b.dataset.delCust));
-    toast("Customer record removed");
-  });
-}
-
 /* ---------- Firebase Listeners & Auth ---------- */
 function subscribeStoreData() {
   onValue(ref(db, "products"), (snap) => {
-    const val = snap.val();
-    products = val && Object.keys(val).length ? val : { ...DEFAULT_PRODUCTS };
+    products = snap.val() || {};
     renderCategories();
     renderProducts();
-    if (isAdmin) renderAdminDashboard();
   });
 
   onValue(ref(db, "categories"), (snap) => {
-    const val = snap.val();
-    categories = val && Object.keys(val).length ? val : { ...DEFAULT_CATEGORIES };
+    categories = snap.val() || {};
     renderCategories();
-    if (isAdmin) renderAdminDashboard();
   });
 
   onValue(ref(db, "coupons"), (snap) => {
-    const val = snap.val();
-    coupons = val && Object.keys(val).length ? val : { ...DEFAULT_COUPONS };
-    if (isAdmin) renderAdminCoupons();
+    coupons = snap.val() || {};
   });
 
   onValue(ref(db, "deals/hero"), (snap) => {
@@ -1656,47 +1265,36 @@ function subscribeStoreData() {
   onValue(ref(db, "settings/payment"), (snap) => {
     if (snap.exists()) {
       paymentSettings = { ...paymentSettings, ...snap.val() };
-      if (isAdmin) renderAdminPaymentSettings();
     }
   });
 }
 
-function subscribeAdminData() {
-  onValue(ref(db, "orders"), (snap) => {
-    allOrders = snap.val() || {};
-    if (isAdmin) renderAdminDashboard();
-  });
-  onValue(ref(db, "sms_inbox"), (snap) => {
-    smsInbox = snap.val() || {};
-    if (isAdmin) renderAdminPaymentSettings();
-  });
-  onValue(ref(db, "customers"), (snap) => {
-    allCustomers = snap.val() || {};
-    if (isAdmin) renderAdminDashboard();
-  });
-}
-
 onAuthStateChanged(auth, async (user) => {
+  if (unsubscribeCustomer) { unsubscribeCustomer(); unsubscribeCustomer = null; }
   currentUser = user;
-  isAdmin = false;
+  userProfile = null;
+  userAddresses = {};
+
   if (user) {
     let claimAdmin = false;
     try {
       const token = await user.getIdTokenResult();
       claimAdmin = token.claims.admin === true;
     } catch (_) {}
-    isAdmin = (user.email || "").toLowerCase() === ADMIN_EMAIL || claimAdmin;
-    $("accountBtn").textContent = `👤 ${user.displayName || user.email.split("@")[0]} (Logout)`;
-    $("adminToggleBtn").classList.toggle("hidden", !isAdmin);
-    $("adminSection").classList.toggle("show", isAdmin);
-    if (isAdmin) {
-      subscribeAdminData();
-      renderAdminDashboard();
-    }
+    const isAdmin = (user.email || "").toLowerCase() === ADMIN_EMAIL || claimAdmin;
+    $("accountBtn").textContent = `👤 ${user.displayName || user.email.split("@")[0]}`;
+    $("adminPortalLink").classList.toggle("hidden", !isAdmin);
+
+    unsubscribeCustomer = onValue(ref(db, "customers/" + user.uid), (snap) => {
+      const val = snap.val() || {};
+      userProfile = val;
+      userAddresses = val.addresses || {};
+      if (val.name) $("accountBtn").textContent = `👤 ${val.name}`;
+      renderAccountModalData();
+    });
   } else {
     $("accountBtn").textContent = "👤 Login | Register";
-    $("adminToggleBtn").classList.add("hidden");
-    $("adminSection").classList.remove("show");
+    $("adminPortalLink").classList.add("hidden");
   }
 });
 
@@ -1733,7 +1331,6 @@ $("trackOrderForm").onsubmit = (e) => { e.preventDefault(); openOrdersModal($("t
 
 $("cartBtn").onclick = () => { renderCartDrawer(); $("cartDrawer").classList.add("show"); };
 $("closeCartBtn").onclick = () => $("cartDrawer").classList.remove("show");
-$("cartZoneSelect").onchange = renderCartDrawer;
 $("applyPromoBtn").onclick = () => {
   const code = $("promoInput").value.trim().toUpperCase();
   const sub = cart.reduce((s, x) => s + x.price * x.qty, 0);
@@ -1748,19 +1345,33 @@ $("applyPromoBtn").onclick = () => {
 };
 $("proceedCheckoutBtn").onclick = () => { $("cartDrawer").classList.remove("show"); openCheckout(); };
 $("cPayment").onchange = syncCheckoutPaymentUI;
+$("cDivision").onchange = syncCheckoutPaymentUI;
+$("checkoutSavedAddr").onchange = () => {
+  const id = $("checkoutSavedAddr").value;
+  const a = userAddresses[id];
+  if (a) {
+    $("cName").value = a.recipientName || "";
+    $("cPhone").value = a.phone || "";
+    $("cDivision").value = a.division || "Dhaka";
+    $("cAddress").value = `${a.street}, ${a.thana}, ${a.division}`;
+    syncCheckoutPaymentUI();
+  }
+};
 $("copyMerchantNumBtn").onclick = async () => {
+  const num = $("merchantPayNumber").textContent;
   try {
-    await navigator.clipboard.writeText($("merchantPayNumber").textContent);
+    await navigator.clipboard.writeText(num);
     toast("Merchant number copied!");
-  } catch (_) { toast("Copy: " + $("merchantPayNumber").textContent); }
+  } catch (_) { toast("Copy: " + num); }
 };
 
 $("checkoutForm").onsubmit = async (e) => {
   e.preventDefault();
   if (!cart.length) return toast("Cart is empty");
   const method = $("cPayment").value;
+  const division = $("cDivision").value;
   const isMobile = method === "bKash" || method === "Nagad" || method === "Rocket";
-  const totals = computeTotals();
+  const totals = computeTotals(division);
   let senderNorm = "", trxUpper = "", payStatus = "Pay on Delivery", status = "Pending";
 
   if (isMobile) {
@@ -1799,7 +1410,7 @@ $("checkoutForm").onsubmit = async (e) => {
       name: $("cName").value.trim(),
       phone: normalizeBdPhone($("cPhone").value),
       address: $("cAddress").value.trim(),
-      division: $("cDivision").value
+      division
     },
     items: cart.map((x) => ({ ...x })),
     itemsSummary: cart.map((x) => `${x.name} x${x.qty} (${x.variant}) @৳${x.price}`).join("||"),
@@ -1839,9 +1450,9 @@ $("checkoutForm").onsubmit = async (e) => {
   }
 };
 
-/* ---------- Auth Modal ---------- */
+/* ---------- Auth & Account Modals ---------- */
 function renderAuthMode() {
-  $("authTitle").textContent = registerMode ? "Create Customer Account" : "Customer / Admin Login";
+  $("authTitle").textContent = registerMode ? "Create Customer Account" : "Customer Login";
   $("authSubmitBtn").textContent = registerMode ? "Create Account" : "Sign In";
   $("authNameWrap").classList.toggle("hidden", !registerMode);
   $("authPhoneWrap").classList.toggle("hidden", !registerMode);
@@ -1854,7 +1465,8 @@ function renderAuthMode() {
 
 $("accountBtn").onclick = () => {
   if (currentUser) {
-    if (confirm(`Sign out from ${currentUser.email}?`)) signOut(auth);
+    renderAccountModalData();
+    openModal("accountModal");
   } else {
     registerMode = false;
     renderAuthMode();
@@ -1862,17 +1474,105 @@ $("accountBtn").onclick = () => {
   }
 };
 
+$("signOutBtn").onclick = async () => {
+  await signOut(auth);
+  closeModal("accountModal");
+  toast("Signed out");
+};
+
+document.querySelectorAll("[data-ac-tab]").forEach((t) => {
+  t.onclick = () => {
+    document.querySelectorAll("[data-ac-tab]").forEach((x) => x.classList.remove("active"));
+    t.classList.add("active");
+    $("acTab-profile").classList.toggle("hidden", t.dataset.acTab !== "profile");
+    $("acTab-addresses").classList.toggle("hidden", t.dataset.acTab !== "addresses");
+  };
+});
+
+$("profileForm").onsubmit = async (e) => {
+  e.preventDefault();
+  if (!currentUser) return;
+  const name = $("profName").value.trim();
+  const phone = $("profPhone").value.trim();
+  if (phone && !isValidBdPhone(phone)) return toast("Enter a valid 11-digit BD number (01XXXXXXXXX)");
+  const normPhone = phone ? normalizeBdPhone(phone) : "";
+  await update(ref(db, "customers/" + currentUser.uid), {
+    name,
+    email: currentUser.email,
+    phone: normPhone,
+    bio: $("profBio").value.trim(),
+    updatedAt: Date.now()
+  });
+  try { await updateProfile(currentUser, { displayName: name }); } catch (_) {}
+  toast("Profile saved!");
+};
+
+$("deleteProfileDataBtn").onclick = async () => {
+  if (!currentUser || !confirm("Delete your saved profile info and addresses?")) return;
+  await remove(ref(db, "customers/" + currentUser.uid));
+  toast("Profile info deleted");
+};
+
+$("deleteAccountBtn").onclick = async () => {
+  if (!currentUser || !confirm("Permanently delete your account & profile?")) return;
+  const uid = currentUser.uid;
+  try {
+    await remove(ref(db, "customers/" + uid));
+    await deleteUser(currentUser);
+    closeModal("accountModal");
+    toast("Account deleted permanently");
+  } catch (err) {
+    if (err.code === "auth/requires-recent-login") {
+      toast("Please sign out and sign in again before deleting your auth account.");
+    } else {
+      toast(err.message);
+    }
+  }
+};
+
+$("addressForm").onsubmit = async (e) => {
+  e.preventDefault();
+  if (!currentUser) return;
+  const phone = $("addrPhone").value.trim();
+  if (!isValidBdPhone(phone)) return toast("Enter valid 11-digit BD mobile phone (01XXXXXXXXX)");
+  const existingId = $("addrEditId").value;
+  const addrId = existingId || push(ref(db, `customers/${currentUser.uid}/addresses`)).key;
+  const makeDefault = $("addrDefault").checked || Object.keys(userAddresses || {}).length === 0;
+  const updates = {};
+  if (makeDefault) {
+    Object.keys(userAddresses || {}).forEach((k) => {
+      updates[`customers/${currentUser.uid}/addresses/${k}/isDefault`] = false;
+    });
+  }
+  updates[`customers/${currentUser.uid}/addresses/${addrId}`] = {
+    label: $("addrLabel").value.trim() || "Home",
+    recipientName: $("addrRecipient").value.trim(),
+    phone: normalizeBdPhone(phone),
+    division: $("addrDivision").value,
+    thana: $("addrThana").value.trim(),
+    street: $("addrStreet").value.trim(),
+    isDefault: makeDefault
+  };
+  await update(ref(db), updates);
+  resetAddressForm();
+  toast(existingId ? "Address updated!" : "Address saved!");
+};
+$("addrResetBtn").onclick = resetAddressForm;
+
 $("authForm").onsubmit = async (e) => {
   e.preventDefault();
   const email = $("authEmail").value.trim();
   const password = $("authPassword").value;
   try {
     if (registerMode) {
+      const name = $("authName").value.trim();
+      const phone = $("authPhone").value.trim();
       const cred = await createUserWithEmailAndPassword(auth, email, password);
+      try { await updateProfile(cred.user, { displayName: name }); } catch (_) {}
       await set(ref(db, "customers/" + cred.user.uid), {
-        name: $("authName").value.trim(),
+        name,
         email,
-        phone: $("authPhone").value.trim(),
+        phone: phone ? normalizeBdPhone(phone) : "",
         createdAt: Date.now()
       });
     } else {
@@ -1892,136 +1592,6 @@ $("newsletterForm").onsubmit = async (e) => {
     $("newsletterForm").reset();
     toast("Subscribed to SPR ZONE BD deals!");
   } catch (err) { toast(err.message); }
-};
-
-/* ---------- Admin Event Handlers ---------- */
-$("adminToggleBtn").onclick = () => {
-  $("adminSection").classList.toggle("show");
-  if ($("adminSection").classList.contains("show")) $("adminSection").scrollIntoView({ behavior: "smooth" });
-};
-$("closeAdminBtn").onclick = () => $("adminSection").classList.remove("show");
-$("refreshAdminBtn").onclick = () => { renderAdminDashboard(); toast("Synced with e-commarcebd"); };
-
-document.querySelectorAll(".admin-tab").forEach((tab) => {
-  tab.onclick = () => {
-    document.querySelectorAll(".admin-tab").forEach((t) => t.classList.remove("active"));
-    tab.classList.add("active");
-    document.querySelectorAll(".admin-tab-pane").forEach((p) => p.classList.add("hidden"));
-    $("atab-" + tab.dataset.atab).classList.remove("hidden");
-  };
-});
-
-$("seedCatalogBtn").onclick = async () => {
-  if (!isAdmin) return;
-  try {
-    await set(ref(db, "categories"), DEFAULT_CATEGORIES);
-    await set(ref(db, "products"), DEFAULT_PRODUCTS);
-    await set(ref(db, "coupons"), DEFAULT_COUPONS);
-    await update(ref(db, "settings/payment"), paymentSettings);
-    toast("Seeded BD products, categories & coupons to RTDB!");
-  } catch (err) { toast(err.message); }
-};
-
-$("adminProductForm").onsubmit = async (e) => {
-  e.preventDefault();
-  if (!isAdmin) return;
-  const id = $("apId").value || push(ref(db, "products")).key;
-  const data = {
-    name: $("apName").value.trim(),
-    category: $("apCategory").value,
-    brand: $("apBrand").value.trim() || "SPR Official",
-    price: Number($("apPrice").value),
-    oldPrice: Number($("apOldPrice").value) || 0,
-    stock: Number($("apStock").value),
-    variants: $("apVariants").value.trim() || "Standard",
-    image: $("apImage").value.trim(),
-    specs: $("apSpecs").value.trim(),
-    description: $("apDesc").value.trim(),
-    isFlashDeal: $("apFlash").checked,
-    isFeatured: $("apFeatured").checked,
-    rating: products[id]?.rating || 4.8,
-    reviewCount: products[id]?.reviewCount || 120,
-    updatedAt: Date.now()
-  };
-  await set(ref(db, "products/" + id), data);
-  $("adminProductForm").reset();
-  $("apId").value = "";
-  $("prodFormTitle").textContent = "Add / Edit Product";
-  toast("Product saved!");
-};
-$("apResetBtn").onclick = () => { $("adminProductForm").reset(); $("apId").value = ""; $("prodFormTitle").textContent = "Add / Edit Product"; };
-
-$("adminCategoryForm").onsubmit = async (e) => {
-  e.preventDefault();
-  if (!isAdmin) return;
-  const id = $("acId").value || "cat_" + Date.now();
-  await set(ref(db, "categories/" + id), {
-    name: $("acName").value.trim(),
-    icon: $("acIcon").value.trim() || "🛍️",
-    order: Number($("acOrder").value) || 1
-  });
-  $("adminCategoryForm").reset();
-  $("acId").value = "";
-  toast("Category saved!");
-};
-$("acResetBtn").onclick = () => { $("adminCategoryForm").reset(); $("acId").value = ""; };
-
-$("adminHeroForm").onsubmit = async (e) => {
-  e.preventDefault();
-  if (!isAdmin) return;
-  await set(ref(db, "deals/hero"), {
-    badge: $("ahBadge").value.trim(),
-    title: $("ahTitle").value.trim(),
-    subtitle: $("ahSub").value.trim()
-  });
-  toast("Hero banner updated!");
-};
-
-$("adminCouponForm").onsubmit = async (e) => {
-  e.preventDefault();
-  if (!isAdmin) return;
-  const code = $("aqCode").value.trim().toUpperCase();
-  await set(ref(db, "coupons/" + code), {
-    code,
-    type: $("aqType").value,
-    value: Number($("aqValue").value) || 0,
-    minOrder: Number($("aqMin").value) || 0
-  });
-  $("adminCouponForm").reset();
-  $("aqId").value = "";
-  toast(`Coupon ${code} saved!`);
-};
-$("aqResetBtn").onclick = () => { $("adminCouponForm").reset(); $("aqId").value = ""; };
-
-$("adminOrderFilter").onchange = renderAdminOrders;
-
-$("adminPaymentSettingsForm").onsubmit = async (e) => {
-  e.preventDefault();
-  if (!isAdmin) return;
-  const data = {
-    bkashNumber: $("psBkash").value.trim(),
-    nagadNumber: $("psNagad").value.trim(),
-    rocketNumber: $("psRocket").value.trim(),
-    smsApiUrl: $("psSmsUrl").value.trim(),
-    smsApiKey: $("psSmsKey").value.trim(),
-    autoVerifyEnabled: $("psAutoVerify").checked
-  };
-  await set(ref(db, "settings/payment"), data);
-  toast("Payment & SMS settings saved!");
-};
-
-$("adminAddSmsForm").onsubmit = async (e) => {
-  e.preventDefault();
-  if (!isAdmin) return;
-  const trx = $("smsTrxId").value.trim().toUpperCase();
-  await set(ref(db, "sms_inbox/" + trx), {
-    provider: $("smsProvider").value,
-    senderNumber: normalizeBdPhone($("smsSender").value),
-    amount: Number($("smsAmount").value),
-    receivedAt: Date.now()
-  });
-  $("adminAddSmsForm").reset();
-  toast(`Payment SMS ${trx} added to /sms_inbox`);
 };
 </script>
 </body>

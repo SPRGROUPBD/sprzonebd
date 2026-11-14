@@ -20,14 +20,22 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.AddLocationAlt
+import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.DeleteOutline
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -56,15 +64,14 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.example.data.model.AddressEntity
-import com.example.data.model.DeliveryZone
 import com.example.data.model.ProductEntity
+import com.example.data.model.StoreConstants
 import com.example.data.model.UserAccountEntity
 import com.example.ui.components.EmptyStatePanel
 import com.example.ui.components.ProductCard
 import com.example.ui.components.SprBrandLogo
 import com.example.ui.theme.DiscountRed
 import com.example.ui.theme.EmeraldPrimary
-import com.example.ui.theme.VerifiedGreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -72,17 +79,38 @@ fun AccountScreen(
     currentUser: UserAccountEntity?,
     wishlistProducts: List<ProductEntity>,
     addresses: List<AddressEntity>,
-    deliveryZone: DeliveryZone,
     isDarkMode: Boolean,
     onLogin: (email: String, password: String, onResult: (Result<UserAccountEntity>) -> Unit) -> Unit,
     onRegister: (fullName: String, email: String, phone: String, password: String, onResult: (Result<UserAccountEntity>) -> Unit) -> Unit,
+    onUpdateProfile: (fullName: String, phone: String, bio: String, onResult: (Result<UserAccountEntity>) -> Unit) -> Unit,
+    onDeleteProfile: (onResult: (Result<Unit>) -> Unit) -> Unit,
     onSignOut: () -> Unit,
     onProductClick: (String) -> Unit,
     onToggleWishlist: (String) -> Unit,
     onQuickAdd: (ProductEntity) -> Unit,
+    onSaveAddress: (
+        label: String,
+        recipientName: String,
+        phone: String,
+        division: String,
+        districtThana: String,
+        streetAddress: String,
+        makeDefault: Boolean,
+        onResult: (Result<Long>) -> Unit
+    ) -> Unit,
+    onUpdateAddress: (
+        addressId: Long,
+        label: String,
+        recipientName: String,
+        phone: String,
+        division: String,
+        districtThana: String,
+        streetAddress: String,
+        makeDefault: Boolean,
+        onResult: (Result<Unit>) -> Unit
+    ) -> Unit,
     onSetDefaultAddress: (Long) -> Unit,
     onDeleteAddress: (Long) -> Unit,
-    onSelectDeliveryZone: (DeliveryZone) -> Unit,
     onToggleDarkMode: (Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -99,6 +127,11 @@ fun AccountScreen(
         }
 
         var selectedTab by remember { mutableIntStateOf(0) }
+        var showEditProfileDialog by remember { mutableStateOf(false) }
+        var showDeleteProfileDialog by remember { mutableStateOf(false) }
+        var showAddressDialog by remember { mutableStateOf(false) }
+        var editingAddress by remember { mutableStateOf<AddressEntity?>(null) }
+
         val tabs = listOf("Profile", "Wishlist (${wishlistProducts.size})", "Addresses (${addresses.size})")
 
         LazyColumn(
@@ -147,6 +180,13 @@ fun AccountScreen(
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
+                            if (currentUser.bio.isNotBlank()) {
+                                Text(
+                                    text = currentUser.bio,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
                         }
                         IconButton(
                             onClick = onSignOut,
@@ -187,7 +227,50 @@ fun AccountScreen(
                                 verticalArrangement = Arrangement.spacedBy(12.dp),
                                 modifier = Modifier.padding(16.dp)
                             ) {
-                                Text("Store Preferences", style = MaterialTheme.typography.titleMedium)
+                                Text("Profile Details", style = MaterialTheme.typography.titleMedium)
+                                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    Text(
+                                        text = "Name: ${currentUser.fullName}",
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                    Text(
+                                        text = "Phone: ${currentUser.phone.ifBlank { "Not added" }}",
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                    if (currentUser.bio.isNotBlank()) {
+                                        Text(
+                                            text = "Bio / Note: ${currentUser.bio}",
+                                            style = MaterialTheme.typography.bodyMedium
+                                        )
+                                    }
+                                }
+                                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                    Button(
+                                        onClick = { showEditProfileDialog = true },
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .testTag("edit_profile_button")
+                                    ) {
+                                        Icon(Icons.Filled.Edit, contentDescription = null, modifier = Modifier.size(16.dp))
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text("Edit Profile")
+                                    }
+                                    OutlinedButton(
+                                        onClick = { showDeleteProfileDialog = true },
+                                        colors = ButtonDefaults.outlinedButtonColors(contentColor = DiscountRed),
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .testTag("delete_profile_button")
+                                    ) {
+                                        Icon(Icons.Filled.DeleteForever, contentDescription = null, modifier = Modifier.size(16.dp))
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text("Delete Profile")
+                                    }
+                                }
+
+                                HorizontalDivider()
+
+                                Text("Appearance", style = MaterialTheme.typography.titleMedium)
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
                                     modifier = Modifier.fillMaxWidth()
@@ -204,30 +287,6 @@ fun AccountScreen(
                                         checked = isDarkMode,
                                         onCheckedChange = onToggleDarkMode
                                     )
-                                }
-                                HorizontalDivider()
-                                Text("Default Delivery Zone", style = MaterialTheme.typography.titleSmall)
-                                DeliveryZone.entries.forEach { zone ->
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        modifier = Modifier.fillMaxWidth()
-                                    ) {
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            Text(zone.label, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
-                                            Text(
-                                                "৳${zone.feeBdt} • ${zone.etaText}",
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                                            )
-                                        }
-                                        if (deliveryZone == zone) {
-                                            Text("Selected", style = MaterialTheme.typography.labelMedium, color = VerifiedGreen)
-                                        } else {
-                                            TextButton(onClick = { onSelectDeliveryZone(zone) }) {
-                                                Text("Select")
-                                            }
-                                        }
-                                    }
                                 }
                             }
                         }
@@ -267,11 +326,28 @@ fun AccountScreen(
                 }
 
                 2 -> {
+                    item {
+                        Button(
+                            onClick = {
+                                editingAddress = null
+                                showAddressDialog = true
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(48.dp)
+                                .testTag("add_address_button")
+                        ) {
+                            Icon(Icons.Filled.AddLocationAlt, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Add New Address")
+                        }
+                    }
+
                     if (addresses.isEmpty()) {
                         item {
                             EmptyStatePanel(
                                 title = "No saved BD addresses",
-                                subtitle = "Add your Dhaka or nationwide Bangladesh shipping address during checkout.",
+                                subtitle = "Tap Add New Address above to save your delivery details.",
                                 icon = Icons.Filled.LocationOn
                             )
                         }
@@ -308,13 +384,28 @@ fun AccountScreen(
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
                                         if (!addr.isDefault) {
-                                            TextButton(onClick = { onSetDefaultAddress(addr.id) }) {
+                                            TextButton(
+                                                onClick = { onSetDefaultAddress(addr.id) },
+                                                modifier = Modifier.testTag("default_address_${addr.id}")
+                                            ) {
                                                 Text("Set as Default")
                                             }
                                         }
                                     }
-                                    IconButton(onClick = { onDeleteAddress(addr.id) }) {
-                                        Icon(Icons.Filled.DeleteOutline, contentDescription = "Delete", tint = DiscountRed)
+                                    IconButton(
+                                        onClick = {
+                                            editingAddress = addr
+                                            showAddressDialog = true
+                                        },
+                                        modifier = Modifier.testTag("edit_address_${addr.id}")
+                                    ) {
+                                        Icon(Icons.Filled.Edit, contentDescription = "Edit Address", tint = EmeraldPrimary)
+                                    }
+                                    IconButton(
+                                        onClick = { onDeleteAddress(addr.id) },
+                                        modifier = Modifier.testTag("delete_address_${addr.id}")
+                                    ) {
+                                        Icon(Icons.Filled.DeleteOutline, contentDescription = "Delete Address", tint = DiscountRed)
                                     }
                                 }
                             }
@@ -323,7 +414,258 @@ fun AccountScreen(
                 }
             }
         }
+
+        if (showEditProfileDialog) {
+            EditProfileDialog(
+                user = currentUser,
+                onDismiss = { showEditProfileDialog = false },
+                onSave = { name, phone, bio, onDone ->
+                    onUpdateProfile(name, phone, bio) { res ->
+                        if (res.isSuccess) showEditProfileDialog = false
+                        onDone(res)
+                    }
+                }
+            )
+        }
+
+        if (showDeleteProfileDialog) {
+            AlertDialog(
+                onDismissRequest = { showDeleteProfileDialog = false },
+                title = { Text("Delete Your Profile?") },
+                text = {
+                    Text("This permanently deletes your profile, saved addresses, wishlist, and cart from this device.")
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            showDeleteProfileDialog = false
+                            onDeleteProfile {}
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = DiscountRed),
+                        modifier = Modifier.testTag("confirm_delete_profile_button")
+                    ) {
+                        Text("Delete Permanently")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showDeleteProfileDialog = false }) {
+                        Text("Cancel")
+                    }
+                }
+            )
+        }
+
+        if (showAddressDialog) {
+            AddressFormDialog(
+                existing = editingAddress,
+                defaultName = currentUser.fullName,
+                defaultPhone = currentUser.phone,
+                onDismiss = { showAddressDialog = false },
+                onSave = { label, name, phone, division, thana, street, makeDefault, onError ->
+                    val target = editingAddress
+                    if (target == null) {
+                        onSaveAddress(label, name, phone, division, thana, street, makeDefault) { res ->
+                            if (res.isSuccess) showAddressDialog = false
+                            else onError(res.exceptionOrNull()?.message ?: "Failed to save address")
+                        }
+                    } else {
+                        onUpdateAddress(target.id, label, name, phone, division, thana, street, makeDefault) { res ->
+                            if (res.isSuccess) showAddressDialog = false
+                            else onError(res.exceptionOrNull()?.message ?: "Failed to update address")
+                        }
+                    }
+                }
+            )
+        }
     }
+}
+
+@Composable
+private fun EditProfileDialog(
+    user: UserAccountEntity,
+    onDismiss: () -> Unit,
+    onSave: (String, String, String, (Result<UserAccountEntity>) -> Unit) -> Unit
+) {
+    var fullName by remember(user.email) { mutableStateOf(user.fullName) }
+    var phone by remember(user.email) { mutableStateOf(user.phone) }
+    var bio by remember(user.email) { mutableStateOf(user.bio) }
+    var errorMsg by remember { mutableStateOf<String?>(null) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Edit Profile") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedTextField(
+                    value = fullName,
+                    onValueChange = { fullName = it; errorMsg = null },
+                    label = { Text("Full Name *") },
+                    singleLine = true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("profile_name_input")
+                )
+                OutlinedTextField(
+                    value = phone,
+                    onValueChange = { phone = it; errorMsg = null },
+                    label = { Text("BD Mobile Number (01XXXXXXXXX)") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                    singleLine = true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("profile_phone_input")
+                )
+                OutlinedTextField(
+                    value = bio,
+                    onValueChange = { bio = it; errorMsg = null },
+                    label = { Text("Bio / Delivery Note (Optional)") },
+                    maxLines = 2,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("profile_bio_input")
+                )
+                if (errorMsg != null) {
+                    Text(errorMsg!!, style = MaterialTheme.typography.bodySmall, color = DiscountRed)
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    onSave(fullName, phone, bio) { res ->
+                        if (res.isFailure) errorMsg = res.exceptionOrNull()?.message
+                    }
+                },
+                modifier = Modifier.testTag("save_profile_button")
+            ) {
+                Text("Save Profile")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
+@Composable
+private fun AddressFormDialog(
+    existing: AddressEntity?,
+    defaultName: String,
+    defaultPhone: String,
+    onDismiss: () -> Unit,
+    onSave: (String, String, String, String, String, String, Boolean, (String) -> Unit) -> Unit
+) {
+    var label by remember(existing) { mutableStateOf(existing?.label ?: "Home") }
+    var recipientName by remember(existing) { mutableStateOf(existing?.recipientName ?: defaultName) }
+    var phone by remember(existing) { mutableStateOf(existing?.phone ?: defaultPhone) }
+    var division by remember(existing) { mutableStateOf(existing?.division ?: "Dhaka") }
+    var showDivisionMenu by remember { mutableStateOf(false) }
+    var thana by remember(existing) { mutableStateOf(existing?.districtThana.orEmpty()) }
+    var street by remember(existing) { mutableStateOf(existing?.streetAddress.orEmpty()) }
+    var makeDefault by remember(existing) { mutableStateOf(existing?.isDefault ?: false) }
+    var errorMsg by remember { mutableStateOf<String?>(null) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(if (existing == null) "Add New Address" else "Edit Address") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = label,
+                    onValueChange = { label = it; errorMsg = null },
+                    label = { Text("Label (Home / Office)") },
+                    singleLine = true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("address_label_input")
+                )
+                OutlinedTextField(
+                    value = recipientName,
+                    onValueChange = { recipientName = it; errorMsg = null },
+                    label = { Text("Recipient Name *") },
+                    singleLine = true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("address_name_input")
+                )
+                OutlinedTextField(
+                    value = phone,
+                    onValueChange = { phone = it; errorMsg = null },
+                    label = { Text("BD Mobile Phone *") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                    singleLine = true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("address_phone_input")
+                )
+                Box {
+                    OutlinedButton(
+                        onClick = { showDivisionMenu = true },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Division: $division")
+                    }
+                    DropdownMenu(
+                        expanded = showDivisionMenu,
+                        onDismissRequest = { showDivisionMenu = false }
+                    ) {
+                        StoreConstants.BD_DIVISIONS.forEach { div ->
+                            DropdownMenuItem(
+                                text = { Text(div) },
+                                onClick = {
+                                    division = div
+                                    showDivisionMenu = false
+                                }
+                            )
+                        }
+                    }
+                }
+                OutlinedTextField(
+                    value = thana,
+                    onValueChange = { thana = it; errorMsg = null },
+                    label = { Text("District / Thana *") },
+                    singleLine = true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("address_thana_input")
+                )
+                OutlinedTextField(
+                    value = street,
+                    onValueChange = { street = it; errorMsg = null },
+                    label = { Text("House, Road, Block / Area *") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("address_street_input")
+                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Checkbox(checked = makeDefault, onCheckedChange = { makeDefault = it })
+                    Text("Set as default address", style = MaterialTheme.typography.bodyMedium)
+                }
+                if (errorMsg != null) {
+                    Text(errorMsg!!, style = MaterialTheme.typography.bodySmall, color = DiscountRed)
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    onSave(label, recipientName, phone, division, thana, street, makeDefault) { msg ->
+                        errorMsg = msg
+                    }
+                },
+                modifier = Modifier.testTag("save_address_dialog_button")
+            ) {
+                Text(if (existing == null) "Save Address" else "Update Address")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
 }
 
 @Composable

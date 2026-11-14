@@ -65,7 +65,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.R
-import com.example.data.model.DeliveryZone
 import com.example.data.model.ProductEntity
 import com.example.data.model.StoreConstants
 import com.example.ui.components.EmptyStatePanel
@@ -85,13 +84,11 @@ fun HomeScreen(
     allProducts: List<ProductEntity>,
     wishlistIds: List<String>,
     filterState: CatalogFilterState,
-    deliveryZone: DeliveryZone,
     countdownSeconds: Long,
     isDarkMode: Boolean,
     onSearchChange: (String) -> Unit,
     onSelectCategory: (String) -> Unit,
     onSortChange: (ProductSortOption) -> Unit,
-    onSelectDeliveryZone: (DeliveryZone) -> Unit,
     onToggleDarkMode: (Boolean) -> Unit,
     onRefreshStore: () -> Unit,
     onProductClick: (String) -> Unit,
@@ -101,7 +98,6 @@ fun HomeScreen(
     onOpenCategories: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var showZoneMenu by remember { mutableStateOf(false) }
     var showSortMenu by remember { mutableStateOf(false) }
     val wishlistSet = remember(wishlistIds) { wishlistIds.toSet() }
     val flashDeals = remember(allProducts) { allProducts.filter { it.isFlashSale } }
@@ -168,51 +164,13 @@ fun HomeScreen(
                             color = EmeraldPrimary,
                             fontWeight = FontWeight.Bold
                         )
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(6.dp))
-                                .clickable { showZoneMenu = true }
-                                .padding(vertical = 2.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.LocationOn,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(14.dp)
-                            )
-                            Spacer(modifier = Modifier.width(3.dp))
-                            Text(
-                                text = "${deliveryZone.label} (৳${deliveryZone.feeBdt})",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                            DropdownMenu(
-                                expanded = showZoneMenu,
-                                onDismissRequest = { showZoneMenu = false }
-                            ) {
-                                DeliveryZone.entries.forEach { zone ->
-                                    DropdownMenuItem(
-                                        text = {
-                                            Column {
-                                                Text(zone.label, fontWeight = FontWeight.SemiBold)
-                                                Text(
-                                                    "Fee: ৳${zone.feeBdt} • ${zone.etaText}",
-                                                    style = MaterialTheme.typography.bodySmall,
-                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                                )
-                                            }
-                                        },
-                                        onClick = {
-                                            onSelectDeliveryZone(zone)
-                                            showZoneMenu = false
-                                        }
-                                    )
-                                }
-                            }
-                        }
+                        Text(
+                            text = stringResource(R.string.brand_tagline),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
                     }
 
                     Surface(
@@ -572,16 +530,26 @@ fun HomeScreen(
 
             if (products.isEmpty()) {
                 item {
-                    EmptyStatePanel(
-                        title = "No matching products",
-                        subtitle = "Try another keyword or clear your category filter.",
-                        icon = Icons.Filled.Search,
-                        actionLabel = "Reset Filters",
-                        onAction = {
-                            onSearchChange("")
-                            onSelectCategory("All")
-                        }
-                    )
+                    if (allProducts.isEmpty()) {
+                        EmptyStatePanel(
+                            title = "Store catalog is empty",
+                            subtitle = "Live products added by SPR Zone BD Admin will appear here automatically.",
+                            icon = Icons.Filled.Refresh,
+                            actionLabel = "Sync Store",
+                            onAction = onRefreshStore
+                        )
+                    } else {
+                        EmptyStatePanel(
+                            title = "No matching products",
+                            subtitle = "Try another keyword or clear your category filter.",
+                            icon = Icons.Filled.Search,
+                            actionLabel = "Reset Filters",
+                            onAction = {
+                                onSearchChange("")
+                                onSelectCategory("All")
+                            }
+                        )
+                    }
                 }
             } else {
                 val rows = products.chunked(columns)

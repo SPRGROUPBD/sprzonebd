@@ -1,0 +1,1132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#007B3D">
+<meta name="description" content="SPR ZONE BD Admin Portal — Manage products, categories, coupons, hero banner, orders, bKash/Nagad/Rocket SMS auto-verification, and customer profiles & addresses.">
+<title>SPR ZONE BD | Admin Portal</title>
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --emerald:#007B3D;
+  --emerald-dark:#005C2D;
+  --emerald-soft:#E8F6EE;
+  --crimson:#E11D48;
+  --crimson-dark:#BE123C;
+  --gold:#F59E0B;
+  --ink:#141C18;
+  --muted:#526059;
+  --bg:#F3F6F4;
+  --surface:#FFFFFF;
+  --line:#DCE5DF;
+  --shadow:0 6px 20px rgba(0,40,20,0.06);
+  --radius:14px;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 'Inter',system-ui,-apple-system,sans-serif}
+h1,h2,h3,h4{font-family:'Plus Jakarta Sans','Inter',sans-serif;margin:0}
+a{color:inherit;text-decoration:none}
+button,input,select,textarea{font:inherit}
+button{
+  cursor:pointer;border:0;border-radius:10px;padding:9px 15px;
+  background:var(--emerald);color:#fff;font-weight:700;transition:.16s ease;
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;
+}
+button:hover{background:var(--emerald-dark)}
+button.secondary{background:var(--emerald-soft);color:var(--emerald-dark)}
+button.secondary:hover{background:#d4eedf}
+button.crimson{background:var(--crimson);color:#fff}
+button.crimson:hover{background:var(--crimson-dark)}
+button.gold{background:var(--gold);color:#1A1200}
+button.gold:hover{background:#d97706;color:#fff}
+button.outline{background:#fff;color:var(--ink);border:1px solid var(--line)}
+button.outline:hover{background:#f8faf9}
+button.sm{padding:6px 11px;min-height:32px;font-size:12px;border-radius:8px}
+button:disabled{opacity:.5;cursor:not-allowed}
+
+.topbar{background:var(--emerald-dark);color:#fff;font-size:12.5px}
+.topbar-inner{max-width:1420px;margin:auto;padding:10px 18px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.header{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20;box-shadow:0 4px 14px rgba(0,30,15,.05)}
+.header-inner{max-width:1420px;margin:auto;padding:12px 18px;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:12px}
+.brand img{height:44px;width:auto}
+.admin-badge{background:var(--gold);color:#1A1200;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:800}
+
+.wrap{max-width:1420px;margin:0 auto;padding:20px 18px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
+.stats-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:18px}
+.stat-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 16px;box-shadow:var(--shadow)}
+.stat-label{font-size:12px;color:var(--muted);font-weight:600}
+.stat-val{font-size:22px;font-weight:800;color:var(--emerald-dark);margin-top:4px}
+
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.tab-btn{background:#fff;color:var(--ink);border:1px solid var(--line);padding:10px 16px;border-radius:10px;font-weight:700}
+.tab-btn.active{background:var(--emerald);color:#fff;border-color:var(--emerald)}
+
+.split-grid{display:grid;grid-template-columns:390px minmax(0,1fr);gap:18px;align-items:start}
+.field{display:grid;gap:5px;margin-bottom:10px}
+.field label{font-size:12.5px;font-weight:700;color:var(--muted)}
+.field input,.field select,.field textarea{padding:9px 11px;border:1px solid #cbd5e1;border-radius:8px;width:100%;background:#fff}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+.list-item{border:1px solid var(--line);border-radius:12px;padding:12px;background:#fafcfb;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:10px}
+.list-item img{width:58px;height:58px;object-fit:contain;border-radius:8px;background:#fff;border:1px solid var(--line);flex-shrink:0}
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11.5px;font-weight:700}
+.badge.green{background:#dcfce7;color:#166534}
+.badge.amber{background:#fef3c7;color:#92400e}
+.badge.red{background:#fee2e2;color:#991b1b}
+.badge.blue{background:#dbeafe;color:#1e40af}
+
+.login-shell{max-width:440px;margin:48px auto;background:#fff;border:1px solid var(--line);border-radius:16px;padding:24px;box-shadow:var(--shadow)}
+.toast{position:fixed;bottom:20px;right:20px;background:#0f291c;color:#fff;padding:12px 18px;border-radius:10px;display:none;z-index:90;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.22)}
+.hidden{display:none!important}
+.muted{color:var(--muted)}
+
+@media(max-width:1100px){
+  .stats-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .split-grid{grid-template-columns:1fr}
+}
+@media(max-width:600px){
+  .stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .form-row{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div>⚙️ <b>SPR ZONE BD</b> · Live Storefront Control Center (Connected to e-commarcebd)</div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <span id="adminEmailDisplay">Not signed in</span>
+      <a href="index.html" style="background:rgba(255,255,255,.16);padding:4px 10px;border-radius:18px;font-weight:700">🛍️ Storefront</a>
+      <button class="crimson sm hidden" id="adminSignOutBtn">Sign Out</button>
+    </div>
+  </div>
+</div>
+
+<header class="header">
+  <div class="header-inner">
+    <div class="brand">
+      <a href="index.html"><img src="assets/logo.svg" alt="SPR ZONE BD"></a>
+      <span class="admin-badge">ADMIN PORTAL</span>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <a href="index.html"><button type="button" class="outline sm">← View Live Website</button></a>
+    </div>
+  </div>
+</header>
+
+<!-- Admin Gate (Auth Required) -->
+<main class="wrap">
+  <div id="adminLoginGate" class="login-shell">
+    <h2 style="margin-bottom:6px">🔐 Admin Sign In</h2>
+    <p class="muted" style="margin:0 0 16px;font-size:13px">
+      Sign in with your authorized SPR ZONE BD admin email (<b>mail.sajjadahmed@gmail.com</b>) to add, edit, or delete store data.
+    </p>
+    <div id="nonAdminNotice" class="hidden" style="background:#fee2e2;color:#991b1b;padding:10px 12px;border-radius:10px;font-size:13px;margin-bottom:12px">
+      Signed-in account <b id="nonAdminEmail"></b> does not have Admin permissions. Please sign out and log in with <b>mail.sajjadahmed@gmail.com</b>.
+      <div style="margin-top:8px"><button type="button" class="crimson sm" id="switchAccountBtn">Sign Out &amp; Switch Account</button></div>
+    </div>
+    <form id="adminLoginForm">
+      <div class="field"><label>Admin Email *</label><input id="loginEmail" type="email" required value="mail.sajjadahmed@gmail.com"></div>
+      <div class="field"><label>Password *</label><input id="loginPassword" type="password" required placeholder="Enter admin password"></div>
+      <button type="submit" style="width:100%">Sign In to Admin Portal</button>
+    </form>
+  </div>
+
+  <!-- Admin Dashboard -->
+  <div id="adminDashboard" class="hidden">
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-label">Live Products</div><div class="stat-val" id="stProducts">0</div></div>
+      <div class="stat-card"><div class="stat-label">Total Orders</div><div class="stat-val" id="stOrders">0</div></div>
+      <div class="stat-card"><div class="stat-label">Confirmed Revenue</div><div class="stat-val" id="stRevenue">৳0</div></div>
+      <div class="stat-card"><div class="stat-label">Pending TrxID Check</div><div class="stat-val" id="stPending">0</div></div>
+      <div class="stat-card"><div class="stat-label">Customers</div><div class="stat-val" id="stCustomers">0</div></div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="products">📦 Products</button>
+      <button class="tab-btn" data-tab="categories">🗂️ Categories</button>
+      <button class="tab-btn" data-tab="deals">🏷️ Hero &amp; Coupons</button>
+      <button class="tab-btn" data-tab="orders">🧾 Orders</button>
+      <button class="tab-btn" data-tab="payment">📱 Payment &amp; SMS API</button>
+      <button class="tab-btn" data-tab="customers">👥 Customers &amp; Profiles</button>
+    </div>
+
+    <!-- TAB 1: PRODUCTS CRUD -->
+    <section id="tab-products" class="split-grid">
+      <div class="card">
+        <h3 id="prodFormTitle" style="margin-bottom:12px">Add New Product</h3>
+        <form id="productForm">
+          <input type="hidden" id="pEditId">
+          <div class="field"><label>Product Name *</label><input id="pName" required placeholder="e.g. Wireless Earbuds Pro"></div>
+          <div class="form-row">
+            <div class="field">
+              <label>Category *</label>
+              <input id="pCategory" list="categoryOptionsList" required placeholder="Select or type category">
+              <datalist id="categoryOptionsList"></datalist>
+            </div>
+            <div class="field"><label>Brand</label><input id="pBrand" placeholder="Brand Name"></div>
+          </div>
+          <div class="form-row">
+            <div class="field"><label>Price (৳ BDT) *</label><input id="pPrice" type="number" min="1" required></div>
+            <div class="field"><label>Old / Regular Price (৳)</label><input id="pOldPrice" type="number" min="0" value="0"></div>
+          </div>
+          <div class="form-row">
+            <div class="field"><label>Stock Qty *</label><input id="pStock" type="number" min="0" value="10" required></div>
+            <div class="field"><label>Rating (1.0 - 5.0)</label><input id="pRating" type="number" min="1" max="5" step="0.1" value="4.8"></div>
+          </div>
+          <div class="field"><label>Variants (comma-separated)</label><input id="pVariants" value="Standard" placeholder="Black, White, Blue"></div>
+          <div class="field"><label>Product Image URL *</label><input id="pImage" required placeholder="https://..."></div>
+          <div class="field"><label>Short Key Specs</label><input id="pSpecs" placeholder="12 Month Warranty • Original"></div>
+          <div class="field"><label>Description</label><textarea id="pDesc" rows="3" placeholder="Detailed product description"></textarea></div>
+          <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:12px">
+            <label style="display:flex;align-items:center;gap:6px;font-weight:600"><input type="checkbox" id="pFlashDeal" style="width:auto"> Flash Deal</label>
+            <label style="display:flex;align-items:center;gap:6px;font-weight:600"><input type="checkbox" id="pFeatured" checked style="width:auto"> Featured</label>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button type="submit" style="flex:1" id="pSaveBtn">➕ Add Product</button>
+            <button type="button" class="secondary" id="pResetBtn">Clear</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+          <h3>Store Products (<span id="prodListCount">0</span>)</h3>
+          <input id="adminProdSearch" placeholder="Filter products..." style="padding:8px 12px;border:1px solid var(--line);border-radius:8px;min-width:220px">
+        </div>
+        <div id="adminProductList"></div>
+      </div>
+    </section>
+
+    <!-- TAB 2: CATEGORIES CRUD -->
+    <section id="tab-categories" class="split-grid hidden">
+      <div class="card">
+        <h3 id="catFormTitle" style="margin-bottom:12px">Add Category</h3>
+        <form id="categoryForm">
+          <input type="hidden" id="catEditId">
+          <div class="field"><label>Category Name *</label><input id="catName" required placeholder="e.g. Electronics & Gadgets"></div>
+          <div class="form-row">
+            <div class="field"><label>Icon / Emoji</label><input id="catIcon" value="📦" placeholder="📱 / 👕 / 💻"></div>
+            <div class="field"><label>Sort Order</label><input id="catOrder" type="number" value="1" min="1"></div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button type="submit" style="flex:1" id="catSaveBtn">➕ Save Category</button>
+            <button type="button" class="secondary" id="catResetBtn">Clear</button>
+          </div>
+        </form>
+      </div>
+      <div class="card">
+        <h3 style="margin-bottom:12px">Store Categories</h3>
+        <div id="adminCategoryList"></div>
+      </div>
+    </section>
+
+    <!-- TAB 3: HERO BANNER & COUPONS -->
+    <section id="tab-deals" class="split-grid hidden">
+      <div class="card">
+        <h3 style="margin-bottom:12px">Homepage Hero Banner</h3>
+        <form id="heroForm">
+          <div class="field"><label>Top Red Tag Badge</label><input id="hBadge" required></div>
+          <div class="field"><label>Main Headline</label><input id="hTitle" required></div>
+          <div class="field"><label>Subtitle / Tagline</label><input id="hSubtitle" required></div>
+          <button type="submit" style="width:100%">💾 Update Hero Banner</button>
+        </form>
+
+        <hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
+        <h3 id="couponFormTitle" style="margin-bottom:12px">Add Promo Coupon</h3>
+        <form id="couponForm">
+          <input type="hidden" id="cpEditCode">
+          <div class="form-row">
+            <div class="field"><label>Coupon Code *</label><input id="cpCode" required placeholder="e.g. EID15" style="text-transform:uppercase"></div>
+            <div class="field">
+              <label>Discount Type *</label>
+              <select id="cpType">
+                <option value="percent">Percent (%)</option>
+                <option value="flat">Flat Amount (৳)</option>
+                <option value="freeship">Free Delivery</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="field"><label>Value (% or ৳)</label><input id="cpValue" type="number" min="0" value="10"></div>
+            <div class="field"><label>Min Order (৳)</label><input id="cpMinOrder" type="number" min="0" value="0"></div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button type="submit" style="flex:1" id="cpSaveBtn">➕ Save Coupon</button>
+            <button type="button" class="secondary" id="cpResetBtn">Clear</button>
+          </div>
+        </form>
+      </div>
+      <div class="card">
+        <h3 style="margin-bottom:12px">Active Coupons</h3>
+        <div id="adminCouponList"></div>
+      </div>
+    </section>
+
+    <!-- TAB 4: ORDERS -->
+    <section id="tab-orders" class="card hidden">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+        <h3>Customer Orders &amp; Payment Verification</h3>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <input id="adminOrderSearch" placeholder="Search Order ID, Phone, TrxID..." style="padding:8px 12px;border:1px solid var(--line);border-radius:8px;min-width:220px">
+          <select id="adminOrderStatusFilter" style="padding:8px 12px;border:1px solid var(--line);border-radius:8px">
+            <option value="All">All Statuses</option>
+            <option value="Pending">Pending</option>
+            <option value="Confirmed">Confirmed</option>
+            <option value="Packed">Packed</option>
+            <option value="Out for Delivery">Out for Delivery</option>
+            <option value="Delivered">Delivered</option>
+            <option value="Cancelled">Cancelled</option>
+          </select>
+        </div>
+      </div>
+      <div id="adminOrderList"></div>
+    </section>
+
+    <!-- TAB 5: PAYMENT SETTINGS & SMS GATEWAY -->
+    <section id="tab-payment" class="split-grid hidden">
+      <div class="card">
+        <h3 style="margin-bottom:12px">Merchant Numbers &amp; SMS API</h3>
+        <form id="paymentSettingsForm">
+          <div class="field"><label>bKash Merchant / Personal Number</label><input id="setBkash" placeholder="017XXXXXXXX"></div>
+          <div class="field"><label>Nagad Number</label><input id="setNagad" placeholder="018XXXXXXXX"></div>
+          <div class="field"><label>Rocket DBBL Number</label><input id="setRocket" placeholder="019XXXXXXXX"></div>
+          <div class="field"><label>External Payment SMS API URL (Optional)</label><input id="setSmsUrl" placeholder="https://your-sms-webhook.example/verify"></div>
+          <div class="field"><label>External SMS API Key / Header Token</label><input id="setSmsKey" placeholder="Optional secret token"></div>
+          <label style="display:flex;align-items:center;gap:8px;font-weight:600;margin-bottom:12px">
+            <input type="checkbox" id="setAutoVerify" checked style="width:auto"> Enable Auto TrxID Verification on Checkout
+          </label>
+          <button type="submit" style="width:100%">💾 Save Payment Settings</button>
+        </form>
+
+        <hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
+        <h3 style="margin-bottom:10px">Record Received Payment SMS</h3>
+        <p class="muted" style="font-size:12px;margin:0 0 10px">Customers paying with matching Sender Number &amp; TrxID are automatically confirmed and locked from cancellation.</p>
+        <form id="smsInboxForm">
+          <div class="form-row">
+            <div class="field">
+              <label>Provider *</label>
+              <select id="smsProvider">
+                <option value="bKash">bKash</option>
+                <option value="Nagad">Nagad</option>
+                <option value="Rocket">Rocket</option>
+              </select>
+            </div>
+            <div class="field"><label>Amount Received (৳) *</label><input id="smsAmount" type="number" min="1" required></div>
+          </div>
+          <div class="form-row">
+            <div class="field"><label>Sender Number (01XXXXXXXXX) *</label><input id="smsSender" required placeholder="017XXXXXXXX"></div>
+            <div class="field"><label>Transaction ID (TrxID) *</label><input id="smsTrxId" required placeholder="BL74K9M2PQ" style="text-transform:uppercase"></div>
+          </div>
+          <button type="submit" style="width:100%">➕ Add Verified Payment SMS</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-bottom:12px">SMS Inbox Verification Ledger</h3>
+        <div id="adminSmsList"></div>
+      </div>
+    </section>
+
+    <!-- TAB 6: CUSTOMERS, PROFILES & ADDRESSES CRUD -->
+    <section id="tab-customers" class="split-grid hidden">
+      <div class="card">
+        <h3 id="custFormTitle" style="margin-bottom:12px">Add / Edit Customer Profile</h3>
+        <form id="customerForm">
+          <input type="hidden" id="custEditUid">
+          <div class="field"><label>Profile ID / UID (leave blank to auto-generate)</label><input id="custUidInput" placeholder="Firebase UID or custom key"></div>
+          <div class="field"><label>Full Name *</label><input id="custName" required placeholder="Customer Full Name"></div>
+          <div class="form-row">
+            <div class="field"><label>Email *</label><input id="custEmail" type="email" required placeholder="customer@example.com"></div>
+            <div class="field"><label>BD Mobile Phone</label><input id="custPhone" placeholder="017XXXXXXXX"></div>
+          </div>
+          <div class="field"><label>Bio / Notes</label><textarea id="custBio" rows="2" placeholder="Optional profile bio or note"></textarea></div>
+          <div style="display:flex;gap:8px">
+            <button type="submit" style="flex:1" id="custSaveBtn">💾 Save Customer Profile</button>
+            <button type="button" class="secondary" id="custResetBtn">Clear</button>
+          </div>
+        </form>
+
+        <hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
+        <h3 id="admAddrTitle" style="margin-bottom:8px">Add / Edit Customer Address</h3>
+        <form id="admAddressForm">
+          <input type="hidden" id="admAddrCustUid">
+          <input type="hidden" id="admAddrId">
+          <div class="field">
+            <label>Select Customer *</label>
+            <select id="admAddrCustSelect" required></select>
+          </div>
+          <div class="form-row">
+            <div class="field"><label>Label *</label><input id="admAddrLabel" value="Home" required></div>
+            <div class="field"><label>Recipient Name *</label><input id="admAddrRecipient" required></div>
+          </div>
+          <div class="form-row">
+            <div class="field"><label>Phone *</label><input id="admAddrPhone" required placeholder="017XXXXXXXX"></div>
+            <div class="field">
+              <label>Division *</label>
+              <select id="admAddrDivision">
+                <option>Dhaka</option><option>Chattogram</option><option>Sylhet</option><option>Rajshahi</option>
+                <option>Khulna</option><option>Barishal</option><option>Rangpur</option><option>Mymensingh</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="field"><label>District / Thana *</label><input id="admAddrThana" required></div>
+            <div class="field"><label>Street / House / Area *</label><input id="admAddrStreet" required></div>
+          </div>
+          <label style="display:flex;align-items:center;gap:6px;font-weight:600;margin-bottom:10px">
+            <input type="checkbox" id="admAddrDefault" style="width:auto"> Set as default address
+          </label>
+          <div style="display:flex;gap:8px">
+            <button type="submit" style="flex:1" id="admAddrSaveBtn">➕ Save Address</button>
+            <button type="button" class="secondary" id="admAddrResetBtn">Clear</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+          <h3>Customer Profiles &amp; Saved Addresses (<span id="custListCount">0</span>)</h3>
+          <input id="adminCustSearch" placeholder="Search name, email, phone..." style="padding:8px 12px;border:1px solid var(--line);border-radius:8px;min-width:220px">
+        </div>
+        <div id="adminCustomerList"></div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import { getDatabase, ref, set, push, update, remove, onValue } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBmogqpXzirZC-aUHZrFMwutSJ5fmbyDXk",
+  authDomain: "e-commarcebd.firebaseapp.com",
+  databaseURL: "https://e-commarcebd-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "e-commarcebd",
+  storageBucket: "e-commarcebd.firebasestorage.app",
+  messagingSenderId: "799252588942",
+  appId: "1:799252588942:web:985396062c3a1823c6dcdf",
+  measurementId: "G-FM6BH07VPM"
+};
+
+const ADMIN_EMAIL = "mail.sajjadahmed@gmail.com";
+const STANDARD_CATEGORIES = [
+  "Electronics & Gadgets",
+  "Mobile & Accessories",
+  "Computer & Accessories",
+  "Home & Kitchen",
+  "Fashion & Apparel",
+  "Health & Beauty",
+  "Sports & Outdoors",
+  "Toys & Baby Care",
+  "Books & Stationery",
+  "Groceries & Daily Needs"
+];
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getDatabase(app);
+
+let products = {};
+let categories = {};
+let coupons = {};
+let orders = {};
+let smsInbox = {};
+let customers = {};
+let listenersStarted = false;
+
+const $ = (id) => document.getElementById(id);
+const money = (n) => "৳" + Number(n || 0).toLocaleString("en-BD");
+const safe = (s = "") => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+function toast(msg) {
+  const el = $("toast");
+  el.textContent = msg;
+  el.style.display = "block";
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => { el.style.display = "none"; }, 3400);
+}
+
+function normalizeBdPhone(raw = "") {
+  const digits = String(raw).replace(/\D/g, "");
+  if (digits.startsWith("8801") && digits.length === 13) return digits.slice(2);
+  return digits;
+}
+
+function updateStats() {
+  $("stProducts").textContent = Object.keys(products).length;
+  const orderArr = Object.values(orders);
+  $("stOrders").textContent = orderArr.length;
+  const rev = orderArr.filter((o) => o.status !== "Cancelled").reduce((s, o) => s + Number(o.total || 0), 0);
+  $("stRevenue").textContent = money(rev);
+  $("stPending").textContent = orderArr.filter((o) => o.status === "Pending").length;
+  $("stCustomers").textContent = Object.keys(customers).length;
+}
+
+function renderCategoryDatalist() {
+  const names = new Set([...STANDARD_CATEGORIES, ...Object.values(categories).map((c) => c.name).filter(Boolean)]);
+  $("categoryOptionsList").innerHTML = [...names].map((n) => `<option value="${safe(n)}">`).join("");
+}
+
+function renderAdminProducts() {
+  const q = $("adminProdSearch").value.trim().toLowerCase();
+  const entries = Object.entries(products).filter(([_, p]) =>
+    !q || `${p.name} ${p.category} ${p.brand || ""}`.toLowerCase().includes(q)
+  );
+  $("prodListCount").textContent = Object.keys(products).length;
+
+  if (!entries.length) {
+    $("adminProductList").innerHTML = `<p class="muted" style="text-align:center;padding:24px 0">No products yet. Add your first product using the form.</p>`;
+    return;
+  }
+
+  $("adminProductList").innerHTML = entries.map(([id, p]) => `
+    <div class="list-item">
+      <div style="display:flex;gap:12px;align-items:center;min-width:0;flex:1">
+        <img src="${safe(p.image || "assets/favicon.svg")}" alt="${safe(p.name)}" onerror="this.src='assets/favicon.svg'">
+        <div style="min-width:0">
+          <div style="font-weight:700">${safe(p.name)}</div>
+          <div style="font-size:12px;color:var(--muted)">${safe(p.category)} · Brand: ${safe(p.brand || "-")} · Stock: <b>${Number(p.stock || 0)}</b></div>
+          <div style="margin-top:4px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+            <b style="color:var(--crimson)">${money(p.price)}</b>
+            ${p.oldPrice > p.price ? `<span class="muted" style="text-decoration:line-through;font-size:12px">${money(p.oldPrice)}</span>` : ""}
+            ${p.isFlashDeal ? `<span class="badge red">Flash Deal</span>` : ""}
+            ${p.isFeatured ? `<span class="badge green">Featured</span>` : ""}
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0">
+        <button type="button" class="secondary sm" data-edit-prod="${safe(id)}">Edit</button>
+        <button type="button" class="crimson sm" data-del-prod="${safe(id)}">Delete</button>
+      </div>
+    </div>
+  `).join("");
+
+  $("adminProductList").querySelectorAll("[data-edit-prod]").forEach((b) => {
+    b.onclick = () => {
+      const id = b.dataset.editProd;
+      const p = products[id];
+      if (!p) return;
+      $("pEditId").value = id;
+      $("prodFormTitle").textContent = "Edit Product";
+      $("pSaveBtn").textContent = "💾 Update Product";
+      $("pName").value = p.name || "";
+      $("pCategory").value = p.category || "";
+      $("pBrand").value = p.brand || "";
+      $("pPrice").value = p.price || 0;
+      $("pOldPrice").value = p.oldPrice || 0;
+      $("pStock").value = p.stock ?? 0;
+      $("pRating").value = p.rating || 4.8;
+      $("pVariants").value = p.variants || "Standard";
+      $("pImage").value = p.image || "";
+      $("pSpecs").value = p.specs || "";
+      $("pDesc").value = p.description || "";
+      $("pFlashDeal").checked = !!p.isFlashDeal;
+      $("pFeatured").checked = !!p.isFeatured;
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+  });
+
+  $("adminProductList").querySelectorAll("[data-del-prod]").forEach((b) => {
+    b.onclick = async () => {
+      if (!confirm("Delete this product permanently?")) return;
+      await remove(ref(db, "products/" + b.dataset.delProd));
+      toast("Product deleted");
+    };
+  });
+}
+
+function resetProductForm() {
+  $("productForm").reset();
+  $("pEditId").value = "";
+  $("prodFormTitle").textContent = "Add New Product";
+  $("pSaveBtn").textContent = "➕ Add Product";
+  $("pFeatured").checked = true;
+  $("pRating").value = "4.8";
+  $("pStock").value = "10";
+  $("pVariants").value = "Standard";
+}
+
+function renderAdminCategories() {
+  renderCategoryDatalist();
+  const entries = Object.entries(categories).sort((a, b) => (a[1].order || 99) - (b[1].order || 99));
+  $("adminCategoryList").innerHTML = entries.length
+    ? entries.map(([id, c]) => `
+      <div class="list-item">
+        <div>
+          <div style="font-weight:700">${safe(c.icon || "📦")} ${safe(c.name)}</div>
+          <div style="font-size:12px;color:var(--muted)">Sort order: ${Number(c.order || 1)}</div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button type="button" class="secondary sm" data-edit-cat="${safe(id)}">Edit</button>
+          <button type="button" class="crimson sm" data-del-cat="${safe(id)}">Delete</button>
+        </div>
+      </div>
+    `).join("")
+    : `<p class="muted" style="text-align:center;padding:24px 0">No custom categories added yet. Categories are also auto-listed from your live products.</p>`;
+
+  $("adminCategoryList").querySelectorAll("[data-edit-cat]").forEach((b) => {
+    b.onclick = () => {
+      const id = b.dataset.editCat;
+      const c = categories[id];
+      if (!c) return;
+      $("catEditId").value = id;
+      $("catFormTitle").textContent = "Edit Category";
+      $("catSaveBtn").textContent = "💾 Update Category";
+      $("catName").value = c.name || "";
+      $("catIcon").value = c.icon || "📦";
+      $("catOrder").value = c.order || 1;
+    };
+  });
+
+  $("adminCategoryList").querySelectorAll("[data-del-cat]").forEach((b) => {
+    b.onclick = async () => {
+      if (!confirm("Delete this category?")) return;
+      await remove(ref(db, "categories/" + b.dataset.delCat));
+      toast("Category deleted");
+    };
+  });
+}
+
+function resetCategoryForm() {
+  $("categoryForm").reset();
+  $("catEditId").value = "";
+  $("catFormTitle").textContent = "Add Category";
+  $("catSaveBtn").textContent = "➕ Save Category";
+  $("catIcon").value = "📦";
+  $("catOrder").value = "1";
+}
+
+function renderAdminCoupons() {
+  const entries = Object.entries(coupons);
+  $("adminCouponList").innerHTML = entries.length
+    ? entries.map(([code, c]) => `
+      <div class="list-item">
+        <div>
+          <div style="font-weight:800;color:var(--emerald-dark)">${safe(code)} <span class="badge blue">${safe(c.type)}</span></div>
+          <div style="font-size:12.5px;color:var(--muted)">
+            Value: <b>${c.type === "percent" ? `${c.value}%` : c.type === "flat" ? money(c.value) : "Free Shipping"}</b> · Min Order: ${money(c.minOrder || 0)}
+          </div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button type="button" class="secondary sm" data-edit-cp="${safe(code)}">Edit</button>
+          <button type="button" class="crimson sm" data-del-cp="${safe(code)}">Delete</button>
+        </div>
+      </div>
+    `).join("")
+    : `<p class="muted" style="text-align:center;padding:24px 0">No active coupons yet.</p>`;
+
+  $("adminCouponList").querySelectorAll("[data-edit-cp]").forEach((b) => {
+    b.onclick = () => {
+      const code = b.dataset.editCp;
+      const c = coupons[code];
+      if (!c) return;
+      $("cpEditCode").value = code;
+      $("couponFormTitle").textContent = "Edit Coupon";
+      $("cpSaveBtn").textContent = "💾 Update Coupon";
+      $("cpCode").value = code;
+      $("cpType").value = c.type || "percent";
+      $("cpValue").value = c.value || 0;
+      $("cpMinOrder").value = c.minOrder || 0;
+    };
+  });
+
+  $("adminCouponList").querySelectorAll("[data-del-cp]").forEach((b) => {
+    b.onclick = async () => {
+      if (!confirm("Delete this coupon?")) return;
+      await remove(ref(db, "coupons/" + b.dataset.delCp));
+      toast("Coupon deleted");
+    };
+  });
+}
+
+function resetCouponForm() {
+  $("couponForm").reset();
+  $("cpEditCode").value = "";
+  $("couponFormTitle").textContent = "Add Promo Coupon";
+  $("cpSaveBtn").textContent = "➕ Save Coupon";
+  $("cpValue").value = "10";
+  $("cpMinOrder").value = "0";
+}
+
+function renderAdminOrders() {
+  const q = $("adminOrderSearch").value.trim().toLowerCase();
+  const st = $("adminOrderStatusFilter").value;
+  const entries = Object.entries(orders)
+    .filter(([id, o]) => {
+      if (st !== "All" && (o.status || "Pending") !== st) return false;
+      if (!q) return true;
+      return `${id} ${o.customer?.name || ""} ${o.customer?.phone || ""} ${o.senderNumber || ""} ${o.trxId || ""}`.toLowerCase().includes(q);
+    })
+    .sort((a, b) => (b[1].createdAt || 0) - (a[1].createdAt || 0));
+
+  if (!entries.length) {
+    $("adminOrderList").innerHTML = `<p class="muted" style="text-align:center;padding:24px 0">No matching orders found.</p>`;
+    return;
+  }
+
+  $("adminOrderList").innerHTML = entries.map(([id, o]) => {
+    const status = o.status || "Pending";
+    const badgeCls = status === "Confirmed" || status === "Delivered" ? "green" : status === "Cancelled" ? "red" : "amber";
+    return `
+      <div class="list-item" style="flex-direction:column;align-items:stretch">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+          <div>
+            <b style="font-size:15px">${safe(id)}</b>
+            <span class="badge ${badgeCls}">${safe(status)}</span>
+            <span class="badge blue">${safe(o.paymentMethod || "")} · ${safe(o.paymentStatus || "Pending")}</span>
+          </div>
+          <div style="font-size:12px;color:var(--muted)">${new Date(o.createdAt || Date.now()).toLocaleString()}</div>
+        </div>
+        <div style="font-size:13px;display:grid;gap:4px">
+          <div><b>Customer:</b> ${safe(o.customer?.name || "")} (${safe(o.customer?.phone || "")}) · ${safe(o.customer?.address || "")}, ${safe(o.customer?.division || "")}</div>
+          <div><b>Items:</b> ${(o.items || []).map((i) => `${safe(i.name)} ×${i.qty}`).join(", ") || safe(o.itemsSummary || "")}</div>
+          ${o.senderNumber || o.trxId ? `<div><b>Payment Sender:</b> ${safe(o.senderNumber || "-")} · <b>TrxID:</b> <code>${safe(o.trxId || "-")}</code></div>` : ""}
+          <div><b>Total:</b> <b style="color:var(--crimson)">${money(o.total)}</b> (Delivery: ${money(o.deliveryFee || 0)})</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding-top:8px;border-top:1px solid var(--line)">
+          ${status === "Pending" || status === "Placed"
+            ? `<button type="button" class="sm" data-confirm-ord="${safe(id)}">✅ Confirm &amp; Verify Payment</button>`
+            : `<span style="font-size:12px;color:var(--emerald-dark);font-weight:700">🔒 Confirmed/Active (Customer cancel locked)</span>`}
+          <select data-status-ord="${safe(id)}" style="padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-size:12.5px">
+            ${["Pending","Confirmed","Packed","Out for Delivery","Delivered","Cancelled"].map((s) => `<option value="${s}" ${s === status ? "selected" : ""}>${s}</option>`).join("")}
+          </select>
+          <button type="button" class="crimson sm" data-del-ord="${safe(id)}">🗑️ Delete Order</button>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  $("adminOrderList").querySelectorAll("[data-confirm-ord]").forEach((b) => {
+    b.onclick = async () => {
+      const id = b.dataset.confirmOrd;
+      await update(ref(db, "orders/" + id), {
+        status: "Confirmed",
+        paymentStatus: "Verified (Admin)",
+        updatedAt: Date.now()
+      });
+      toast(`Order ${id} confirmed! Customer cancellation is now locked.`);
+    };
+  });
+
+  $("adminOrderList").querySelectorAll("[data-status-ord]").forEach((sel) => {
+    sel.onchange = async () => {
+      const id = sel.dataset.statusOrd;
+      await update(ref(db, "orders/" + id), { status: sel.value, updatedAt: Date.now() });
+      toast(`Order ${id} updated to ${sel.value}`);
+    };
+  });
+
+  $("adminOrderList").querySelectorAll("[data-del-ord]").forEach((b) => {
+    b.onclick = async () => {
+      if (!confirm("Delete this order record permanently?")) return;
+      await remove(ref(db, "orders/" + b.dataset.delOrd));
+      toast("Order deleted");
+    };
+  });
+}
+
+function renderAdminSmsList() {
+  const entries = Object.entries(smsInbox).sort((a, b) => (b[1].receivedAt || 0) - (a[1].receivedAt || 0));
+  $("adminSmsList").innerHTML = entries.length
+    ? entries.map(([trxId, s]) => `
+      <div class="list-item">
+        <div>
+          <div style="font-weight:800">${safe(trxId)} <span class="badge blue">${safe(s.provider || "bKash")}</span> <span class="badge green">${money(s.amount)}</span></div>
+          <div style="font-size:12.5px;color:var(--muted)">Sender: <b>${safe(s.senderNumber)}</b> · ${s.matchedOrderId ? `Matched Order: <b>${safe(s.matchedOrderId)}</b>` : "Available for Auto-Verify"}</div>
+        </div>
+        <button type="button" class="crimson sm" data-del-sms="${safe(trxId)}">Delete</button>
+      </div>
+    `).join("")
+    : `<p class="muted" style="text-align:center;padding:24px 0">No SMS verification entries recorded yet.</p>`;
+
+  $("adminSmsList").querySelectorAll("[data-del-sms]").forEach((b) => {
+    b.onclick = async () => {
+      if (!confirm("Remove this SMS entry?")) return;
+      await remove(ref(db, "sms_inbox/" + b.dataset.delSms));
+      toast("SMS entry deleted");
+    };
+  });
+}
+
+function renderAdminCustomers() {
+  const q = $("adminCustSearch").value.trim().toLowerCase();
+  const entries = Object.entries(customers).filter(([uid, c]) =>
+    !q || `${uid} ${c.name || ""} ${c.email || ""} ${c.phone || ""}`.toLowerCase().includes(q)
+  );
+  $("custListCount").textContent = Object.keys(customers).length;
+
+  // Populate customer dropdown for address form
+  const curSelected = $("admAddrCustSelect").value;
+  $("admAddrCustSelect").innerHTML = Object.entries(customers).length
+    ? Object.entries(customers).map(([uid, c]) => `<option value="${safe(uid)}">${safe(c.name || c.email || uid)} (${safe(c.email || uid)})</option>`).join("")
+    : `<option value="">-- Add a customer profile first --</option>`;
+  if (curSelected && customers[curSelected]) $("admAddrCustSelect").value = curSelected;
+
+  if (!entries.length) {
+    $("adminCustomerList").innerHTML = `<p class="muted" style="text-align:center;padding:24px 0">No customer profiles found.</p>`;
+    return;
+  }
+
+  $("adminCustomerList").innerHTML = entries.map(([uid, c]) => {
+    const addrs = Object.entries(c.addresses || {});
+    return `
+      <div class="list-item" style="flex-direction:column;align-items:stretch">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap">
+          <div>
+            <div style="font-weight:800;font-size:15px">${safe(c.name || "Unnamed User")}</div>
+            <div style="font-size:12.5px;color:var(--muted)">Email: ${safe(c.email || "-")} · Phone: ${safe(c.phone || "-")}</div>
+            ${c.bio ? `<div style="font-size:12px;color:var(--muted);margin-top:2px">Note: ${safe(c.bio)}</div>` : ""}
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button type="button" class="secondary sm" data-edit-cust="${safe(uid)}">Edit Profile</button>
+            <button type="button" class="crimson sm" data-del-cust="${safe(uid)}">Delete Profile</button>
+          </div>
+        </div>
+        <div style="margin-top:8px;padding-top:8px;border-top:1px dashed var(--line)">
+          <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:6px">Saved Addresses (${addrs.length})</div>
+          ${addrs.length ? addrs.map(([aid, a]) => `
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin-bottom:6px;font-size:12.5px">
+              <div>
+                <b>${safe(a.label || "Home")}</b> ${a.isDefault ? `<span class="badge green">Default</span>` : ""} · ${safe(a.recipientName)} (${safe(a.phone)})
+                <div class="muted">${safe(a.street)}, ${safe(a.thana)}, ${safe(a.division)}</div>
+              </div>
+              <div style="display:flex;gap:5px;flex-shrink:0">
+                <button type="button" class="secondary sm" data-edit-caddr="${safe(uid)}|${safe(aid)}">Edit</button>
+                <button type="button" class="crimson sm" data-del-caddr="${safe(uid)}|${safe(aid)}">Delete</button>
+              </div>
+            </div>
+          `).join("") : `<div class="muted" style="font-size:12px">No saved addresses yet.</div>`}
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  $("adminCustomerList").querySelectorAll("[data-edit-cust]").forEach((b) => {
+    b.onclick = () => {
+      const uid = b.dataset.editCust;
+      const c = customers[uid];
+      if (!c) return;
+      $("custEditUid").value = uid;
+      $("custUidInput").value = uid;
+      $("custUidInput").disabled = true;
+      $("custFormTitle").textContent = "Edit Customer Profile";
+      $("custSaveBtn").textContent = "💾 Update Profile";
+      $("custName").value = c.name || "";
+      $("custEmail").value = c.email || "";
+      $("custPhone").value = c.phone || "";
+      $("custBio").value = c.bio || "";
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+  });
+
+  $("adminCustomerList").querySelectorAll("[data-del-cust]").forEach((b) => {
+    b.onclick = async () => {
+      if (!confirm("Delete this customer profile and all their saved addresses?")) return;
+      await remove(ref(db, "customers/" + b.dataset.delCust));
+      toast("Customer profile deleted");
+    };
+  });
+
+  $("adminCustomerList").querySelectorAll("[data-edit-caddr]").forEach((b) => {
+    b.onclick = () => {
+      const [uid, aid] = b.dataset.editCaddr.split("|");
+      const a = customers[uid]?.addresses?.[aid];
+      if (!a) return;
+      $("admAddrCustUid").value = uid;
+      $("admAddrCustSelect").value = uid;
+      $("admAddrId").value = aid;
+      $("admAddrTitle").textContent = "Edit Customer Address";
+      $("admAddrSaveBtn").textContent = "💾 Update Address";
+      $("admAddrLabel").value = a.label || "Home";
+      $("admAddrRecipient").value = a.recipientName || "";
+      $("admAddrPhone").value = a.phone || "";
+      $("admAddrDivision").value = a.division || "Dhaka";
+      $("admAddrThana").value = a.thana || "";
+      $("admAddrStreet").value = a.street || "";
+      $("admAddrDefault").checked = !!a.isDefault;
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+  });
+
+  $("adminCustomerList").querySelectorAll("[data-del-caddr]").forEach((b) => {
+    b.onclick = async () => {
+      if (!confirm("Delete this saved address?")) return;
+      const [uid, aid] = b.dataset.delCaddr.split("|");
+      await remove(ref(db, `customers/${uid}/addresses/${aid}`));
+      toast("Customer address deleted");
+    };
+  });
+}
+
+function resetCustomerForm() {
+  $("customerForm").reset();
+  $("custEditUid").value = "";
+  $("custUidInput").disabled = false;
+  $("custFormTitle").textContent = "Add / Edit Customer Profile";
+  $("custSaveBtn").textContent = "💾 Save Customer Profile";
+}
+
+function resetAdmAddrForm() {
+  $("admAddressForm").reset();
+  $("admAddrId").value = "";
+  $("admAddrTitle").textContent = "Add / Edit Customer Address";
+  $("admAddrSaveBtn").textContent = "➕ Save Address";
+  $("admAddrLabel").value = "Home";
+}
+
+function startAdminListeners() {
+  if (listenersStarted) return;
+  listenersStarted = true;
+
+  onValue(ref(db, "products"), (snap) => { products = snap.val() || {}; updateStats(); renderAdminProducts(); });
+  onValue(ref(db, "categories"), (snap) => { categories = snap.val() || {}; renderAdminCategories(); });
+  onValue(ref(db, "coupons"), (snap) => { coupons = snap.val() || {}; renderAdminCoupons(); });
+  onValue(ref(db, "orders"), (snap) => { orders = snap.val() || {}; updateStats(); renderAdminOrders(); });
+  onValue(ref(db, "sms_inbox"), (snap) => { smsInbox = snap.val() || {}; renderAdminSmsList(); });
+  onValue(ref(db, "customers"), (snap) => { customers = snap.val() || {}; updateStats(); renderAdminCustomers(); });
+  onValue(ref(db, "deals/hero"), (snap) => {
+    const v = snap.val() || {};
+    $("hBadge").value = v.badge || "সাশ্রয়ে সেরা অনলাইন শপিং সারা বাংলাদেশে!";
+    $("hTitle").value = v.title || "SPR ZONE BD";
+    $("hSubtitle").value = v.subtitle || "এখন আরও কাছে, আরও সাশ্রয়ী!";
+  });
+  onValue(ref(db, "settings/payment"), (snap) => {
+    const v = snap.val() || {};
+    $("setBkash").value = v.bkashNumber || "";
+    $("setNagad").value = v.nagadNumber || "";
+    $("setRocket").value = v.rocketNumber || "";
+    $("setSmsUrl").value = v.smsApiUrl || "";
+    $("setSmsKey").value = v.smsApiKey || "";
+    $("setAutoVerify").checked = v.autoVerifyEnabled !== false;
+  });
+}
+
+/* ---------- Auth ---------- */
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    $("adminLoginGate").classList.remove("hidden");
+    $("adminDashboard").classList.add("hidden");
+    $("nonAdminNotice").classList.add("hidden");
+    $("adminSignOutBtn").classList.add("hidden");
+    $("adminEmailDisplay").textContent = "Not signed in";
+    return;
+  }
+
+  let claimAdmin = false;
+  try {
+    const token = await user.getIdTokenResult();
+    claimAdmin = token.claims.admin === true;
+  } catch (_) {}
+
+  const isAdmin = (user.email || "").toLowerCase() === ADMIN_EMAIL || claimAdmin;
+  $("adminEmailDisplay").textContent = user.email;
+  $("adminSignOutBtn").classList.remove("hidden");
+
+  if (!isAdmin) {
+    $("adminLoginGate").classList.remove("hidden");
+    $("adminDashboard").classList.add("hidden");
+    $("nonAdminNotice").classList.remove("hidden");
+    $("nonAdminEmail").textContent = user.email;
+    return;
+  }
+
+  $("adminLoginGate").classList.add("hidden");
+  $("nonAdminNotice").classList.add("hidden");
+  $("adminDashboard").classList.remove("hidden");
+  startAdminListeners();
+});
+
+$("adminLoginForm").onsubmit = async (e) => {
+  e.preventDefault();
+  try {
+    await signInWithEmailAndPassword(auth, $("loginEmail").value.trim(), $("loginPassword").value);
+    toast("Admin signed in!");
+  } catch (err) {
+    toast(err.message);
+  }
+};
+
+const doSignOut = async () => { await signOut(auth); toast("Signed out"); };
+$("adminSignOutBtn").onclick = doSignOut;
+$("switchAccountBtn").onclick = doSignOut;
+
+/* ---------- Tabs & Filters ---------- */
+document.querySelectorAll("[data-tab]").forEach((btn) => {
+  btn.onclick = () => {
+    document.querySelectorAll("[data-tab]").forEach((x) => x.classList.remove("active"));
+    btn.classList.add("active");
+    ["products", "categories", "deals", "orders", "payment", "customers"].forEach((t) => {
+      $("tab-" + t).classList.toggle("hidden", t !== btn.dataset.tab);
+    });
+  };
+});
+
+$("adminProdSearch").oninput = renderAdminProducts;
+$("adminOrderSearch").oninput = renderAdminOrders;
+$("adminOrderStatusFilter").onchange = renderAdminOrders;
+$("adminCustSearch").oninput = renderAdminCustomers;
+
+/* ---------- Form Submissions ---------- */
+$("productForm").onsubmit = async (e) => {
+  e.preventDefault();
+  const editId = $("pEditId").value;
+  const prodId = editId || push(ref(db, "products")).key;
+  const price = Number($("pPrice").value);
+  const oldPrice = Number($("pOldPrice").value || 0);
+  await set(ref(db, "products/" + prodId), {
+    name: $("pName").value.trim(),
+    category: $("pCategory").value.trim(),
+    brand: $("pBrand").value.trim() || "SPR ZONE BD",
+    price,
+    oldPrice: oldPrice > price ? oldPrice : 0,
+    stock: Number($("pStock").value || 0),
+    rating: Number($("pRating").value || 4.8),
+    reviewCount: editId && products[editId]?.reviewCount ? products[editId].reviewCount : 0,
+    variants: $("pVariants").value.trim() || "Standard",
+    image: $("pImage").value.trim(),
+    specs: $("pSpecs").value.trim(),
+    description: $("pDesc").value.trim(),
+    isFlashDeal: $("pFlashDeal").checked,
+    isFeatured: $("pFeatured").checked,
+    updatedAt: Date.now()
+  });
+  resetProductForm();
+  toast(editId ? "Product updated!" : "Product added to live store!");
+};
+$("pResetBtn").onclick = resetProductForm;
+
+$("categoryForm").onsubmit = async (e) => {
+  e.preventDefault();
+  const editId = $("catEditId").value;
+  const catId = editId || push(ref(db, "categories")).key;
+  await set(ref(db, "categories/" + catId), {
+    name: $("catName").value.trim(),
+    icon: $("catIcon").value.trim() || "📦",
+    order: Number($("catOrder").value || 1)
+  });
+  resetCategoryForm();
+  toast(editId ? "Category updated!" : "Category added!");
+};
+$("catResetBtn").onclick = resetCategoryForm;
+
+$("heroForm").onsubmit = async (e) => {
+  e.preventDefault();
+  await set(ref(db, "deals/hero"), {
+    badge: $("hBadge").value.trim(),
+    title: $("hTitle").value.trim(),
+    subtitle: $("hSubtitle").value.trim(),
+    updatedAt: Date.now()
+  });
+  toast("Hero banner updated!");
+};
+
+$("couponForm").onsubmit = async (e) => {
+  e.preventDefault();
+  const code = $("cpCode").value.trim().toUpperCase();
+  const oldCode = $("cpEditCode").value;
+  if (oldCode && oldCode !== code) {
+    await remove(ref(db, "coupons/" + oldCode));
+  }
+  await set(ref(db, "coupons/" + code), {
+    type: $("cpType").value,
+    value: Number($("cpValue").value || 0),
+    minOrder: Number($("cpMinOrder").value || 0)
+  });
+  resetCouponForm();
+  toast(`Coupon ${code} saved!`);
+};
+$("cpResetBtn").onclick = resetCouponForm;
+
+$("paymentSettingsForm").onsubmit = async (e) => {
+  e.preventDefault();
+  await set(ref(db, "settings/payment"), {
+    bkashNumber: normalizeBdPhone($("setBkash").value),
+    nagadNumber: normalizeBdPhone($("setNagad").value),
+    rocketNumber: normalizeBdPhone($("setRocket").value),
+    smsApiUrl: $("setSmsUrl").value.trim(),
+    smsApiKey: $("setSmsKey").value.trim(),
+    autoVerifyEnabled: $("setAutoVerify").checked,
+    updatedAt: Date.now()
+  });
+  toast("Payment & SMS API settings saved!");
+};
+
+$("smsInboxForm").onsubmit = async (e) => {
+  e.preventDefault();
+  const trxId = $("smsTrxId").value.trim().toUpperCase();
+  await set(ref(db, "sms_inbox/" + trxId), {
+    provider: $("smsProvider").value,
+    amount: Number($("smsAmount").value),
+    senderNumber: normalizeBdPhone($("smsSender").value),
+    trxId,
+    matchedOrderId: "",
+    receivedAt: Date.now()
+  });
+  $("smsInboxForm").reset();
+  toast(`Payment SMS ${trxId} saved to verification inbox!`);
+};
+
+$("customerForm").onsubmit = async (e) => {
+  e.preventDefault();
+  const editUid = $("custEditUid").value;
+  const uid = editUid || $("custUidInput").value.trim() || push(ref(db, "customers")).key;
+  const payload = {
+    name: $("custName").value.trim(),
+    email: $("custEmail").value.trim(),
+    phone: normalizeBdPhone($("custPhone").value),
+    bio: $("custBio").value.trim(),
+    updatedAt: Date.now()
+  };
+  if (editUid && customers[editUid]?.addresses) {
+    payload.addresses = customers[editUid].addresses;
+  }
+  if (!editUid) payload.createdAt = Date.now();
+  await update(ref(db, "customers/" + uid), payload);
+  resetCustomerForm();
+  toast(editUid ? "Customer profile updated!" : "Customer profile added!");
+};
+$("custResetBtn").onclick = resetCustomerForm;
+
+$("admAddressForm").onsubmit = async (e) => {
+  e.preventDefault();
+  const uid = $("admAddrCustSelect").value;
+  if (!uid) return toast("Please select or add a customer first");
+  const existingAid = $("admAddrId").value;
+  const aid = existingAid || push(ref(db, `customers/${uid}/addresses`)).key;
+  const curAddrs = customers[uid]?.addresses || {};
+  const makeDefault = $("admAddrDefault").checked || Object.keys(curAddrs).length === 0;
+  const updates = {};
+  if (makeDefault) {
+    Object.keys(curAddrs).forEach((k) => {
+      updates[`customers/${uid}/addresses/${k}/isDefault`] = false;
+    });
+  }
+  updates[`customers/${uid}/addresses/${aid}`] = {
+    label: $("admAddrLabel").value.trim() || "Home",
+    recipientName: $("admAddrRecipient").value.trim(),
+    phone: normalizeBdPhone($("admAddrPhone").value),
+    division: $("admAddrDivision").value,
+    thana: $("admAddrThana").value.trim(),
+    street: $("admAddrStreet").value.trim(),
+    isDefault: makeDefault
+  };
+  await update(ref(db), updates);
+  resetAdmAddrForm();
+  toast(existingAid ? "Customer address updated!" : "Customer address added!");
+};
+$("admAddrResetBtn").onclick = resetAdmAddrForm;
+</script>
+</body>
+</html>

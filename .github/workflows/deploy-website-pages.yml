@@ -6,7 +6,11 @@ on:
       - main
       - master
     paths:
-      - "website/**"
+      - "index.html"
+      - "admin.html"
+      - ".nojekyll"
+      - "firebase.database.rules.json"
+      - "assets/**"
       - ".github/workflows/deploy-website-pages.yml"
   workflow_dispatch:
 
@@ -29,13 +33,21 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Stage static website files
+        run: |
+          mkdir -p _site
+          cp index.html admin.html .nojekyll firebase.database.rules.json _site/
+          cp -r assets _site/
+
       - name: Setup GitHub Pages
         uses: actions/configure-pages@v5
+        with:
+          enablement: true
 
       - name: Upload website artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: "./website"
+          path: "./_site"
 
       - name: Deploy to GitHub Pages
         id: deployment

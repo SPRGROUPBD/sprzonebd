@@ -10,7 +10,6 @@ import com.example.data.local.SessionPreferences
 import com.example.data.local.SprZoneDatabase
 import com.example.data.model.AddressEntity
 import com.example.data.model.CartItemEntity
-import com.example.data.model.DeliveryZone
 import com.example.data.model.MerchantPaymentSettings
 import com.example.data.model.OrderEntity
 import com.example.data.model.PaymentMethod
@@ -33,6 +32,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -79,11 +79,12 @@ class SprZoneViewModel(
 
     val paymentSettings: StateFlow<MerchantPaymentSettings> = repository.paymentSettings
 
+    val availableCoupons: StateFlow<List<String>> = repository.coupons
+        .map { map -> map.keys.toList().sorted() }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), emptyList())
+
     val loggedInEmail: StateFlow<String?> = repository.loggedInEmailFlow
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), null)
-
-    val deliveryZone: StateFlow<DeliveryZone> = repository.deliveryZoneFlow
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), DeliveryZone.DHAKA_METRO)
 
     val isDarkMode: StateFlow<Boolean> = repository.isDarkModeFlow
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), false)
@@ -138,19 +139,26 @@ class SprZoneViewModel(
         products.filter { it.id in idSet }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), emptyList())
 
+    val addresses: StateFlow<List<AddressEntity>> = loggedInEmail
+        .flatMapLatest { email ->
+            if (email.isNullOrBlank()) flowOf(emptyList()) else repository.observeAddresses(email)
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), emptyList())
+
     val cartSummary: StateFlow<CartSummary> = combine(
         cartItems,
-        deliveryZone,
+        addresses,
         _promoCodeInput
-    ) { items, zone, promoInput ->
+    ) { items, addrList, promoInput ->
         val itemCount = items.sumOf { it.quantity }
         val subtotal = items.sumOf { it.unitPriceBdt * it.quantity }
         val promo = if (promoInput.isNotBlank()) repository.evaluatePromo(promoInput, subtotal) else null
         val discount = promo?.discountBdt ?: 0L
+        val defaultDivision = addrList.firstOrNull { it.isDefault }?.division ?: addrList.firstOrNull()?.division ?: "Dhaka"
         val delivery = when {
             items.isEmpty() -> 0L
             subtotal >= StoreConstants.FREE_DELIVERY_THRESHOLD_BDT || promo?.freeShipping == true -> 0L
-            else -> zone.feeBdt
+            else -> StoreConstants.deliveryFeeForDivision(defaultDivision)
         }
         val total = (subtotal - discount + delivery).coerceAtLeast(0L)
         val remainingForFree = (StoreConstants.FREE_DELIVERY_THRESHOLD_BDT - subtotal).coerceAtLeast(0L)
@@ -164,12 +172,6 @@ class SprZoneViewModel(
             freeDeliveryRemainingBdt = remainingForFree
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), CartSummary())
-
-    val addresses: StateFlow<List<AddressEntity>> = loggedInEmail
-        .flatMapLatest { email ->
-            if (email.isNullOrBlank()) flowOf(emptyList()) else repository.observeAddresses(email)
-        }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), emptyList())
 
     val userOrders: StateFlow<List<OrderEntity>> = loggedInEmail
         .flatMapLatest { email ->
@@ -225,13 +227,6 @@ class SprZoneViewModel(
         _filterState.value = CatalogFilterState()
     }
 
-    fun setDeliveryZone(zone: DeliveryZone) {
-        viewModelScope.launch {
-            repository.setDeliveryZone(zone)
-            _snackbarEvents.tryEmit("Delivery zone: ${zone.label}")
-        }
-    }
-
     fun setDarkMode(enabled: Boolean) {
         viewModelScope.launch {
             repository.setDarkMode(enabled)
@@ -249,7 +244,7 @@ class SprZoneViewModel(
             _promoCodeInput.value = promo.code
             _snackbarEvents.tryEmit(promo.message)
         } else {
-            _snackbarEvents.tryEmit("Invalid promo or minimum ৳1,000 not met. Try SPR10, DHAKA100, or FREESHIP.")
+            _snackbarEvents.tryEmit("Invalid promo code or minimum order requirement not met.")
         }
     }
 
@@ -316,6 +311,42 @@ class SprZoneViewModel(
         }
     }
 
+    fun updateProfile(
+        fullName: String,
+        phone: String,
+        bio: String,
+        onResult: (Result<UserAccountEntity>) -> Unit
+    ) {
+        viewModelScope.launch {
+            val email = loggedInEmail.value
+            if (email.isNullOrBlank()) {
+                onResult(Result.failure(IllegalStateException("Please sign in first.")))
+                return@launch
+            }
+            val res = repository.updateProfile(email, fullName, phone, bio)
+            if (res.isSuccess) {
+                _snackbarEvents.tryEmit("Profile updated")
+            }
+            onResult(res)
+        }
+    }
+
+    fun deleteProfile(onResult: (Result<Unit>) -> Unit = {}) {
+        viewModelScope.launch {
+            val email = loggedInEmail.value
+            if (email.isNullOrBlank()) {
+                onResult(Result.failure(IllegalStateException("No active profile.")))
+                return@launch
+            }
+            val res = repository.deleteProfile(email)
+            if (res.isSuccess) {
+                _promoCodeInput.value = ""
+                _snackbarEvents.tryEmit("Profile deleted")
+            }
+            onResult(res)
+        }
+    }
+
     fun signOut() {
         viewModelScope.launch {
             repository.signOut()
@@ -357,6 +388,41 @@ class SprZoneViewModel(
         }
     }
 
+    fun updateAddress(
+        addressId: Long,
+        label: String,
+        recipientName: String,
+        phone: String,
+        division: String,
+        districtThana: String,
+        streetAddress: String,
+        makeDefault: Boolean,
+        onResult: (Result<Unit>) -> Unit
+    ) {
+        viewModelScope.launch {
+            val email = loggedInEmail.value
+            if (email.isNullOrBlank()) {
+                onResult(Result.failure(IllegalStateException("Please sign in first.")))
+                return@launch
+            }
+            val res = repository.updateAddress(
+                userEmail = email,
+                addressId = addressId,
+                label = label,
+                recipientName = recipientName,
+                phone = phone,
+                division = division,
+                districtThana = districtThana,
+                streetAddress = streetAddress,
+                makeDefault = makeDefault
+            )
+            if (res.isSuccess) {
+                _snackbarEvents.tryEmit("Shipping address updated")
+            }
+            onResult(res)
+        }
+    }
+
     fun setDefaultAddress(addressId: Long) {
         viewModelScope.launch {
             val email = loggedInEmail.value ?: return@launch
@@ -388,7 +454,6 @@ class SprZoneViewModel(
                 userEmail = email,
                 address = address,
                 cartItems = cartItems.value,
-                deliveryZone = deliveryZone.value,
                 promoCode = _promoCodeInput.value,
                 paymentMethod = paymentMethod,
                 senderNumberInput = senderNumberInput,

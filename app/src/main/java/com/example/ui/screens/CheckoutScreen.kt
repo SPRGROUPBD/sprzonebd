@@ -134,6 +134,13 @@ fun CheckoutScreen(
     }
 
     val selectedAddress = addresses.find { it.id == selectedAddressId }
+    val effectiveDeliveryFee = when {
+        cartItems.isEmpty() -> 0L
+        summary.subtotalBdt >= StoreConstants.FREE_DELIVERY_THRESHOLD_BDT || summary.appliedPromo?.freeShipping == true -> 0L
+        selectedAddress != null -> StoreConstants.deliveryFeeForDivision(selectedAddress.division)
+        else -> summary.deliveryFeeBdt
+    }
+    val effectiveTotal = (summary.subtotalBdt - summary.discountBdt + effectiveDeliveryFee).coerceAtLeast(0L)
 
     Scaffold(
         topBar = {
@@ -335,9 +342,9 @@ fun CheckoutScreen(
                             if (summary.discountBdt > 0) {
                                 SummaryRow("Promo (${summary.appliedPromo?.code})", "-${formatBdt(summary.discountBdt)}", valueColor = VerifiedGreen)
                             }
-                            SummaryRow("Delivery Fee", if (summary.deliveryFeeBdt == 0L) "FREE" else formatBdt(summary.deliveryFeeBdt))
+                            SummaryRow("Delivery Fee", if (effectiveDeliveryFee == 0L) "FREE" else formatBdt(effectiveDeliveryFee))
                             HorizontalDivider()
-                            SummaryRow("Total Amount", formatBdt(summary.totalBdt), bold = true, valueColor = MaterialTheme.colorScheme.primary)
+                            SummaryRow("Total Amount", formatBdt(effectiveTotal), bold = true, valueColor = MaterialTheme.colorScheme.primary)
 
                             if (checkoutError != null) {
                                 Text(
@@ -377,9 +384,9 @@ fun CheckoutScreen(
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
                                     text = if (selectedPayment == PaymentMethod.COD) {
-                                        "Place COD Order (${formatBdt(summary.totalBdt)})"
+                                        "Place COD Order (${formatBdt(effectiveTotal)})"
                                     } else {
-                                        "Pay ${formatBdt(summary.totalBdt)} via ${selectedPayment.displayName}"
+                                        "Pay ${formatBdt(effectiveTotal)} via ${selectedPayment.displayName}"
                                     }
                                 )
                             }
@@ -393,7 +400,7 @@ fun CheckoutScreen(
     if (showGatewayDialog && selectedAddress != null) {
         PaymentGatewayVerificationDialog(
             method = selectedPayment,
-            amountBdt = summary.totalBdt,
+            amountBdt = effectiveTotal,
             defaultPhone = currentUser?.phone.orEmpty(),
             paymentSettings = paymentSettings,
             onDismiss = { showGatewayDialog = false },
@@ -574,20 +581,22 @@ private fun PaymentGatewayVerificationDialog(
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 Text(
-                                    text = merchantNumber,
+                                    text = merchantNumber.ifBlank { "Set merchant number in Admin" },
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold,
                                     color = brandColor
                                 )
-                                TextButton(
-                                    onClick = {
-                                        clipboard.setText(AnnotatedString(merchantNumber))
-                                        copiedNotice = true
+                                if (merchantNumber.isNotBlank()) {
+                                    TextButton(
+                                        onClick = {
+                                            clipboard.setText(AnnotatedString(merchantNumber))
+                                            copiedNotice = true
+                                        }
+                                    ) {
+                                        Icon(Icons.Filled.ContentCopy, contentDescription = "Copy number", modifier = Modifier.size(16.dp))
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text(if (copiedNotice) "Copied" else "Copy")
                                     }
-                                ) {
-                                    Icon(Icons.Filled.ContentCopy, contentDescription = "Copy number", modifier = Modifier.size(16.dp))
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text(if (copiedNotice) "Copied" else "Copy")
                                 }
                             }
                             Text(

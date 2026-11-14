@@ -51,6 +51,14 @@ data class RemotePaymentSettingsDto(
 )
 
 @JsonClass(generateAdapter = true)
+data class RemoteCouponDto(
+    val code: String? = null,
+    val type: String? = null,
+    val value: Double? = null,
+    val minOrder: Double? = null
+)
+
+@JsonClass(generateAdapter = true)
 data class RemoteSmsRecordDto(
     val senderNumber: String? = null,
     val provider: String? = null,
@@ -114,6 +122,9 @@ interface SprZoneRtdbService {
 
     @GET("settings/payment.json")
     suspend fun getPaymentSettings(): Response<RemotePaymentSettingsDto?>
+
+    @GET("coupons.json")
+    suspend fun getCoupons(): Response<Map<String, RemoteCouponDto>?>
 
     @GET("sms_inbox/{trxId}.json")
     suspend fun getSmsInboxRecord(@Path("trxId") trxId: String): Response<RemoteSmsRecordDto?>
@@ -183,9 +194,9 @@ object SprZoneNetworkClient {
 
     fun RemotePaymentSettingsDto.toDomain(): MerchantPaymentSettings {
         return MerchantPaymentSettings(
-            bkashNumber = bkashNumber?.takeIf { it.isNotBlank() } ?: "01700-000000",
-            nagadNumber = nagadNumber?.takeIf { it.isNotBlank() } ?: "01700-000000",
-            rocketNumber = rocketNumber?.takeIf { it.isNotBlank() } ?: "01700-0000009",
+            bkashNumber = bkashNumber.orEmpty().trim(),
+            nagadNumber = nagadNumber.orEmpty().trim(),
+            rocketNumber = rocketNumber.orEmpty().trim(),
             smsApiUrl = smsApiUrl.orEmpty().trim(),
             smsApiKey = smsApiKey.orEmpty().trim(),
             autoVerifyEnabled = autoVerifyEnabled ?: true

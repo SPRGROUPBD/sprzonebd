@@ -59,6 +59,7 @@ data class UserAccountEntity(
     val phone: String,
     val passwordHash: String,
     val salt: String,
+    val bio: String = "",
     val createdAt: Long = System.currentTimeMillis()
 )
 
@@ -117,9 +118,9 @@ data class ReviewEntity(
 )
 
 data class MerchantPaymentSettings(
-    val bkashNumber: String = "01700-000000",
-    val nagadNumber: String = "01700-000000",
-    val rocketNumber: String = "01700-0000009",
+    val bkashNumber: String = "",
+    val nagadNumber: String = "",
+    val rocketNumber: String = "",
     val smsApiUrl: String = "",
     val smsApiKey: String = "",
     val autoVerifyEnabled: Boolean = true
@@ -148,6 +149,10 @@ object StoreConstants {
     const val GUEST_EMAIL = "guest@sprzonebd.local"
     const val FREE_DELIVERY_THRESHOLD_BDT = 3000L
     const val RTDB_BASE_URL = "https://e-commarcebd-default-rtdb.europe-west1.firebasedatabase.app/"
+
+    fun deliveryFeeForDivision(division: String): Long {
+        return if (division.trim().equals("Dhaka", ignoreCase = true)) 60L else 120L
+    }
 
     val CATEGORIES = listOf(
         "All",

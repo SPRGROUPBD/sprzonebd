@@ -104,7 +104,7 @@ fun SprZoneApp(viewModel: SprZoneViewModel) {
         val wishlistProducts by viewModel.wishlistProducts.collectAsStateWithLifecycle()
         val cartItems by viewModel.cartItems.collectAsStateWithLifecycle()
         val cartSummary by viewModel.cartSummary.collectAsStateWithLifecycle()
-        val deliveryZone by viewModel.deliveryZone.collectAsStateWithLifecycle()
+        val availableCoupons by viewModel.availableCoupons.collectAsStateWithLifecycle()
         val countdown by viewModel.flashCountdownSeconds.collectAsStateWithLifecycle()
         val currentUser by viewModel.currentUser.collectAsStateWithLifecycle()
         val addresses by viewModel.addresses.collectAsStateWithLifecycle()
@@ -216,13 +216,11 @@ fun SprZoneApp(viewModel: SprZoneViewModel) {
                                     allProducts = allProducts,
                                     wishlistIds = wishlistIds,
                                     filterState = filterState,
-                                    deliveryZone = deliveryZone,
                                     countdownSeconds = countdown,
                                     isDarkMode = isDarkMode,
                                     onSearchChange = viewModel::updateSearchQuery,
                                     onSelectCategory = viewModel::selectCategory,
                                     onSortChange = viewModel::updateSortOption,
-                                    onSelectDeliveryZone = viewModel::setDeliveryZone,
                                     onToggleDarkMode = viewModel::setDarkMode,
                                     onRefreshStore = viewModel::refreshStore,
                                     onProductClick = { id -> navController.navigate(SprRoutes.productDetail(id)) },
@@ -255,7 +253,7 @@ fun SprZoneApp(viewModel: SprZoneViewModel) {
                                 CartScreen(
                                     cartItems = cartItems,
                                     summary = cartSummary,
-                                    deliveryZone = deliveryZone,
+                                    availableCoupons = availableCoupons,
                                     isSignedIn = currentUser != null,
                                     onUpdateQuantity = viewModel::updateCartQuantity,
                                     onRemoveItem = viewModel::removeCartItem,
@@ -289,17 +287,19 @@ fun SprZoneApp(viewModel: SprZoneViewModel) {
                                     currentUser = currentUser,
                                     wishlistProducts = wishlistProducts,
                                     addresses = addresses,
-                                    deliveryZone = deliveryZone,
                                     isDarkMode = isDarkMode,
                                     onLogin = viewModel::login,
                                     onRegister = viewModel::register,
+                                    onUpdateProfile = viewModel::updateProfile,
+                                    onDeleteProfile = viewModel::deleteProfile,
                                     onSignOut = viewModel::signOut,
                                     onProductClick = { id -> navController.navigate(SprRoutes.productDetail(id)) },
                                     onToggleWishlist = viewModel::toggleWishlist,
                                     onQuickAdd = { prod -> viewModel.addToCart(prod) },
+                                    onSaveAddress = viewModel::saveAddress,
+                                    onUpdateAddress = viewModel::updateAddress,
                                     onSetDefaultAddress = viewModel::setDefaultAddress,
                                     onDeleteAddress = viewModel::deleteAddress,
-                                    onSelectDeliveryZone = viewModel::setDeliveryZone,
                                     onToggleDarkMode = viewModel::setDarkMode
                                 )
                             }
