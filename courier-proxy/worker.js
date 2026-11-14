@@ -87,6 +87,13 @@ async function verifyFirebaseAdminToken(authHeader, env) {
   return payload;
 }
 
+function normalizeBdPhone(raw = "") {
+  const digits = String(raw).replace(/\D/g, "");
+  if (digits.startsWith("8801") && digits.length === 13) return digits.slice(2);
+  if (digits.startsWith("01") && digits.length === 11) return digits;
+  return digits || String(raw).trim();
+}
+
 async function dispatchSteadfast(body, env) {
   if (!env.STEADFAST_API_KEY || !env.STEADFAST_SECRET_KEY) {
     throw new Error("Server missing STEADFAST_API_KEY or STEADFAST_SECRET_KEY secrets");
@@ -101,7 +108,7 @@ async function dispatchSteadfast(body, env) {
     body: JSON.stringify({
       invoice: String(body.invoice || "").trim(),
       recipient_name: String(body.recipient_name || "").trim(),
-      recipient_phone: String(body.recipient_phone || "").trim(),
+      recipient_phone: normalizeBdPhone(body.recipient_phone || ""),
       recipient_address: String(body.recipient_address || "").trim(),
       cod_amount: Number(body.cod_amount || 0),
       note: String(body.note || "").trim(),
@@ -150,7 +157,7 @@ async function dispatchPathao(body, env) {
       store_id: Number(env.PATHAO_STORE_ID),
       merchant_order_id: String(body.invoice || ""),
       recipient_name: String(body.recipient_name || ""),
-      recipient_phone: String(body.recipient_phone || ""),
+      recipient_phone: normalizeBdPhone(body.recipient_phone || ""),
       recipient_address: String(body.recipient_address || ""),
       delivery_type: 48,
       item_type: 2,
@@ -185,6 +192,15 @@ export default {
       await verifyFirebaseAdminToken(request.headers.get("Authorization"), env);
       const url = new URL(request.url);
 
+      if (request.method === "GET" && url.pathname.endsWith("/health")) {
+        return jsonResponse({
+          ok: true,
+          provider: "Steadfast",
+          steadfastConfigured: Boolean(env.STEADFAST_API_KEY && env.STEADFAST_SECRET_KEY),
+          pathaoConfigured: Boolean(env.PATHAO_CLIENT_ID && env.PATHAO_CLIENT_SECRET && env.PATHAO_STORE_ID),
+        }, 200, origin);
+      }
+
       if (request.method === "POST" && url.pathname.endsWith("/create-order")) {
         const body = await request.json();
         const courier = String(body.courier || "Steadfast");
@@ -213,7 +229,7 @@ export default {
         return jsonResponse({ ok: res.ok, ...data }, res.status, origin);
       }
 
-      return jsonResponse({ error: "Not found. Use POST /create-order or GET /track" }, 404, origin);
+      return jsonResponse({ error: "Not found. Use POST /create-order, GET /track, or GET /health" }, 404, origin);
     } catch (err) {
       return jsonResponse({ ok: false, error: err.message || "Request failed" }, 401, origin);
     }

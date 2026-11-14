@@ -328,11 +328,12 @@ button:disabled{opacity:.5;cursor:not-allowed}
           <div class="field">
             <label>Auto-fill from Order (Optional)</label>
             <select id="smsOrderPreset">
-              <option value="">-- Select a Pending Order (or enter manually) --</option>
+              <option value="">-- Select Customer Order to auto-fill Products &amp; Grand Total --</option>
             </select>
           </div>
+          <div id="smsOrderPreview" class="hidden" style="background:#f8faf9;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:12.5px"></div>
           <div class="form-row">
-            <div class="field"><label>Product Name</label><input id="smsProductName" placeholder="e.g. Milk Bread x2"></div>
+            <div class="field"><label>Ordered Products</label><input id="smsProductName" placeholder="e.g. Milk Bread x2"></div>
             <div class="field"><label>Grand Total Price (৳)</label><input id="smsGrandTotal" type="number" min="0" placeholder="Order Grand Total"></div>
           </div>
           <div class="form-row">
@@ -342,15 +343,20 @@ button:disabled{opacity:.5;cursor:not-allowed}
                 <option value="bKash">bKash</option>
                 <option value="Nagad">Nagad</option>
                 <option value="Rocket">Rocket</option>
+                <option value="Cash on Delivery">Cash on Delivery</option>
+                <option value="Card">Card</option>
               </select>
             </div>
-            <div class="field"><label>Amount Received (৳) *</label><input id="smsAmount" type="number" min="1" required></div>
+            <div class="field"><label>Amount Received (৳) *</label><input id="smsAmount" type="number" min="0" required></div>
           </div>
           <div class="form-row">
-            <div class="field"><label>Sender Number (01XXXXXXXXX) *</label><input id="smsSender" required placeholder="017XXXXXXXX"></div>
-            <div class="field"><label>Transaction ID (TrxID) *</label><input id="smsTrxId" required placeholder="BL74K9M2PQ" style="text-transform:uppercase"></div>
+            <div class="field"><label>Sender Number (01XXXXXXXXX)</label><input id="smsSender" placeholder="017XXXXXXXX"></div>
+            <div class="field"><label>Transaction ID (TrxID)</label><input id="smsTrxId" placeholder="BL74K9M2PQ" style="text-transform:uppercase"></div>
           </div>
-          <button type="submit" style="width:100%">➕ Add Verified Payment SMS</button>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button type="submit" style="flex:1">➕ Add Verified Payment SMS</button>
+            <button type="button" class="gold hidden" id="smsConfirmGoPickupBtn" style="flex:1">✅ Confirm Order &amp; Go to Pickup Request →</button>
+          </div>
         </form>
 
         <hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
@@ -371,7 +377,10 @@ button:disabled{opacity:.5;cursor:not-allowed}
           </div>
           <div class="field"><label>Merchant Pickup Address</label><input id="setCourierHub" placeholder="House, Road, Area, Dhaka"></div>
           <div class="field"><label>Courier Server Proxy URL (Cloudflare Worker)</label><input id="setCourierProxyUrl" type="url" placeholder="https://spr-zone-bd-courier-proxy.your-subdomain.workers.dev"></div>
-          <button type="submit" class="secondary" style="width:100%">🚚 Save Courier Hub &amp; Proxy Settings</button>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button type="submit" class="secondary" style="flex:1">🚚 Save Courier Hub &amp; Proxy Settings</button>
+            <button type="button" class="outline" id="testCourierProxyBtn">🔍 Test Proxy Connection</button>
+          </div>
         </form>
       </div>
 
@@ -555,10 +564,25 @@ let courierSettings = {
 let listenersStarted = false;
 
 const $ = (id) => document.getElementById(id);
-const money = (n) => "৳" + Number(n || 0).toLocaleString("en-BD");
+const parseNum = (v) => {
+  if (typeof v === "number") return Number.isFinite(v) ? v : 0;
+  const cleaned = String(v ?? "").replace(/[^0-9.-]/g, "");
+  const n = Number(cleaned);
+  return Number.isFinite(n) ? n : 0;
+};
+const money = (n) => "৳" + parseNum(n).toLocaleString("en-BD");
 const safe = (s = "") => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 window.closeModal = (id) => $(id).classList.remove("show");
 function openModal(id) { $(id).classList.add("show"); }
+
+function switchAdminTab(tabName) {
+  document.querySelectorAll("[data-tab]").forEach((x) => {
+    x.classList.toggle("active", x.dataset.tab === tabName);
+  });
+  ["products", "categories", "deals", "orders", "payment", "customers"].forEach((t) => {
+    $("tab-" + t).classList.toggle("hidden", t !== tabName);
+  });
+}
 
 function toast(msg) {
   const el = $("toast");
@@ -574,13 +598,84 @@ function normalizeBdPhone(raw = "") {
   return digits;
 }
 
+function findCatalogPrice(id, name = "") {
+  if (id && products[id]) return parseNum(products[id].price);
+  const target = String(name || "").trim().toLowerCase();
+  if (!target) return 0;
+  const match = Object.values(products).find((p) => String(p.name || "").trim().toLowerCase() === target);
+  return match ? parseNum(match.price) : 0;
+}
+
+function parseOrderItems(o) {
+  if (Array.isArray(o?.items) && o.items.length) {
+    return o.items.map((it) => {
+      const qty = Math.max(1, Math.round(parseNum(it.qty ?? it.quantity) || 1));
+      const unitPrice = parseNum(it.price ?? it.unitPrice ?? it.unitPriceBdt) || findCatalogPrice(it.id, it.name);
+      return {
+        id: it.id || "",
+        name: it.name || "Store Item",
+        variant: it.variant || it.selectedVariant || "Standard",
+        qty,
+        price: unitPrice
+      };
+    });
+  }
+  const rawSummary = String(o?.itemsSummary || "").trim();
+  if (rawSummary) {
+    return rawSummary.split("||").map((seg) => {
+      const m = seg.trim().match(/^(.+?)\s*[x×]\s*(\d+)(?:\s*\(([^)]*)\))?(?:\s*@\s*৳?([\d,]+(?:\.\d+)?))?/i);
+      if (m) {
+        const name = m[1].trim();
+        const qty = Math.max(1, parseNum(m[2]) || 1);
+        const variant = (m[3] || "Standard").trim();
+        const price = m[4] ? parseNum(m[4]) : findCatalogPrice("", name);
+        return { id: "", name, variant, qty, price };
+      }
+      return { id: "", name: seg.trim(), variant: "Standard", qty: 1, price: findCatalogPrice("", seg.trim()) };
+    });
+  }
+  return [{ id: "", name: "Store Item", variant: "Standard", qty: 1, price: parseNum(o?.subtotal ?? o?.total ?? o?.totalBdt) }];
+}
+
+function computeOrderFinancials(o) {
+  const items = parseOrderItems(o);
+  const itemsSubtotal = items.reduce((s, it) => s + parseNum(it.price) * Math.max(1, it.qty), 0);
+  const storedSub = parseNum(o?.subtotal ?? o?.subtotalBdt);
+  const storedDisc = parseNum(o?.discount ?? o?.discountBdt);
+  const storedTotal = parseNum(o?.total ?? o?.totalBdt);
+  const hasStoredFee = o?.deliveryFee !== undefined && o?.deliveryFee !== null && o?.deliveryFee !== "";
+  const storedFee = hasStoredFee ? parseNum(o.deliveryFee) : parseNum(o?.deliveryFeeBdt);
+
+  let subtotal = storedSub > 0 ? storedSub : itemsSubtotal;
+  const discount = storedDisc;
+  let deliveryFee = storedFee;
+  if (subtotal > 0 && storedSub === 0 && storedTotal === 0 && !hasStoredFee) {
+    const div = String(o?.customer?.division || "Dhaka").trim().toLowerCase();
+    deliveryFee = subtotal >= 3000 ? 0 : (div === "dhaka" ? 60 : 120);
+  }
+  if (subtotal === 0 && storedTotal > 0) {
+    subtotal = Math.max(0, storedTotal + discount - deliveryFee);
+  }
+  const computedGrand = Math.max(0, subtotal - discount + deliveryFee);
+  const grandTotal = storedTotal > 0 ? storedTotal : computedGrand;
+  return { items, subtotal, discount, deliveryFee, grandTotal };
+}
+
+function isOrderPaymentVerified(o) {
+  if (!o) return false;
+  const st = o.status || "Pending";
+  if (st === "Cancelled") return false;
+  const ps = String(o.paymentStatus || "").toLowerCase();
+  return ["Confirmed", "Packed", "Out for Delivery", "Delivered"].includes(st) || ps.includes("verified");
+}
+
 function updateStats() {
   $("stProducts").textContent = Object.keys(products).length;
   const orderArr = Object.values(orders);
   $("stOrders").textContent = orderArr.length;
-  const rev = orderArr.filter((o) => o.status !== "Cancelled").reduce((s, o) => s + Number(o.total || 0), 0);
+  const rev = orderArr.filter((o) => o.status !== "Cancelled").reduce((s, o) => s + computeOrderFinancials(o).grandTotal, 0);
   $("stRevenue").textContent = money(rev);
-  $("stPending").textContent = orderArr.filter((o) => o.status === "Pending").length;
+  $("stPending").textContent = orderArr.filter((o) => o.status === "Pending" || o.status === "Placed").length;
   $("stCustomers").textContent = Object.keys(customers).length;
 }
 
@@ -771,10 +866,48 @@ function resetCouponForm() {
 }
 
 function orderProductSummaryText(o) {
-  if (Array.isArray(o.items) && o.items.length) {
-    return o.items.map((i) => `${i.name} ×${i.qty}`).join(", ");
+  const items = parseOrderItems(o);
+  return items.map((i) => `${i.name} ×${i.qty}`).join(", ");
+}
+
+function renderSmsOrderPreview(orderId) {
+  const box = $("smsOrderPreview");
+  const goBtn = $("smsConfirmGoPickupBtn");
+  const o = orders[orderId];
+  if (!o) {
+    box.classList.add("hidden");
+    box.innerHTML = "";
+    goBtn.classList.add("hidden");
+    return;
   }
-  return o.itemsSummary || "Order Items";
+  const fin = computeOrderFinancials(o);
+  const verified = isOrderPaymentVerified(o);
+  box.classList.remove("hidden");
+  goBtn.classList.remove("hidden");
+  box.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
+      <b>📦 Order ${safe(orderId)} Summary</b>
+      <span class="badge ${verified ? "green" : "amber"}">${safe(o.status || "Pending")} · ${safe(o.paymentStatus || "Pending")}</span>
+    </div>
+    <div><b>Customer:</b> ${safe(o.customer?.name || "Customer")} (${safe(o.customer?.phone || "-")}) · ${safe(o.customer?.address || "")}, ${safe(o.customer?.division || "")}</div>
+    <div style="margin:6px 0;padding:6px 8px;background:#fff;border:1px solid var(--line);border-radius:8px">
+      ${fin.items.map((it) => `<div style="display:flex;justify-content:space-between;gap:8px">
+        <span>• ${safe(it.name)} (${safe(it.variant)}) × ${it.qty}</span>
+        <b>${money(it.price * it.qty)}</b>
+      </div>`).join("")}
+    </div>
+    <div style="display:grid;gap:2px">
+      <div style="display:flex;justify-content:space-between"><span>Subtotal</span><b>${money(fin.subtotal)}</b></div>
+      ${fin.discount > 0 ? `<div style="display:flex;justify-content:space-between;color:var(--emerald)"><span>Discount</span><b>-${money(fin.discount)}</b></div>` : ""}
+      <div style="display:flex;justify-content:space-between"><span>Delivery Fee</span><b>${fin.deliveryFee === 0 ? "FREE" : money(fin.deliveryFee)}</b></div>
+      <div style="display:flex;justify-content:space-between;font-size:14px;border-top:1px dashed var(--line);padding-top:4px;margin-top:2px">
+        <b>Grand Total</b><b style="color:var(--crimson)">${money(fin.grandTotal)}</b>
+      </div>
+    </div>
+    <div style="margin-top:6px;color:var(--muted)">
+      <b>Payment:</b> ${safe(o.paymentMethod || "-")} · <b>Sender:</b> ${safe(o.senderNumber || "-")} · <b>TrxID:</b> <code>${safe(o.trxId || "-")}</code>
+    </div>
+  `;
 }
 
 function populateSmsOrderPreset() {
@@ -783,18 +916,30 @@ function populateSmsOrderPreset() {
   const cur = sel.value;
   const entries = Object.entries(orders)
     .filter(([_, o]) => o.status !== "Cancelled")
-    .sort((a, b) => (b[1].createdAt || 0) - (a[1].createdAt || 0));
-  sel.innerHTML = `<option value="">-- Select an Order to auto-fill Product & Grand Total (or type below) --</option>` +
-    entries.map(([id, o]) => `<option value="${safe(id)}">${safe(id)} · ${safe(orderProductSummaryText(o))} · Grand Total: ${money(o.total)}</option>`).join("");
-  if (cur && orders[cur]) sel.value = cur;
+    .sort((a, b) => {
+      const aPend = !isOrderPaymentVerified(a[1]) ? 1 : 0;
+      const bPend = !isOrderPaymentVerified(b[1]) ? 1 : 0;
+      if (aPend !== bPend) return bPend - aPend;
+      return (b[1].createdAt || 0) - (a[1].createdAt || 0);
+    });
+  sel.innerHTML = `<option value="">-- Select Customer Order to auto-fill Products &amp; Grand Total --</option>` +
+    entries.map(([id, o]) => {
+      const fin = computeOrderFinancials(o);
+      const tag = isOrderPaymentVerified(o) ? "✅" : "⏳";
+      return `<option value="${safe(id)}">${tag} ${safe(id)} · ${safe(o.customer?.name || "Customer")} · ${safe(orderProductSummaryText(o))} · Total: ${money(fin.grandTotal)}</option>`;
+    }).join("");
+  if (cur && orders[cur]) {
+    sel.value = cur;
+    renderSmsOrderPreview(cur);
+  } else {
+    renderSmsOrderPreview("");
+  }
 }
 
 function openInvoiceModal(orderId) {
   const o = orders[orderId];
   if (!o) return toast("Order not found");
-  const items = Array.isArray(o.items) && o.items.length
-    ? o.items
-    : [{ name: o.itemsSummary || "Store Item", variant: "-", qty: 1, price: Number(o.subtotal || o.total || 0) }];
+  const fin = computeOrderFinancials(o);
 
   $("invoicePrintArea").innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;border-bottom:2px solid var(--emerald);padding-bottom:14px;flex-wrap:wrap">
@@ -838,14 +983,14 @@ function openInvoiceModal(orderId) {
         </tr>
       </thead>
       <tbody>
-        ${items.map((it, idx) => `
+        ${fin.items.map((it, idx) => `
           <tr>
             <td>${idx + 1}</td>
             <td><b>${safe(it.name)}</b></td>
             <td>${safe(it.variant || "Standard")}</td>
-            <td>${Number(it.qty || 1)}</td>
+            <td>${it.qty}</td>
             <td>${money(it.price)}</td>
-            <td style="text-align:right"><b>${money(Number(it.price || 0) * Number(it.qty || 1))}</b></td>
+            <td style="text-align:right"><b>${money(it.price * it.qty)}</b></td>
           </tr>
         `).join("")}
       </tbody>
@@ -853,11 +998,11 @@ function openInvoiceModal(orderId) {
 
     <div style="display:flex;justify-content:flex-end">
       <div style="width:min(300px,100%);display:grid;gap:6px;font-size:13.5px">
-        <div style="display:flex;justify-content:space-between"><span>Subtotal</span><b>${money(o.subtotal || o.total)}</b></div>
-        ${Number(o.discount || 0) > 0 ? `<div style="display:flex;justify-content:space-between;color:var(--emerald)"><span>Discount ${o.promoCode ? `(${safe(o.promoCode)})` : ""}</span><b>-${money(o.discount)}</b></div>` : ""}
-        <div style="display:flex;justify-content:space-between"><span>Delivery Fee</span><b>${Number(o.deliveryFee || 0) === 0 ? "FREE" : money(o.deliveryFee)}</b></div>
+        <div style="display:flex;justify-content:space-between"><span>Subtotal</span><b>${money(fin.subtotal)}</b></div>
+        ${fin.discount > 0 ? `<div style="display:flex;justify-content:space-between;color:var(--emerald)"><span>Discount ${o.promoCode ? `(${safe(o.promoCode)})` : ""}</span><b>-${money(fin.discount)}</b></div>` : ""}
+        <div style="display:flex;justify-content:space-between"><span>Delivery Fee</span><b>${fin.deliveryFee === 0 ? "FREE" : money(fin.deliveryFee)}</b></div>
         <div style="display:flex;justify-content:space-between;font-size:17px;border-top:2px solid var(--ink);padding-top:6px;margin-top:4px">
-          <b>Grand Total</b><b style="color:var(--crimson)">${money(o.total)}</b>
+          <b>Grand Total</b><b style="color:var(--crimson)">${money(fin.grandTotal)}</b>
         </div>
       </div>
     </div>
@@ -872,21 +1017,33 @@ function openInvoiceModal(orderId) {
 function openCourierModal(orderId) {
   const o = orders[orderId];
   if (!o) return toast("Order not found");
+  if (!isOrderPaymentVerified(o)) {
+    return toast("Complete Customer Order & Payment Verification first before Courier Pickup Request.");
+  }
+  const fin = computeOrderFinancials(o);
   const isPaid = String(o.paymentStatus || "").toLowerCase().includes("verified") || String(o.paymentMethod || "") === "Card";
-  const defaultCod = isPaid ? 0 : Number(o.total || 0);
+  const defaultCod = isPaid ? 0 : fin.grandTotal;
 
   $("cpOrderId").value = orderId;
   $("cpOrderBanner").innerHTML = `
     <div><b>Order:</b> ${safe(orderId)} · <b>Products:</b> ${safe(orderProductSummaryText(o))}</div>
-    <div><b>Grand Total:</b> <b style="color:var(--crimson)">${money(o.total)}</b> · <b>Payment:</b> ${safe(o.paymentMethod)} (${safe(o.paymentStatus || "Pending")})</div>
+    <div><b>Subtotal:</b> ${money(fin.subtotal)} · <b>Delivery:</b> ${fin.deliveryFee === 0 ? "FREE" : money(fin.deliveryFee)} · <b>Grand Total:</b> <b style="color:var(--crimson)">${money(fin.grandTotal)}</b> · <b>Payment:</b> ${safe(o.paymentMethod)} (${safe(o.paymentStatus || "Pending")})</div>
   `;
   const hasProxy = Boolean((courierSettings.proxyUrl || "").trim());
   $("cpProxyStatus").style.background = hasProxy ? "#E8F6EE" : "#FEF3C7";
   $("cpProxyStatus").style.border = hasProxy ? "1px solid #B7E4C7" : "1px solid #FDE68A";
   $("cpProxyStatus").style.color = hasProxy ? "#005C2D" : "#92400E";
   $("cpProxyStatus").innerHTML = hasProxy
-    ? `🔒 <b>Private Courier Server Connected:</b> Dispatch sends authenticated request to Steadfast API using server-only secrets.`
-    : `⚠️ <b>Proxy URL not configured yet:</b> Deploy <code>courier-proxy/</code> and save the Worker URL in <b>Payment &amp; SMS → Courier Hub</b> to dispatch live to Steadfast.`;
+    ? `🔒 <b>Private Courier Server Connected:</b> Clicking Send auto-dispatches via server <code>Api-Key</code> &amp; <code>Secret-Key</code> to Steadfast API.`
+    : `⚠️ <b>Proxy URL not configured yet:</b> Save your <code>courier-proxy/</code> Worker URL in Payment &amp; SMS so requests auto-dispatch via server <code>Api-Key</code> &amp; <code>Secret-Key</code>. <button type="button" class="secondary sm" id="cpGotoProxySettingsBtn" style="margin-left:6px">⚙️ Configure Proxy URL</button>`;
+  const gotoBtn = $("cpGotoProxySettingsBtn");
+  if (gotoBtn) {
+    gotoBtn.onclick = () => {
+      closeModal("courierModal");
+      switchAdminTab("payment");
+      $("setCourierProxyUrl").focus();
+    };
+  }
   $("cpCourierName").value = o.courier?.courierName || courierSettings.defaultCourier || "Steadfast";
   $("cpCodAmount").value = o.courier?.codAmount ?? defaultCod;
   $("cpRecipientName").value = o.courier?.recipientName || o.customer?.name || "";
@@ -918,6 +1075,8 @@ function renderAdminOrders() {
 
   $("adminOrderList").innerHTML = entries.map(([id, o]) => {
     const status = o.status || "Pending";
+    const verified = isOrderPaymentVerified(o);
+    const fin = computeOrderFinancials(o);
     const badgeCls = status === "Confirmed" || status === "Delivered" ? "green" : status === "Cancelled" ? "red" : "amber";
     return `
       <div class="list-item" style="flex-direction:column;align-items:stretch">
@@ -934,18 +1093,23 @@ function renderAdminOrders() {
           <div><b>Customer:</b> ${safe(o.customer?.name || "")} (${safe(o.customer?.phone || "")}) · ${safe(o.customer?.address || "")}, ${safe(o.customer?.division || "")}</div>
           <div><b>Products:</b> ${safe(orderProductSummaryText(o))}</div>
           ${o.senderNumber || o.trxId ? `<div><b>Payment Sender:</b> ${safe(o.senderNumber || "-")} · <b>TrxID:</b> <code>${safe(o.trxId || "-")}</code></div>` : ""}
-          <div><b>Grand Total:</b> <b style="color:var(--crimson)">${money(o.total)}</b> (Subtotal: ${money(o.subtotal || o.total)} · Delivery: ${money(o.deliveryFee || 0)})</div>
+          <div><b>Grand Total:</b> <b style="color:var(--crimson)">${money(fin.grandTotal)}</b> (Subtotal: ${money(fin.subtotal)} · Delivery: ${fin.deliveryFee === 0 ? "FREE" : money(fin.deliveryFee)})</div>
           ${o.courier ? `<div style="font-size:12.5px;color:var(--emerald-dark)"><b>Courier Pickup:</b> ${safe(o.courier.courierName)} · Consignment: <code>${safe(o.courier.consignmentId)}</code>${o.courier.trackingCode && o.courier.trackingCode !== o.courier.consignmentId ? ` · Tracking: <code>${safe(o.courier.trackingCode)}</code>` : ""} · Status: <b>${safe(o.courier.pickupStatus || "Pickup Requested")}</b> · COD: ${money(o.courier.codAmount)} · Hub: ${safe(o.courier.pickupHub || "-")}</div>` : ""}
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding-top:8px;border-top:1px solid var(--line)">
-          ${status === "Pending" || status === "Placed"
-            ? `<button type="button" class="sm" data-confirm-ord="${safe(id)}">✅ Confirm &amp; Verify Payment</button>`
-            : `<span style="font-size:12px;color:var(--emerald-dark);font-weight:700">🔒 Confirmed/Active (Customer cancel locked)</span>`}
+          ${!verified && status !== "Cancelled"
+            ? `<button type="button" class="sm" data-confirm-ord="${safe(id)}">✅ Verify &amp; Confirm Order</button>
+               <button type="button" class="secondary sm" data-sms-verify-ord="${safe(id)}">📩 Verify in Payment SMS</button>`
+            : (status !== "Cancelled"
+                ? `<span style="font-size:12px;color:var(--emerald-dark);font-weight:700">🔒 Verified &amp; Confirmed (Cancel locked)</span>`
+                : `<span style="font-size:12px;color:var(--crimson);font-weight:700">Order Cancelled</span>`)}
           <select data-status-ord="${safe(id)}" style="padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-size:12.5px">
             ${["Pending","Confirmed","Packed","Out for Delivery","Delivered","Cancelled"].map((s) => `<option value="${s}" ${s === status ? "selected" : ""}>${s}</option>`).join("")}
           </select>
           <button type="button" class="secondary sm" data-print-inv="${safe(id)}">🖨️ Print Invoice</button>
-          <button type="button" class="gold sm" data-courier-req="${safe(id)}">${o.courier ? "🚚 Update Courier Pickup" : "🚚 Courier Pickup Request"}</button>
+          ${verified && status !== "Cancelled"
+            ? `<button type="button" class="gold sm" data-courier-req="${safe(id)}">${o.courier ? "🚚 Update Courier Pickup" : "🚚 Request Courier Pickup"}</button>`
+            : `<button type="button" class="outline sm" disabled title="Complete Customer Orders &amp; Payment Verification first">🔒 Verify Order for Courier Pickup</button>`}
           ${o.courier && courierSettings.proxyUrl ? `<button type="button" class="outline sm" data-sync-courier="${safe(id)}">🔄 Sync Status</button>` : ""}
           <button type="button" class="crimson sm" data-del-ord="${safe(id)}">🗑️ Delete Order</button>
         </div>
@@ -956,12 +1120,27 @@ function renderAdminOrders() {
   $("adminOrderList").querySelectorAll("[data-confirm-ord]").forEach((b) => {
     b.onclick = async () => {
       const id = b.dataset.confirmOrd;
+      const o = orders[id];
+      const fin = computeOrderFinancials(o);
       await update(ref(db, "orders/" + id), {
         status: "Confirmed",
         paymentStatus: "Verified (Admin)",
+        subtotal: fin.subtotal,
+        deliveryFee: fin.deliveryFee,
+        total: fin.grandTotal,
         updatedAt: Date.now()
       });
-      toast(`Order ${id} confirmed! Customer cancellation is now locked.`);
+      toast(`Order ${id} confirmed! Courier Pickup is now unlocked.`);
+    };
+  });
+
+  $("adminOrderList").querySelectorAll("[data-sms-verify-ord]").forEach((b) => {
+    b.onclick = () => {
+      const id = b.dataset.smsVerifyOrd;
+      switchAdminTab("payment");
+      $("smsOrderPreset").value = id;
+      $("smsOrderPreset").onchange();
+      $("smsOrderPreset").scrollIntoView({ behavior: "smooth", block: "center" });
     };
   });
 
@@ -1265,13 +1444,7 @@ $("switchAccountBtn").onclick = doSignOut;
 
 /* ---------- Tabs & Filters ---------- */
 document.querySelectorAll("[data-tab]").forEach((btn) => {
-  btn.onclick = () => {
-    document.querySelectorAll("[data-tab]").forEach((x) => x.classList.remove("active"));
-    btn.classList.add("active");
-    ["products", "categories", "deals", "orders", "payment", "customers"].forEach((t) => {
-      $("tab-" + t).classList.toggle("hidden", t !== btn.dataset.tab);
-    });
-  };
+  btn.onclick = () => switchAdminTab(btn.dataset.tab);
 });
 
 $("adminProdSearch").oninput = renderAdminProducts;
@@ -1367,55 +1540,100 @@ $("paymentSettingsForm").onsubmit = async (e) => {
 $("smsOrderPreset").onchange = () => {
   const orderId = $("smsOrderPreset").value;
   const o = orders[orderId];
+  renderSmsOrderPreview(orderId);
   if (!o) return;
+  const fin = computeOrderFinancials(o);
   $("smsProductName").value = orderProductSummaryText(o);
-  $("smsGrandTotal").value = Number(o.total || 0);
-  if (o.paymentMethod === "bKash" || o.paymentMethod === "Nagad" || o.paymentMethod === "Rocket") {
+  $("smsGrandTotal").value = fin.grandTotal;
+  if (["bKash", "Nagad", "Rocket", "Cash on Delivery", "Card"].includes(o.paymentMethod)) {
     $("smsProvider").value = o.paymentMethod;
   }
-  $("smsAmount").value = Number(o.total || 0);
-  if (o.senderNumber) $("smsSender").value = o.senderNumber;
-  if (o.trxId) $("smsTrxId").value = o.trxId;
+  $("smsAmount").value = fin.grandTotal;
+  $("smsSender").value = o.senderNumber || o.customer?.phone || "";
+  $("smsTrxId").value = o.trxId || "";
 };
 
-$("smsInboxForm").onsubmit = async (e) => {
-  e.preventDefault();
-  const trxId = $("smsTrxId").value.trim().toUpperCase();
+async function processPaymentVerificationAndConfirm({ goToPickup = false } = {}) {
+  const presetOrderId = $("smsOrderPreset").value;
+  const trxIdRaw = $("smsTrxId").value.trim().toUpperCase();
   const senderNumber = normalizeBdPhone($("smsSender").value);
-  const amount = Number($("smsAmount").value);
+  const provider = $("smsProvider").value;
+  const amount = parseNum($("smsAmount").value);
   const productName = $("smsProductName").value.trim();
-  const grandTotal = Number($("smsGrandTotal").value || amount);
+  const grandTotalInput = parseNum($("smsGrandTotal").value);
 
-  // Auto-match any pending order with matching Sender Number & TrxID
-  let matchedOrderId = "";
-  for (const [oid, o] of Object.entries(orders)) {
-    const oSender = normalizeBdPhone(o.senderNumber || "");
-    const oTrx = String(o.trxId || "").trim().toUpperCase();
-    if ((o.status === "Pending" || o.status === "Placed") && oSender === senderNumber && oTrx === trxId && amount >= Number(o.total || 0)) {
-      matchedOrderId = oid;
-      await update(ref(db, "orders/" + oid), {
-        status: "Confirmed",
-        paymentStatus: "Verified (Auto SMS)",
-        updatedAt: Date.now()
-      });
-      break;
+  let matchedOrderId = presetOrderId && orders[presetOrderId] ? presetOrderId : "";
+
+  if (!matchedOrderId && senderNumber && trxIdRaw) {
+    for (const [oid, o] of Object.entries(orders)) {
+      const oSender = normalizeBdPhone(o.senderNumber || "");
+      const oTrx = String(o.trxId || "").trim().toUpperCase();
+      const fin = computeOrderFinancials(o);
+      if ((o.status === "Pending" || o.status === "Placed") && oSender === senderNumber && oTrx === trxIdRaw && amount >= fin.grandTotal) {
+        matchedOrderId = oid;
+        break;
+      }
     }
   }
 
-  await set(ref(db, "sms_inbox/" + trxId), {
-    productName,
-    grandTotal,
-    provider: $("smsProvider").value,
-    amount,
-    senderNumber,
-    trxId,
-    matchedOrderId,
-    receivedAt: Date.now()
-  });
+  if (matchedOrderId) {
+    const o = orders[matchedOrderId];
+    const fin = computeOrderFinancials(o);
+    const expectedTotal = grandTotalInput > 0 ? grandTotalInput : fin.grandTotal;
+    if (provider !== "Cash on Delivery" && amount < expectedTotal) {
+      return toast(`Received amount (${money(amount)}) is less than Order Grand Total (${money(expectedTotal)}).`);
+    }
+    if (provider !== "Cash on Delivery" && (!senderNumber || !trxIdRaw)) {
+      return toast("Enter Sender Number & TrxID to verify mobile payment.");
+    }
+    const patch = {
+      status: "Confirmed",
+      paymentStatus: provider === "Cash on Delivery" ? "Verified COD (Admin)" : "Verified (Admin SMS)",
+      subtotal: fin.subtotal,
+      deliveryFee: fin.deliveryFee,
+      total: fin.grandTotal,
+      updatedAt: Date.now()
+    };
+    await update(ref(db, "orders/" + matchedOrderId), patch);
+    orders[matchedOrderId] = { ...o, ...patch };
+  } else if (!trxIdRaw || !senderNumber) {
+    return toast("Enter Sender Number & TrxID, or select a Customer Order above.");
+  }
+
+  if (trxIdRaw) {
+    await set(ref(db, "sms_inbox/" + trxIdRaw), {
+      productName: productName || (matchedOrderId ? orderProductSummaryText(orders[matchedOrderId]) : ""),
+      grandTotal: grandTotalInput || amount,
+      provider,
+      amount,
+      senderNumber,
+      trxId: trxIdRaw,
+      matchedOrderId,
+      receivedAt: Date.now()
+    });
+  }
+
   $("smsInboxForm").reset();
-  toast(matchedOrderId
-    ? `SMS ${trxId} saved & Order ${matchedOrderId} auto-confirmed!`
-    : `Payment SMS ${trxId} saved to verification inbox!`);
+  renderSmsOrderPreview("");
+
+  if (matchedOrderId) {
+    toast(`Order ${matchedOrderId} confirmed! ${goToPickup ? "Opening Courier Pickup..." : ""}`);
+    if (goToPickup) {
+      switchAdminTab("orders");
+      openCourierModal(matchedOrderId);
+    }
+  } else {
+    toast(`Payment SMS ${trxIdRaw} saved to verification inbox!`);
+  }
+}
+
+$("smsInboxForm").onsubmit = async (e) => {
+  e.preventDefault();
+  await processPaymentVerificationAndConfirm({ goToPickup: Boolean($("smsOrderPreset").value) });
+};
+
+$("smsConfirmGoPickupBtn").onclick = async () => {
+  await processPaymentVerificationAndConfirm({ goToPickup: true });
 };
 
 $("courierSettingsForm").onsubmit = async (e) => {
@@ -1428,6 +1646,32 @@ $("courierSettingsForm").onsubmit = async (e) => {
     updatedAt: Date.now()
   });
   toast("Courier hub & private proxy URL saved!");
+};
+
+$("testCourierProxyBtn").onclick = async () => {
+  const base = $("setCourierProxyUrl").value.trim().replace(/\/+$/, "");
+  if (!base) return toast("Enter your Courier Server Proxy URL first.");
+  if (!auth.currentUser) return toast("Admin session not signed in.");
+  $("testCourierProxyBtn").disabled = true;
+  $("testCourierProxyBtn").textContent = "Testing...";
+  try {
+    const idToken = await auth.currentUser.getIdToken();
+    const resp = await fetch(`${base}/health`, {
+      headers: { Authorization: `Bearer ${idToken}` }
+    });
+    const data = await resp.json().catch(() => ({}));
+    if (!resp.ok || !data.ok) {
+      throw new Error(data.error || `HTTP ${resp.status}`);
+    }
+    toast(data.steadfastConfigured
+      ? "✅ Proxy Connected & Steadfast Api-Key / Secret-Key Active!"
+      : "⚠️ Proxy reached, but STEADFAST_API_KEY / STEADFAST_SECRET_KEY secrets are not set yet.");
+  } catch (err) {
+    toast(`Proxy test failed: ${err.message}`);
+  } finally {
+    $("testCourierProxyBtn").disabled = false;
+    $("testCourierProxyBtn").textContent = "🔍 Test Proxy Connection";
+  }
 };
 
 $("printInvoiceBtn").onclick = () => window.print();
@@ -1443,9 +1687,12 @@ $("courierRequestForm").onsubmit = async (e) => {
   const orderId = $("cpOrderId").value;
   const o = orders[orderId];
   if (!o) return;
+  if (!isOrderPaymentVerified(o)) {
+    return toast("Complete Customer Order & Payment Verification before dispatching courier pickup.");
+  }
 
   const courierName = $("cpCourierName").value;
-  const codAmount = Number($("cpCodAmount").value || 0);
+  const codAmount = parseNum($("cpCodAmount").value || 0);
   const recipientName = $("cpRecipientName").value.trim();
   const recipientPhone = normalizeBdPhone($("cpRecipientPhone").value);
   const address = $("cpDeliveryAddr").value.trim();

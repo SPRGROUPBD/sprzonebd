@@ -843,8 +843,28 @@ let registerMode = false;
 let unsubscribeCustomer = null;
 
 const $ = (id) => document.getElementById(id);
-const money = (n) => "৳" + Number(n || 0).toLocaleString("en-BD");
+const parseNum = (v) => {
+  if (typeof v === "number") return Number.isFinite(v) ? v : 0;
+  const cleaned = String(v ?? "").replace(/[^0-9.-]/g, "");
+  const n = Number(cleaned);
+  return Number.isFinite(n) ? n : 0;
+};
+const money = (n) => "৳" + parseNum(n).toLocaleString("en-BD");
 const safe = (s = "") => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+function healCartWithProducts() {
+  let changed = false;
+  cart = (Array.isArray(cart) ? cart : []).map((x) => {
+    const live = products[x.id];
+    const pPrice = live ? parseNum(live.price) : 0;
+    const curPrice = parseNum(x.price);
+    const fixedPrice = curPrice > 0 ? curPrice : pPrice;
+    const fixedQty = Math.max(1, Math.round(parseNum(x.qty) || 1));
+    if (fixedPrice !== x.price || fixedQty !== x.qty) changed = true;
+    return { ...x, price: fixedPrice, qty: fixedQty };
+  });
+  if (changed) saveCart();
+}
 
 function toast(msg) {
   const el = $("toast");
@@ -885,8 +905,8 @@ function deliveryFeeForDivision(division = "Dhaka") {
 
 function saveCart() {
   localStorage.setItem("spr_web_cart", JSON.stringify(cart));
-  const count = cart.reduce((s, x) => s + x.qty, 0);
-  const sub = cart.reduce((s, x) => s + x.price * x.qty, 0);
+  const count = cart.reduce((s, x) => s + Math.max(1, parseNum(x.qty) || 1), 0);
+  const sub = cart.reduce((s, x) => s + parseNum(x.price || products[x.id]?.price) * Math.max(1, parseNum(x.qty) || 1), 0);
   $("cartCount").textContent = count;
   $("cartTopTotal").textContent = money(sub);
 }
@@ -899,12 +919,12 @@ function evaluateCoupon(codeRaw, subtotal) {
   const code = String(codeRaw || "").trim().toUpperCase();
   const c = coupons[code];
   if (!c) return null;
-  if (subtotal < Number(c.minOrder || 0)) return null;
+  if (subtotal < parseNum(c.minOrder || 0)) return null;
   if (c.type === "percent") {
-    return { code, discount: Math.round(subtotal * (Number(c.value || 0) / 100)), freeShip: false };
+    return { code, discount: Math.round(subtotal * (parseNum(c.value || 0) / 100)), freeShip: false };
   }
   if (c.type === "flat") {
-    return { code, discount: Math.min(subtotal, Number(c.value || 0)), freeShip: false };
+    return { code, discount: Math.min(subtotal, parseNum(c.value || 0)), freeShip: false };
   }
   if (c.type === "freeship") {
     return { code, discount: 0, freeShip: true };
@@ -913,11 +933,15 @@ function evaluateCoupon(codeRaw, subtotal) {
 }
 
 function computeTotals(division = "") {
-  const subtotal = cart.reduce((s, x) => s + x.price * x.qty, 0);
+  const subtotal = cart.reduce((s, x) => {
+    const unit = parseNum(x.price) || parseNum(products[x.id]?.price);
+    const qty = Math.max(1, Math.round(parseNum(x.qty) || 1));
+    return s + unit * qty;
+  }, 0);
   const promo = evaluateCoupon(appliedPromoCode, subtotal);
   const discount = promo ? promo.discount : 0;
   const divFee = division ? deliveryFeeForDivision(division) : 60;
-  const deliveryFee = cart.length === 0 || subtotal >= 3000 || promo?.freeShip ? 0 : divFee;
+  const deliveryFee = cart.length === 0 || subtotal <= 0 || subtotal >= 3000 || promo?.freeShip ? 0 : divFee;
   const total = Math.max(0, subtotal - discount + deliveryFee);
   return { subtotal, discount, deliveryFee, total, promo };
 }
@@ -1155,17 +1179,24 @@ function openProductModal(id) {
 
 function addToCart(id, variant = "", qty = 1) {
   const p = products[id];
-  if (!p || Number(p.stock || 0) <= 0) return toast("Product is out of stock");
+  const stock = parseNum(p?.stock);
+  if (!p || stock <= 0) return toast("Product is out of stock");
+  const unitPrice = parseNum(p.price);
   const chosen = variant || String(p.variants || "Standard").split(",")[0].trim() || "Standard";
-  const addQty = Math.max(1, Number(qty || 1));
+  const addQty = Math.max(1, Math.round(parseNum(qty) || 1));
   const found = cart.find((x) => x.id === id && x.variant === chosen);
-  if (found) found.qty = Math.min(Number(p.stock || 99), found.qty + addQty);
-  else cart.push({ id, name: p.name, price: Number(p.price), image: p.image || "", variant: chosen, qty: Math.min(Number(p.stock || 99), addQty) });
+  if (found) {
+    found.price = unitPrice;
+    found.qty = Math.min(stock || 99, found.qty + addQty);
+  } else {
+    cart.push({ id, name: p.name, price: unitPrice, image: p.image || "", variant: chosen, qty: Math.min(stock || 99, addQty) });
+  }
   saveCart();
   toast(`Added ${p.name} (×${addQty}) to cart`);
 }
 
 function renderCartDrawer() {
+  healCartWithProducts();
   if (!cart.length) {
     $("cartItems").innerHTML = `<div style="text-align:center;padding:40px 10px;color:var(--muted)">
       <div style="font-size:38px">🛒</div>
@@ -1178,7 +1209,7 @@ function renderCartDrawer() {
         <div style="flex:1;min-width:0">
           <div style="font-weight:700;font-size:13px">${safe(x.name)}</div>
           <div style="font-size:11.5px;color:var(--muted)">${safe(x.variant)} · ${money(x.price)}</div>
-          <div style="font-weight:800;color:var(--emerald-dark);margin-top:2px">${money(x.price * x.qty)}</div>
+          <div style="font-weight:800;color:var(--emerald-dark);margin-top:2px">${money(parseNum(x.price) * Math.max(1, parseNum(x.qty) || 1))}</div>
         </div>
         <div style="display:flex;align-items:center;gap:4px">
           <button class="outline sm" data-dec="${idx}">−</button>
@@ -1203,8 +1234,8 @@ function renderCartDrawer() {
   $("cartSummaryBox").innerHTML = `
     <div style="display:flex;justify-content:space-between"><span>Subtotal</span><b>${money(t.subtotal)}</b></div>
     ${t.discount > 0 ? `<div style="display:flex;justify-content:space-between;color:var(--emerald)"><span>Promo (${safe(t.promo.code)})</span><b>-${money(t.discount)}</b></div>` : ""}
-    <div style="display:flex;justify-content:space-between;color:var(--muted);font-size:12px"><span>Delivery</span><span>Calculated at checkout (Free over ৳3,000)</span></div>
-    <div style="display:flex;justify-content:space-between;font-size:16px;padding-top:4px;border-top:1px solid var(--line)"><b>Estimated Total</b><b style="color:var(--crimson)">${money(t.subtotal - t.discount)}</b></div>
+    <div style="display:flex;justify-content:space-between"><span>Delivery Fee (Est.)</span><b>${t.deliveryFee === 0 ? "FREE" : money(t.deliveryFee)}</b></div>
+    <div style="display:flex;justify-content:space-between;font-size:16px;padding-top:4px;border-top:1px solid var(--line)"><b>Grand Total</b><b style="color:var(--crimson)">${money(t.total)}</b></div>
   `;
 }
 
@@ -1283,6 +1314,7 @@ function resetAddressForm() {
 
 /* ---------- Checkout & Auto TrxID Verification ---------- */
 function syncCheckoutPaymentUI() {
+  healCartWithProducts();
   const method = $("cPayment").value;
   const division = $("cDivision").value || "Dhaka";
   const isMobile = method === "bKash" || method === "Nagad" || method === "Rocket";
@@ -1297,10 +1329,10 @@ function syncCheckoutPaymentUI() {
   $("merchantPayNumber").textContent = num || "Not configured in Admin yet";
 
   $("checkoutTotals").innerHTML = `
-    <div style="display:flex;justify-content:space-between"><span>Items (${cart.reduce((s, x) => s + x.qty, 0)})</span><b>${money(t.subtotal)}</b></div>
+    <div style="display:flex;justify-content:space-between"><span>Subtotal (${cart.reduce((s, x) => s + Math.max(1, parseNum(x.qty) || 1), 0)} items)</span><b>${money(t.subtotal)}</b></div>
     ${t.discount > 0 ? `<div style="display:flex;justify-content:space-between;color:var(--emerald)"><span>Discount</span><b>-${money(t.discount)}</b></div>` : ""}
-    <div style="display:flex;justify-content:space-between"><span>Delivery (${safe(division)})</span><b>${t.deliveryFee === 0 ? "FREE" : money(t.deliveryFee)}</b></div>
-    <div style="display:flex;justify-content:space-between;font-size:16px;margin-top:4px;padding-top:4px;border-top:1px solid var(--line)"><b>Payable Amount</b><b style="color:var(--crimson)">${money(t.total)}</b></div>
+    <div style="display:flex;justify-content:space-between"><span>Delivery Fee (${safe(division)})</span><b>${t.deliveryFee === 0 ? "FREE" : money(t.deliveryFee)}</b></div>
+    <div style="display:flex;justify-content:space-between;font-size:16px;margin-top:4px;padding-top:4px;border-top:1px solid var(--line)"><b>Grand Total</b><b style="color:var(--crimson)">${money(t.total)}</b></div>
   `;
 }
 
@@ -1458,6 +1490,7 @@ function subscribeStoreData() {
   let deepLinkOpened = false;
   onValue(ref(db, "products"), (snap) => {
     products = snap.val() || {};
+    healCartWithProducts();
     renderCategories();
     renderProducts();
     if (!deepLinkOpened) {
