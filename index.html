@@ -141,31 +141,63 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .filter-tools select{padding:7px 12px;border:1px solid var(--line);border-radius:9px;background:#fff;font-size:13px}
 .products-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
 .product-card{
-  background:#fff;border:1px solid var(--line);border-radius:13px;overflow:hidden;
+  background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden;
   display:flex;flex-direction:column;transition:.16s ease;position:relative;
 }
 .product-card:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(0,60,30,.09);border-color:#b8d9c6}
 .p-img-wrap{
-  position:relative;background:#f8faf9;width:100%;height:175px;
-  display:flex;align-items:center;justify-content:center;padding:10px;
-  cursor:pointer;overflow:hidden;flex-shrink:0;
+  position:relative;background:#fff;width:100%;aspect-ratio:1/1;
+  display:flex;align-items:center;justify-content:center;padding:12px;
+  cursor:pointer;overflow:hidden;flex-shrink:0;border-bottom:1px solid #eef3ef;
 }
 .p-img-wrap img{
   width:100%;height:100%;max-width:100%;max-height:100%;
-  object-fit:contain;display:block;border-radius:8px;
+  object-fit:contain;display:block;border-radius:6px;
 }
 .p-badge{position:absolute;top:8px;left:8px;z-index:2;background:var(--crimson);color:#fff;font-size:11px;font-weight:800;padding:3px 7px;border-radius:6px}
-.p-wish{position:absolute;top:8px;right:8px;z-index:2;width:30px;height:30px;min-height:30px;padding:0;border-radius:50%;background:#fff;color:var(--muted);border:1px solid var(--line)}
+.p-body{padding:11px 12px 12px;display:flex;flex-direction:column;gap:5px;flex:1;position:relative;z-index:1;background:#fff}
+.p-title-row{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.p-title{font-size:13.5px;font-weight:700;line-height:1.35;min-height:36px;flex:1;cursor:pointer;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.p-wish{width:28px;height:28px;min-height:28px;padding:0;border-radius:50%;background:#fff;color:var(--muted);border:1px solid var(--line);flex-shrink:0;font-size:14px}
 .p-wish.liked{color:var(--crimson);border-color:#fecdd3;background:#fff1f2}
-.p-body{padding:11px;display:flex;flex-direction:column;gap:5px;flex:1;position:relative;z-index:1;background:#fff}
-.p-cat{font-size:11px;color:var(--emerald);font-weight:700;text-transform:uppercase;letter-spacing:.3px}
-.p-title{font-size:13.5px;font-weight:700;line-height:1.35;min-height:36px;cursor:pointer;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.p-rating{font-size:12px;color:#b45309;font-weight:600}
-.p-rating span{color:var(--muted);font-weight:400}
-.p-price-row{display:flex;align-items:baseline;gap:6px;margin-top:2px}
-.p-price{font-size:16px;font-weight:800;color:var(--crimson)}
+.p-rating{font-size:12px;color:#f59e0b;font-weight:700;display:flex;align-items:center;gap:4px}
+.p-rating span{color:var(--muted);font-weight:400;font-size:11.5px}
+.p-price-row{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;margin-top:2px}
+.p-price{font-size:16.5px;font-weight:800;color:var(--ink)}
 .p-old{font-size:12px;color:#94a3b8;text-decoration:line-through}
-.p-body .add-btn{width:100%;margin-top:auto;font-size:13px;min-height:36px;padding:8px}
+.p-body .add-btn{width:100%;margin-top:auto;font-size:12.5px;min-height:36px;padding:8px}
+
+/* 3-Column Product Detail View */
+.pd-dialog{width:min(1080px,100%)}
+.pd-layout{display:grid;grid-template-columns:320px minmax(0,1fr) 265px;gap:20px;align-items:start}
+.pd-main-img{
+  background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;
+  height:320px;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;
+}
+.pd-main-img img{width:100%;height:100%;max-width:100%;max-height:100%;object-fit:contain;display:block}
+.pd-thumbs{display:flex;gap:8px;margin-top:10px;overflow-x:auto;padding-bottom:4px}
+.pd-thumb{
+  width:56px;height:56px;min-height:56px;padding:4px;border-radius:8px;
+  border:1.5px solid var(--line);background:#fff;flex-shrink:0;
+}
+.pd-thumb.active{border-color:var(--emerald);box-shadow:0 0 0 2px rgba(0,123,61,.16)}
+.pd-thumb img{width:100%;height:100%;object-fit:contain;display:block}
+.pd-flash-bar{
+  background:linear-gradient(90deg,var(--crimson),#f97316);color:#fff;border-radius:9px;
+  padding:7px 12px;font-size:12.5px;font-weight:800;display:flex;justify-content:space-between;
+  align-items:center;gap:8px;margin-bottom:10px;
+}
+.pd-var-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.pd-var-chip{
+  background:#fff;color:var(--ink);border:1.5px solid var(--line);border-radius:8px;
+  padding:6px 12px;min-height:34px;font-size:12.5px;font-weight:700;
+}
+.pd-var-chip.active{border-color:var(--emerald);background:var(--emerald-soft);color:var(--emerald-dark)}
+.pd-qty-box{display:inline-flex;align-items:center;gap:8px;background:#f8faf9;border:1px solid var(--line);border-radius:9px;padding:3px}
+.pd-qty-box button{min-height:32px;width:32px;padding:0;background:#fff;color:var(--ink);border:1px solid var(--line)}
+.pd-side-card{background:#f8faf9;border:1px solid var(--line);border-radius:12px;padding:14px;display:grid;gap:12px}
+.pd-side-item{display:flex;align-items:flex-start;gap:10px;font-size:12.5px}
+.pd-side-ic{width:30px;height:30px;border-radius:8px;background:#fff;border:1px solid var(--line);display:grid;place-items:center;flex-shrink:0;font-size:14px}
 
 /* Right Sidebar */
 .right-col{display:flex;flex-direction:column;gap:14px}
@@ -239,11 +271,12 @@ button:disabled{opacity:.5;cursor:not-allowed}
   .products-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
   .right-col{grid-template-columns:1fr}
   .footer-inner{grid-template-columns:1fr 1fr}
+  .pd-layout{grid-template-columns:1fr}
 }
 @media(max-width:520px){
   .topbar-inner{font-size:11.5px;justify-content:center}
   .products-grid{gap:9px}
-  .p-img-wrap{height:132px}
+  .p-img-wrap{padding:8px}
   .form-row{grid-template-columns:1fr}
   .footer-inner{grid-template-columns:1fr}
 }
@@ -453,32 +486,120 @@ button:disabled{opacity:.5;cursor:not-allowed}
   </p>
 </footer>
 
-<!-- Product Detail Modal -->
+<!-- 3-Column Product Detail Modal -->
 <div class="modal" id="productModal">
-  <div class="dialog" style="width:min(720px,100%)">
+  <div class="dialog pd-dialog">
     <div class="dialog-head">
-      <h2 id="pmCategory" style="font-size:16px;color:var(--emerald)">Product Details</h2>
+      <div id="pmBreadcrumb" style="font-size:13px;color:var(--emerald-dark);font-weight:700">Product Details</div>
       <button class="outline sm" onclick="closeModal('productModal')">✕</button>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px">
-      <div style="background:#f8faf9;border:1px solid var(--line);border-radius:12px;padding:14px;height:270px;display:flex;align-items:center;justify-content:center;overflow:hidden">
-        <img id="pmImg" alt="Product" style="width:100%;height:100%;max-width:100%;max-height:100%;object-fit:contain;display:block">
-      </div>
+    <div class="pd-layout">
+      <!-- Left: Image Showcase + Thumbnails -->
       <div>
-        <h2 id="pmTitle" style="font-size:21px;margin-bottom:6px"></h2>
-        <div id="pmRating" class="p-rating" style="margin-bottom:10px"></div>
-        <div class="p-price-row" style="margin-bottom:12px">
-          <span class="p-price" id="pmPrice" style="font-size:24px"></span>
-          <span class="p-old" id="pmOldPrice" style="font-size:15px"></span>
+        <div class="pd-main-img">
+          <span class="p-badge hidden" id="pmDiscBadge"></span>
+          <img id="pmImg" alt="Product">
         </div>
-        <div id="pmSpecs" style="font-size:12.5px;color:var(--emerald-dark);font-weight:700;margin-bottom:8px"></div>
-        <p id="pmDesc" style="font-size:13.5px;color:var(--muted);margin:0 0 12px"></p>
-        <div class="field"><label>Option / Variant</label><select id="pmVariant"></select></div>
-        <div style="display:flex;gap:8px;margin-top:12px">
-          <button id="pmAddBtn" style="flex:1">🛒 Add to Cart</button>
-          <button class="crimson" id="pmBuyBtn" style="flex:1">⚡ Buy Now</button>
+        <div class="pd-thumbs" id="pmThumbs"></div>
+      </div>
+
+      <!-- Center: Title, Stars, Brand, Price, Variants, Stepper & CTAs -->
+      <div>
+        <div class="pd-flash-bar hidden" id="pmFlashBar">
+          <span>⚡ FLASH SALE DEAL</span>
+          <span id="pmFlashStock">Limited Stock</span>
+        </div>
+        <h2 id="pmTitle" style="font-size:21px;line-height:1.3;margin-bottom:8px"></h2>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap">
+          <div id="pmRating" class="p-rating"></div>
+          <div style="display:flex;gap:6px">
+            <button type="button" class="outline sm" id="pmShareBtn" title="Share product">🔗 Share</button>
+            <button type="button" class="outline sm" id="pmWishBtn" title="Save to wishlist">♡</button>
+          </div>
+        </div>
+        <div style="font-size:12.5px;color:var(--muted);padding-bottom:10px;border-bottom:1px solid var(--line);margin-bottom:12px">
+          Brand: <b id="pmBrand" style="color:var(--ink)"></b>
+          <span style="margin:0 6px">|</span>
+          <a href="#productsSection" id="pmMoreCatLink" style="color:var(--emerald-dark);font-weight:700"></a>
+        </div>
+
+        <div class="p-price-row" style="margin-bottom:14px">
+          <span class="p-price" id="pmPrice" style="font-size:28px;color:var(--crimson)"></span>
+          <span class="p-old" id="pmOldPrice" style="font-size:15px"></span>
+          <span class="badge red hidden" id="pmDiscInline"></span>
+        </div>
+
+        <div style="margin-bottom:14px">
+          <div style="font-size:12.5px;font-weight:700;color:var(--muted)">
+            Option / Variant: <b id="pmVariantLabel" style="color:var(--ink)">Standard</b>
+          </div>
+          <div class="pd-var-row" id="pmVariantChips"></div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap">
+          <span style="font-size:12.5px;font-weight:700;color:var(--muted)">Quantity</span>
+          <div class="pd-qty-box">
+            <button type="button" id="pmQtyMinus">−</button>
+            <b id="pmQtyVal" style="min-width:26px;text-align:center">1</b>
+            <button type="button" id="pmQtyPlus">+</button>
+          </div>
+          <span id="pmStockHint" style="font-size:12.5px;font-weight:600;color:var(--emerald-dark)"></span>
+        </div>
+
+        <div style="display:flex;gap:10px;margin-bottom:16px">
+          <button type="button" class="gold" id="pmBuyBtn" style="flex:1;min-height:46px">⚡ Buy Now</button>
+          <button type="button" id="pmAddBtn" style="flex:1;min-height:46px">🛒 Add to Cart</button>
+        </div>
+
+        <div style="background:#f8faf9;border:1px solid var(--line);border-radius:11px;padding:12px">
+          <div style="font-size:12px;font-weight:800;color:var(--emerald-dark);text-transform:uppercase;margin-bottom:4px">Specifications &amp; Description</div>
+          <div id="pmSpecs" style="font-size:12.5px;font-weight:700;color:var(--ink);margin-bottom:6px"></div>
+          <p id="pmDesc" style="font-size:13px;color:var(--muted);margin:0;white-space:pre-line"></p>
         </div>
       </div>
+
+      <!-- Right: Delivery Options & Return/Warranty -->
+      <aside class="pd-side-card">
+        <div style="font-size:11.5px;font-weight:800;color:var(--muted);text-transform:uppercase">Delivery Options</div>
+        <div class="pd-side-item">
+          <div class="pd-side-ic">🚚</div>
+          <div>
+            <b>Standard Delivery</b>
+            <div style="color:var(--muted);font-size:12px">Dhaka ৳60 · Outside Dhaka ৳120<br><span style="color:var(--emerald-dark);font-weight:700">Free delivery over ৳3,000</span></div>
+          </div>
+        </div>
+        <div class="pd-side-item">
+          <div class="pd-side-ic">💵</div>
+          <div>
+            <b>Cash on Delivery</b>
+            <div style="color:var(--muted);font-size:12px">Available across all 64 districts</div>
+          </div>
+        </div>
+        <div class="pd-side-item">
+          <div class="pd-side-ic">📱</div>
+          <div>
+            <b>bKash · Nagad · Rocket</b>
+            <div style="color:var(--muted);font-size:12px">Instant Auto TrxID Verification</div>
+          </div>
+        </div>
+
+        <hr style="border:0;border-top:1px solid var(--line);margin:2px 0">
+        <div style="font-size:11.5px;font-weight:800;color:var(--muted);text-transform:uppercase">Return &amp; Warranty</div>
+        <div class="pd-side-item">
+          <div class="pd-side-ic">↺</div>
+          <div>
+            <b>14 Days Easy Return</b>
+            <div style="color:var(--muted);font-size:12px">Hassle-free return &amp; refund</div>
+          </div>
+        </div>
+        <div class="pd-side-item">
+          <div class="pd-side-ic">🛡️</div>
+          <div>
+            <b>100% Authentic Guarantee</b>
+            <div id="pmWarrantyNote" style="color:var(--muted);font-size:12px">Verified Brand Warranty</div>
+          </div>
+        </div>
+      </aside>
     </div>
   </div>
 </div>
@@ -879,16 +1000,18 @@ function renderProducts() {
     const disc = p.oldPrice > p.price ? Math.round(((p.oldPrice - p.price) / p.oldPrice) * 100) : 0;
     const liked = wishlist.includes(p.id);
     const imgSrc = p.image || "assets/favicon.svg";
+    const stars = "★".repeat(Math.max(1, Math.min(5, Math.round(Number(p.rating || 4.6)))));
     return `<article class="product-card">
       <div class="p-img-wrap" data-open="${safe(p.id)}">
         ${disc > 0 ? `<span class="p-badge">-${disc}%</span>` : ""}
-        <button class="p-wish ${liked ? "liked" : ""}" data-wish="${safe(p.id)}" title="Save to wishlist">${liked ? "♥" : "♡"}</button>
         <img src="${safe(imgSrc)}" alt="${safe(p.name)}" onerror="this.src='assets/favicon.svg'">
       </div>
       <div class="p-body">
-        <div class="p-cat">${safe(p.category || "General")}</div>
-        <div class="p-title" data-open="${safe(p.id)}">${safe(p.name)}</div>
-        <div class="p-rating">★ ${Number(p.rating || 4.6).toFixed(1)} <span>(${Number(p.reviewCount || 0)})</span></div>
+        <div class="p-title-row">
+          <div class="p-title" data-open="${safe(p.id)}">${safe(p.name)}</div>
+          <button class="p-wish ${liked ? "liked" : ""}" data-wish="${safe(p.id)}" title="Save to wishlist">${liked ? "♥" : "♡"}</button>
+        </div>
+        <div class="p-rating">${stars} <span>(${Number(p.reviewCount || 0)} Reviews)</span></div>
         <div class="p-price-row">
           <span class="p-price">${money(p.price)}</span>
           ${p.oldPrice > p.price ? `<span class="p-old">${money(p.oldPrice)}</span>` : ""}
@@ -924,36 +1047,122 @@ window.resetStoreFilters = () => {
 function openProductModal(id) {
   const p = products[id];
   if (!p) return;
-  $("pmCategory").textContent = p.category || "SPR Zone BD";
+  const stock = Number(p.stock || 0);
+  const disc = p.oldPrice > p.price ? Math.round(((p.oldPrice - p.price) / p.oldPrice) * 100) : 0;
+  const ratingNum = Number(p.rating || 4.7);
+  const stars = "★".repeat(Math.max(1, Math.min(5, Math.round(ratingNum))));
+
+  $("pmBreadcrumb").textContent = `${p.category || "SPR Zone BD"} › ${p.brand || "Official"}`;
   $("pmTitle").textContent = p.name;
-  $("pmImg").src = p.image || "assets/favicon.svg";
-  $("pmRating").innerHTML = `★ ${Number(p.rating || 4.7).toFixed(1)} <span>(${Number(p.reviewCount || 0)} reviews · Stock: ${Number(p.stock || 0)})</span>`;
+  $("pmRating").innerHTML = `${stars} ${ratingNum.toFixed(1)} <span>(${Number(p.reviewCount || 0)} Ratings)</span>`;
+  $("pmBrand").textContent = p.brand || "SPR ZONE BD";
+  $("pmMoreCatLink").textContent = `More from ${p.category || "Store"}`;
+  $("pmMoreCatLink").onclick = (e) => {
+    e.preventDefault();
+    closeModal("productModal");
+    selectedCategory = p.category || "All";
+    renderCategories();
+    renderProducts();
+    $("productsSection").scrollIntoView({ behavior: "smooth" });
+  };
+
+  $("pmFlashBar").classList.toggle("hidden", !p.isFlashDeal);
+  $("pmFlashStock").textContent = stock > 0 ? `${stock} in stock` : "Sold Out";
+
   $("pmPrice").textContent = money(p.price);
   $("pmOldPrice").textContent = p.oldPrice > p.price ? money(p.oldPrice) : "";
-  $("pmSpecs").textContent = p.specs || "100% Original Product";
-  $("pmDesc").textContent = p.description || "";
+  $("pmDiscBadge").textContent = `-${disc}%`;
+  $("pmDiscBadge").classList.toggle("hidden", disc <= 0);
+  $("pmDiscInline").textContent = `-${disc}% OFF`;
+  $("pmDiscInline").classList.toggle("hidden", disc <= 0);
+
+  $("pmSpecs").textContent = p.specs || "100% Original & Quality Checked";
+  $("pmDesc").textContent = p.description || "Order online from SPR ZONE BD for fast delivery anywhere in Bangladesh.";
+  $("pmWarrantyNote").textContent = p.specs || "Authentic Product Guarantee";
+
+  // Gallery thumbnails (supports comma-separated p.gallery or main image)
+  const imgs = [p.image, ...String(p.gallery || "").split(",").map((s) => s.trim())].filter(Boolean);
+  const uniqImgs = [...new Set(imgs.length ? imgs : ["assets/favicon.svg"])];
+  $("pmImg").src = uniqImgs[0];
+  $("pmThumbs").innerHTML = uniqImgs.map((src, i) => `
+    <button type="button" class="pd-thumb ${i === 0 ? "active" : ""}" data-thumb-src="${safe(src)}">
+      <img src="${safe(src)}" alt="Preview ${i + 1}" onerror="this.src='assets/favicon.svg'">
+    </button>
+  `).join("");
+  $("pmThumbs").querySelectorAll("[data-thumb-src]").forEach((b) => {
+    b.onclick = () => {
+      $("pmImg").src = b.dataset.thumbSrc;
+      $("pmThumbs").querySelectorAll(".pd-thumb").forEach((x) => x.classList.remove("active"));
+      b.classList.add("active");
+    };
+  });
+
+  // Variant pill selector
   const vars = String(p.variants || "Standard").split(",").map((s) => s.trim()).filter(Boolean);
-  $("pmVariant").innerHTML = vars.map((v) => `<option value="${safe(v)}">${safe(v)}</option>`).join("");
-  $("pmAddBtn").disabled = Number(p.stock || 0) <= 0;
-  $("pmBuyBtn").disabled = Number(p.stock || 0) <= 0;
-  $("pmAddBtn").onclick = () => { addToCart(id, $("pmVariant").value); closeModal("productModal"); };
+  let selectedVar = vars[0] || "Standard";
+  const renderVarChips = () => {
+    $("pmVariantLabel").textContent = selectedVar;
+    $("pmVariantChips").innerHTML = vars.map((v) => `
+      <button type="button" class="pd-var-chip ${v === selectedVar ? "active" : ""}" data-var="${safe(v)}">
+        ${v === selectedVar ? "✓ " : ""}${safe(v)}
+      </button>
+    `).join("");
+    $("pmVariantChips").querySelectorAll("[data-var]").forEach((b) => {
+      b.onclick = () => { selectedVar = b.dataset.var; renderVarChips(); };
+    });
+  };
+  renderVarChips();
+
+  // Quantity stepper
+  let qty = 1;
+  const maxQty = Math.max(1, stock);
+  $("pmQtyVal").textContent = qty;
+  $("pmStockHint").textContent = stock <= 0 ? "Out of stock" : stock <= 5 ? `Only ${stock} left — order soon!` : `In Stock (${stock} available)`;
+  $("pmStockHint").style.color = stock <= 5 ? "var(--crimson)" : "var(--emerald-dark)";
+  $("pmQtyMinus").onclick = () => { if (qty > 1) { qty--; $("pmQtyVal").textContent = qty; } };
+  $("pmQtyPlus").onclick = () => { if (qty < maxQty) { qty++; $("pmQtyVal").textContent = qty; } };
+
+  // Wishlist & Share
+  const updateModalWish = () => {
+    const liked = wishlist.includes(id);
+    $("pmWishBtn").textContent = liked ? "♥ Saved" : "♡ Save";
+    $("pmWishBtn").style.color = liked ? "var(--crimson)" : "var(--ink)";
+  };
+  updateModalWish();
+  $("pmWishBtn").onclick = () => {
+    if (wishlist.includes(id)) wishlist = wishlist.filter((x) => x !== id);
+    else wishlist.push(id);
+    saveWishlist();
+    updateModalWish();
+    renderProducts();
+  };
+  $("pmShareBtn").onclick = async () => {
+    const shareUrl = `${location.origin}${location.pathname}?product=${encodeURIComponent(id)}`;
+    try { await navigator.clipboard.writeText(shareUrl); toast("Product link copied!"); }
+    catch (_) { toast(shareUrl); }
+  };
+
+  $("pmAddBtn").disabled = stock <= 0;
+  $("pmBuyBtn").disabled = stock <= 0;
+  $("pmAddBtn").onclick = () => { addToCart(id, selectedVar, qty); closeModal("productModal"); };
   $("pmBuyBtn").onclick = () => {
-    addToCart(id, $("pmVariant").value);
+    addToCart(id, selectedVar, qty);
     closeModal("productModal");
     openCheckout();
   };
   openModal("productModal");
 }
 
-function addToCart(id, variant = "") {
+function addToCart(id, variant = "", qty = 1) {
   const p = products[id];
   if (!p || Number(p.stock || 0) <= 0) return toast("Product is out of stock");
   const chosen = variant || String(p.variants || "Standard").split(",")[0].trim() || "Standard";
+  const addQty = Math.max(1, Number(qty || 1));
   const found = cart.find((x) => x.id === id && x.variant === chosen);
-  if (found) found.qty = Math.min(Number(p.stock || 99), found.qty + 1);
-  else cart.push({ id, name: p.name, price: Number(p.price), image: p.image || "", variant: chosen, qty: 1 });
+  if (found) found.qty = Math.min(Number(p.stock || 99), found.qty + addQty);
+  else cart.push({ id, name: p.name, price: Number(p.price), image: p.image || "", variant: chosen, qty: Math.min(Number(p.stock || 99), addQty) });
   saveCart();
-  toast(`Added ${p.name} to cart`);
+  toast(`Added ${p.name} (×${addQty}) to cart`);
 }
 
 function renderCartDrawer() {
@@ -1246,10 +1455,18 @@ async function openOrdersModal(highlightId = "") {
 
 /* ---------- Firebase Listeners & Auth ---------- */
 function subscribeStoreData() {
+  let deepLinkOpened = false;
   onValue(ref(db, "products"), (snap) => {
     products = snap.val() || {};
     renderCategories();
     renderProducts();
+    if (!deepLinkOpened) {
+      const targetId = new URLSearchParams(location.search).get("product");
+      if (targetId && products[targetId]) {
+        deepLinkOpened = true;
+        openProductModal(targetId);
+      }
+    }
   });
 
   onValue(ref(db, "categories"), (snap) => {

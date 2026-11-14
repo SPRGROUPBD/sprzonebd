@@ -354,25 +354,24 @@ button:disabled{opacity:.5;cursor:not-allowed}
         </form>
 
         <hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
-        <h3 style="margin-bottom:10px">Courier Pickup Hub &amp; API Settings</h3>
+        <h3 style="margin-bottom:10px">Courier Pickup Hub &amp; Private Server Proxy</h3>
+        <div style="background:#E8F6EE;border:1px solid #B7E4C7;border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:12.5px;color:#005C2D">
+          <b>🔒 Private Server Security:</b> Your Steadfast <code>Api-Key</code> / <code>Secret-Key</code> and Pathao <code>Client ID</code> / <code>Client Secret</code> are stored strictly on your server (<code>courier-proxy/</code> Cloudflare Worker Secrets), never in browser code or Firebase. All BD couriers route through your private Steadfast server proxy.
+        </div>
         <form id="courierSettingsForm">
           <div class="form-row">
             <div class="field">
               <label>Default Courier Service</label>
               <select id="setCourierDefault">
-                <option>Steadfast</option><option>Pathao</option><option>RedX</option>
+                <option value="Steadfast">Steadfast (All BD Dispatch)</option><option>Pathao</option><option>RedX</option>
                 <option>Paperfly</option><option>Sundarban</option><option>SA Paribahan</option><option>eCourier</option>
               </select>
             </div>
             <div class="field"><label>Pickup Hub Phone</label><input id="setCourierPhone" placeholder="017XXXXXXXX"></div>
           </div>
           <div class="field"><label>Merchant Pickup Address</label><input id="setCourierHub" placeholder="House, Road, Area, Dhaka"></div>
-          <div class="field"><label>Courier Webhook / API URL (Optional)</label><input id="setCourierApiUrl" placeholder="https://portal.packzy.com/api/v1/create_order"></div>
-          <div class="form-row">
-            <div class="field"><label>Courier API Key</label><input id="setCourierApiKey" placeholder="Api-Key (Optional)"></div>
-            <div class="field"><label>Courier Secret Key</label><input id="setCourierSecret" placeholder="Secret-Key (Optional)"></div>
-          </div>
-          <button type="submit" class="secondary" style="width:100%">🚚 Save Courier Settings</button>
+          <div class="field"><label>Courier Server Proxy URL (Cloudflare Worker)</label><input id="setCourierProxyUrl" type="url" placeholder="https://spr-zone-bd-courier-proxy.your-subdomain.workers.dev"></div>
+          <button type="submit" class="secondary" style="width:100%">🚚 Save Courier Hub &amp; Proxy Settings</button>
         </form>
       </div>
 
@@ -472,12 +471,13 @@ button:disabled{opacity:.5;cursor:not-allowed}
     </div>
     <form id="courierRequestForm">
       <input type="hidden" id="cpOrderId">
-      <div id="cpOrderBanner" style="background:#f8faf9;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:13px"></div>
+      <div id="cpOrderBanner" style="background:#f8faf9;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px;font-size:13px"></div>
+      <div id="cpProxyStatus" style="border-radius:10px;padding:8px 12px;margin-bottom:12px;font-size:12.5px"></div>
       <div class="form-row">
         <div class="field">
-          <label>BD Courier Service *</label>
+          <label>BD Courier Service (Steadfast Server Proxy) *</label>
           <select id="cpCourierName" required>
-            <option>Steadfast</option><option>Pathao</option><option>RedX</option>
+            <option value="Steadfast">Steadfast (All BD Courier Dispatch)</option><option>Pathao</option><option>RedX</option>
             <option>Paperfly</option><option>Sundarban</option><option>SA Paribahan</option><option>eCourier</option>
           </select>
         </div>
@@ -550,9 +550,7 @@ let courierSettings = {
   defaultCourier: "Steadfast",
   hubAddress: "Dhaka, Bangladesh",
   hubPhone: "09678-123456",
-  apiUrl: "",
-  apiKey: "",
-  secretKey: ""
+  proxyUrl: ""
 };
 let listenersStarted = false;
 
@@ -882,6 +880,13 @@ function openCourierModal(orderId) {
     <div><b>Order:</b> ${safe(orderId)} · <b>Products:</b> ${safe(orderProductSummaryText(o))}</div>
     <div><b>Grand Total:</b> <b style="color:var(--crimson)">${money(o.total)}</b> · <b>Payment:</b> ${safe(o.paymentMethod)} (${safe(o.paymentStatus || "Pending")})</div>
   `;
+  const hasProxy = Boolean((courierSettings.proxyUrl || "").trim());
+  $("cpProxyStatus").style.background = hasProxy ? "#E8F6EE" : "#FEF3C7";
+  $("cpProxyStatus").style.border = hasProxy ? "1px solid #B7E4C7" : "1px solid #FDE68A";
+  $("cpProxyStatus").style.color = hasProxy ? "#005C2D" : "#92400E";
+  $("cpProxyStatus").innerHTML = hasProxy
+    ? `🔒 <b>Private Courier Server Connected:</b> Dispatch sends authenticated request to Steadfast API using server-only secrets.`
+    : `⚠️ <b>Proxy URL not configured yet:</b> Deploy <code>courier-proxy/</code> and save the Worker URL in <b>Payment &amp; SMS → Courier Hub</b> to dispatch live to Steadfast.`;
   $("cpCourierName").value = o.courier?.courierName || courierSettings.defaultCourier || "Steadfast";
   $("cpCodAmount").value = o.courier?.codAmount ?? defaultCod;
   $("cpRecipientName").value = o.courier?.recipientName || o.customer?.name || "";
@@ -930,7 +935,7 @@ function renderAdminOrders() {
           <div><b>Products:</b> ${safe(orderProductSummaryText(o))}</div>
           ${o.senderNumber || o.trxId ? `<div><b>Payment Sender:</b> ${safe(o.senderNumber || "-")} · <b>TrxID:</b> <code>${safe(o.trxId || "-")}</code></div>` : ""}
           <div><b>Grand Total:</b> <b style="color:var(--crimson)">${money(o.total)}</b> (Subtotal: ${money(o.subtotal || o.total)} · Delivery: ${money(o.deliveryFee || 0)})</div>
-          ${o.courier ? `<div style="font-size:12.5px;color:var(--emerald-dark)"><b>Courier Pickup:</b> ${safe(o.courier.courierName)} · Consignment: <code>${safe(o.courier.consignmentId)}</code> · COD: ${money(o.courier.codAmount)} · Hub: ${safe(o.courier.pickupHub || "-")}</div>` : ""}
+          ${o.courier ? `<div style="font-size:12.5px;color:var(--emerald-dark)"><b>Courier Pickup:</b> ${safe(o.courier.courierName)} · Consignment: <code>${safe(o.courier.consignmentId)}</code>${o.courier.trackingCode && o.courier.trackingCode !== o.courier.consignmentId ? ` · Tracking: <code>${safe(o.courier.trackingCode)}</code>` : ""} · Status: <b>${safe(o.courier.pickupStatus || "Pickup Requested")}</b> · COD: ${money(o.courier.codAmount)} · Hub: ${safe(o.courier.pickupHub || "-")}</div>` : ""}
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding-top:8px;border-top:1px solid var(--line)">
           ${status === "Pending" || status === "Placed"
@@ -941,6 +946,7 @@ function renderAdminOrders() {
           </select>
           <button type="button" class="secondary sm" data-print-inv="${safe(id)}">🖨️ Print Invoice</button>
           <button type="button" class="gold sm" data-courier-req="${safe(id)}">${o.courier ? "🚚 Update Courier Pickup" : "🚚 Courier Pickup Request"}</button>
+          ${o.courier && courierSettings.proxyUrl ? `<button type="button" class="outline sm" data-sync-courier="${safe(id)}">🔄 Sync Status</button>` : ""}
           <button type="button" class="crimson sm" data-del-ord="${safe(id)}">🗑️ Delete Order</button>
         </div>
       </div>
@@ -973,6 +979,39 @@ function renderAdminOrders() {
 
   $("adminOrderList").querySelectorAll("[data-courier-req]").forEach((b) => {
     b.onclick = () => openCourierModal(b.dataset.courierReq);
+  });
+
+  $("adminOrderList").querySelectorAll("[data-sync-courier]").forEach((b) => {
+    b.onclick = async () => {
+      const id = b.dataset.syncCourier;
+      const o = orders[id];
+      const base = (courierSettings.proxyUrl || "").trim().replace(/\/+$/, "");
+      if (!o || !base || !auth.currentUser) return toast("Configure Courier Proxy URL first.");
+      b.disabled = true;
+      b.textContent = "Syncing...";
+      try {
+        const idToken = await auth.currentUser.getIdToken();
+        const cid = o.courier?.consignmentId || "";
+        const resp = await fetch(`${base}/track?invoice=${encodeURIComponent(id)}&consignmentId=${encodeURIComponent(cid)}`, {
+          headers: { Authorization: `Bearer ${idToken}` }
+        });
+        const data = await resp.json().catch(() => ({}));
+        if (!resp.ok || data.ok === false) {
+          throw new Error(data.error || data.message || `HTTP ${resp.status}`);
+        }
+        const liveStatus = data.delivery_status || data.status || o.courier?.pickupStatus || "In Transit";
+        await update(ref(db, `orders/${id}/courier`), {
+          pickupStatus: String(liveStatus),
+          lastSyncedAt: Date.now()
+        });
+        toast(`Courier status synced: ${liveStatus}`);
+      } catch (err) {
+        toast(`Sync failed: ${err.message}`);
+      } finally {
+        b.disabled = false;
+        b.textContent = "🔄 Sync Status";
+      }
+    };
   });
 
   $("adminOrderList").querySelectorAll("[data-del-ord]").forEach((b) => {
@@ -1161,13 +1200,17 @@ function startAdminListeners() {
   });
   onValue(ref(db, "settings/courier"), (snap) => {
     const v = snap.val() || {};
-    courierSettings = { ...courierSettings, ...v };
-    $("setCourierDefault").value = courierSettings.defaultCourier || "Steadfast";
-    $("setCourierPhone").value = courierSettings.hubPhone || "";
-    $("setCourierHub").value = courierSettings.hubAddress || "";
-    $("setCourierApiUrl").value = courierSettings.apiUrl || "";
-    $("setCourierApiKey").value = courierSettings.apiKey || "";
-    $("setCourierSecret").value = courierSettings.secretKey || "";
+    courierSettings = {
+      defaultCourier: v.defaultCourier || "Steadfast",
+      hubPhone: v.hubPhone || "",
+      hubAddress: v.hubAddress || "",
+      proxyUrl: v.proxyUrl || ""
+    };
+    $("setCourierDefault").value = courierSettings.defaultCourier;
+    $("setCourierPhone").value = courierSettings.hubPhone;
+    $("setCourierHub").value = courierSettings.hubAddress;
+    $("setCourierProxyUrl").value = courierSettings.proxyUrl;
+    renderAdminOrders();
   });
 }
 
@@ -1381,12 +1424,10 @@ $("courierSettingsForm").onsubmit = async (e) => {
     defaultCourier: $("setCourierDefault").value,
     hubPhone: normalizeBdPhone($("setCourierPhone").value),
     hubAddress: $("setCourierHub").value.trim(),
-    apiUrl: $("setCourierApiUrl").value.trim(),
-    apiKey: $("setCourierApiKey").value.trim(),
-    secretKey: $("setCourierSecret").value.trim(),
+    proxyUrl: $("setCourierProxyUrl").value.trim().replace(/\/+$/, ""),
     updatedAt: Date.now()
   });
-  toast("Courier hub & API settings saved!");
+  toast("Courier hub & private proxy URL saved!");
 };
 
 $("printInvoiceBtn").onclick = () => window.print();
@@ -1411,70 +1452,80 @@ $("courierRequestForm").onsubmit = async (e) => {
   const pickupHub = $("cpPickupHub").value.trim();
   const pickupNote = $("cpPickupNote").value.trim();
   let consignmentId = $("cpConsignmentId").value.trim();
+  let trackingCode = "";
+  let pickupStatus = "Pickup Requested";
 
   $("cpSubmitBtn").disabled = true;
   $("cpSubmitBtn").textContent = "Dispatching Pickup Request...";
 
-  let apiNote = "Saved in SPR ZONE BD Order Dispatch";
-  if (courierSettings.apiUrl) {
-    try {
-      const headers = { "Content-Type": "application/json" };
-      if (courierSettings.apiKey) headers["Api-Key"] = courierSettings.apiKey;
-      if (courierSettings.secretKey) headers["Secret-Key"] = courierSettings.secretKey;
-      const resp = await fetch(courierSettings.apiUrl, {
+  let apiNote = "Logged in SPR ZONE BD (Configure Courier Proxy URL for live Steadfast API dispatch)";
+  const proxyBase = (courierSettings.proxyUrl || "").trim().replace(/\/+$/, "");
+
+  try {
+    if (proxyBase) {
+      if (!auth.currentUser) throw new Error("Admin session expired. Please sign in again.");
+      const idToken = await auth.currentUser.getIdToken();
+      const resp = await fetch(`${proxyBase}/create-order`, {
         method: "POST",
-        headers,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${idToken}`
+        },
         body: JSON.stringify({
+          courier: courierName,
           invoice: orderId,
           recipient_name: recipientName,
           recipient_phone: recipientPhone,
           recipient_address: address,
           cod_amount: codAmount,
-          note: pickupNote
+          note: pickupNote,
+          hub_address: pickupHub
         })
       });
-      if (resp.ok) {
-        const data = await resp.json().catch(() => ({}));
-        const remoteId = data?.consignment?.tracking_code || data?.consignment?.consignment_id || data?.tracking_code || data?.consignment_id;
-        if (remoteId) consignmentId = String(remoteId);
-        apiNote = "Dispatched to Courier API";
-      } else {
-        apiNote = `Courier API HTTP ${resp.status} (Saved locally)`;
+      const data = await resp.json().catch(() => ({}));
+      if (!resp.ok || data.ok === false) {
+        throw new Error(data.error || data.message || `Courier proxy HTTP ${resp.status}`);
       }
-    } catch (_) {
-      apiNote = "Courier pickup logged (API unreachable from browser CORS)";
+      const c = data.consignment || {};
+      if (c.consignment_id) consignmentId = String(c.consignment_id);
+      if (c.tracking_code) trackingCode = String(c.tracking_code);
+      if (!consignmentId && trackingCode) consignmentId = trackingCode;
+      if (c.status) pickupStatus = String(c.status);
+      apiNote = `Dispatched via Private Courier Server (${data.provider || "Steadfast"})`;
     }
-  }
 
-  if (!consignmentId) {
-    consignmentId = `${courierName.slice(0, 3).toUpperCase()}-${Date.now().toString().slice(-6)}`;
-  }
+    if (!consignmentId) {
+      consignmentId = `${courierName.slice(0, 3).toUpperCase()}-${Date.now().toString().slice(-6)}`;
+    }
 
-  const orderUpdate = {
-    courier: {
-      courierName,
-      pickupStatus: "Pickup Requested",
-      consignmentId,
-      codAmount,
-      recipientName,
-      recipientPhone,
-      address,
-      pickupHub,
-      pickupNote,
-      apiNote,
-      requestedAt: Date.now()
-    },
-    updatedAt: Date.now()
-  };
+    const orderUpdate = {
+      courier: {
+        courierName,
+        provider: proxyBase ? "Steadfast" : courierName,
+        pickupStatus,
+        consignmentId,
+        trackingCode: trackingCode || consignmentId,
+        codAmount,
+        recipientName,
+        recipientPhone,
+        address,
+        pickupHub,
+        pickupNote,
+        apiNote,
+        requestedAt: Date.now()
+      },
+      updatedAt: Date.now()
+    };
 
-  if ($("cpMarkPacked").checked && (o.status === "Pending" || o.status === "Confirmed")) {
-    orderUpdate.status = "Packed";
-  }
+    if ($("cpMarkPacked").checked && (o.status === "Pending" || o.status === "Confirmed")) {
+      orderUpdate.status = "Packed";
+    }
 
-  try {
     await update(ref(db, "orders/" + orderId), orderUpdate);
     closeModal("courierModal");
-    toast(`Courier pickup requested (${courierName} · ${consignmentId})!`);
+    toast(`Courier pickup dispatched (${courierName} · ${consignmentId})!`);
+  } catch (err) {
+    toast(`Courier dispatch failed: ${err.message}`);
   } finally {
     $("cpSubmitBtn").disabled = false;
     $("cpSubmitBtn").textContent = "🚚 Send Courier Pickup Request";
