@@ -188,66 +188,143 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .p-body .add-btn{width:100%;margin-top:auto;font-size:12.5px;min-height:36px;padding:8px}
 
 /* Full Landscape 3-Column Product Preview Page */
-.pp-topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap}
-.pp-breadcrumb{font-size:13px;color:var(--muted);font-weight:600;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.pp-wrap{max-width:1188px;margin:0 auto}
+.pp-topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:wrap}
+.pp-breadcrumb{font-size:12.5px;color:#1a9cb7;font-weight:500;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .pp-shell{
-  background:#fff;border:1px solid var(--line);border-radius:16px;
-  box-shadow:var(--shadow);padding:20px;
+  background:#fff;border:1px solid #e5e7eb;border-radius:4px;
+  box-shadow:0 2px 8px rgba(0,0,0,.04);overflow:hidden;
 }
-.pp-layout{display:grid;grid-template-columns:360px minmax(0,1fr) 295px;gap:24px;align-items:start}
+.pp-layout{display:grid;grid-template-columns:34% 41% 25%;align-items:stretch}
+.pp-gallery-col{padding:16px;border-right:1px solid #f1f5f9;display:flex;flex-direction:column;justify-content:space-between}
 .pp-stage{
-  position:relative;background:#fff;border:1px solid var(--line);border-radius:14px;
-  width:100%;aspect-ratio:1/1;max-height:360px;padding:16px;
+  position:relative;background:#fff;border-radius:4px;
+  width:100%;aspect-ratio:1/1;
   display:flex;align-items:center;justify-content:center;overflow:hidden;
 }
-.pp-stage img{width:100%;height:100%;max-width:100%;max-height:100%;object-fit:contain;display:block}
-.pp-thumb-bar{display:flex;align-items:center;gap:6px;margin-top:10px}
-.pp-thumb-arrow{
-  width:28px;height:56px;min-height:56px;padding:0;border-radius:8px;
-  background:#f8faf9;color:var(--ink);border:1px solid var(--line);flex-shrink:0;font-size:15px;
+.pp-stage img{width:84%;height:84%;object-fit:contain;display:block;transition:transform .22s ease}
+.pp-stage:hover img{transform:scale(1.06)}
+.pp-promo-overlay{
+  position:absolute;top:8px;left:10px;z-index:3;
+  background:linear-gradient(135deg,#4b0082 0%,#800080 60%,#b017b0 100%);
+  color:#fff;border-radius:12px;padding:6px 11px;
+  box-shadow:0 4px 12px rgba(75,0,130,.28);border:1px solid rgba(216,180,254,.45);
+  display:flex;align-items:center;gap:8px;transform:rotate(-2deg);max-width:90%;
 }
-.pp-thumb-arrow:hover{background:var(--emerald-soft);color:var(--emerald-dark)}
+.pp-promo-left{text-align:center;line-height:1.05;border-right:1px solid rgba(255,255,255,.3);padding-right:8px}
+.pp-promo-badge{font-size:13px;font-weight:900;color:#fde047;letter-spacing:-.3px}
+.pp-promo-sub{font-size:8px;text-transform:uppercase;font-weight:700}
+.pp-promo-right{line-height:1.15}
+.pp-promo-window{font-size:8.5px;color:#e9d5ff}
+.pp-promo-offer{font-size:12px;font-weight:800;color:#fff}
+.pp-promo-offer b{color:#fde047}
+.pp-thumb-bar{display:flex;align-items:center;justify-content:space-between;gap:4px;margin-top:14px}
+.pp-thumb-arrow{
+  width:24px;height:44px;min-height:44px;padding:0;border-radius:4px;
+  background:transparent;color:#9ca3af;border:0;flex-shrink:0;font-size:18px;font-weight:700;
+}
+.pp-thumb-arrow:hover{background:#f3f4f6;color:#374151}
 .pp-thumbs{display:flex;gap:8px;overflow-x:auto;scroll-behavior:smooth;flex:1;padding:2px}
 .pp-thumb{
-  width:56px;height:56px;min-height:56px;padding:4px;border-radius:8px;
-  border:1.5px solid var(--line);background:#fff;flex-shrink:0;
+  width:52px;height:52px;min-height:52px;padding:2px;border-radius:2px;
+  border:1px solid #e5e7eb;background:#fff;flex-shrink:0;
 }
-.pp-thumb.active{border-color:var(--crimson);box-shadow:0 0 0 2px rgba(225,29,72,.14)}
+.pp-thumb:hover,.pp-thumb.active{border:2px solid #f57224}
 .pp-thumb img{width:100%;height:100%;object-fit:contain;display:block}
+.pp-info-col{padding:16px 20px;border-right:1px solid #f1f5f9}
 .pp-flash-bar{
-  background:linear-gradient(90deg,#7E22CE,#E11D48 52%,#F97316);color:#fff;
-  border-radius:999px;padding:6px 14px;font-size:12.5px;font-weight:800;
-  display:flex;align-items:center;justify-content:space-between;gap:10px;
-  margin-bottom:12px;flex-wrap:wrap;
+  background:linear-gradient(90deg,#5e17eb 0%,#8c25e6 50%,#3b0d99 100%);color:#fff;
+  border-radius:999px;padding:5px 12px;font-size:12px;font-weight:700;
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  margin-bottom:10px;flex-wrap:wrap;box-shadow:0 2px 6px rgba(94,23,235,.18);
 }
-.pp-flash-meter{
-  display:inline-flex;align-items:center;gap:8px;font-size:11.5px;font-weight:700;
+.pp-flash-left{display:inline-flex;align-items:center;gap:6px;font-style:italic;font-weight:800;letter-spacing:.3px}
+.pp-flash-tag{background:#facc15;color:#3b0764;padding:1px 6px;border-radius:3px;font-size:10.5px;font-style:normal;font-weight:900}
+.pp-flash-timer{font-size:11.5px;color:#fdba74;font-weight:600;font-variant-numeric:tabular-nums}
+.pp-flash-meter{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600}
+.pp-meter-track{width:56px;height:7px;background:rgba(255,255,255,.3);border-radius:999px;overflow:hidden}
+.pp-meter-fill{height:100%;background:#fb923c;border-radius:999px}
+.pp-mall-badge{
+  display:inline-flex;align-items:center;justify-content:center;
+  background:#5a189a;color:#fff;font-size:10px;font-weight:800;
+  padding:2px 6px;border-radius:2px;margin-bottom:5px;letter-spacing:.2px;
 }
-.pp-meter-track{width:84px;height:7px;background:rgba(255,255,255,.32);border-radius:999px;overflow:hidden}
-.pp-meter-fill{height:100%;background:#FEF08A;border-radius:999px}
-.pd-var-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.pp-title{font-family:inherit;font-size:22px;font-weight:400;line-height:1.35;color:#212121;margin:0 0 8px}
+.pp-meta-row{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.pp-stars-link{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#1a9cb7}
+.pp-stars-link .stars{color:#faca51;letter-spacing:1px;font-size:13px}
+.pp-icon-actions{display:flex;align-items:center;gap:10px}
+.pp-icon-btn{
+  background:transparent;color:#757575;border:0;padding:4px 6px;min-height:32px;
+  font-size:17px;border-radius:6px;
+}
+.pp-icon-btn:hover{background:#f3f4f6;color:#212121}
+.pp-icon-btn.liked{color:#ef4444}
+.pp-brand-row{font-size:12px;color:#757575;padding-bottom:12px;border-bottom:1px solid #f1f5f9}
+.pp-brand-row a{color:#1a9cb7;font-weight:500}
+.pp-brand-row a:hover{text-decoration:underline}
+.pp-price-box{padding:14px 0;border-bottom:1px solid #f1f5f9}
+.pp-price-now{font-size:30px;font-weight:500;color:#f57224;line-height:1.05;margin-bottom:4px}
+.pp-price-sub{display:flex;align-items:center;gap:8px;font-size:12.5px}
+.pp-price-old{color:#9e9e9e;text-decoration:line-through}
+.pp-price-disc{color:#212121;font-weight:500}
+.pp-prop-row{padding:14px 0 4px;display:flex;align-items:flex-start;gap:18px}
+.pp-prop-label{font-size:12.5px;color:#757575;width:68px;flex-shrink:0;padding-top:4px}
+.pd-var-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
 .pd-var-chip{
-  background:#fff;color:var(--ink);border:1.5px solid var(--line);border-radius:8px;
-  padding:6px 13px;min-height:36px;font-size:12.5px;font-weight:700;
+  position:relative;background:#fff;color:#212121;border:1px solid #e5e7eb;border-radius:2px;
+  padding:4px 10px 4px 4px;min-height:38px;font-size:12px;font-weight:500;gap:6px;
 }
-.pd-var-chip.active{border-color:var(--crimson);background:#FFF1F2;color:var(--crimson-dark)}
-.pd-qty-box{display:inline-flex;align-items:center;gap:8px;background:#f8faf9;border:1px solid var(--line);border-radius:9px;padding:3px}
-.pd-qty-box button{min-height:34px;width:34px;padding:0;background:#fff;color:var(--ink);border:1px solid var(--line)}
+.pd-var-chip:hover{border-color:#f57224;background:#fff}
+.pd-var-chip.active{border:1.5px solid #f57224;color:#212121;background:#fff}
+.pd-var-thumb{width:28px;height:28px;object-fit:contain;border-radius:2px}
+.pd-var-check{
+  position:absolute;bottom:0;right:0;width:12px;height:12px;
+  background:#f57224;color:#fff;font-size:8px;display:grid;place-items:center;font-weight:900;
+}
+.pp-qty-row{padding:12px 0;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.pd-qty-box{display:inline-flex;align-items:center}
+.pd-qty-box button{
+  min-height:32px;width:32px;height:32px;padding:0;border-radius:2px;
+  background:#eff0f5;color:#6b7280;border:0;font-size:15px;font-weight:700;
+}
+.pd-qty-box button:hover{background:#e2e4ec;color:#111827}
+.pd-qty-box span{width:40px;text-align:center;font-size:13.5px;font-weight:600;color:#212121}
+.pp-cta-row{margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.pp-btn-buy{
+  background:#2abbe8;color:#fff;border-radius:2px;min-height:44px;font-size:14px;font-weight:600;
+  box-shadow:0 1px 3px rgba(0,0,0,.08);
+}
+.pp-btn-buy:hover{background:#22a8d2}
+.pp-btn-cart{
+  background:#f57224;color:#fff;border-radius:2px;min-height:44px;font-size:14px;font-weight:600;
+  box-shadow:0 1px 3px rgba(0,0,0,.08);
+}
+.pp-btn-cart:hover{background:#e06116}
 .pp-side-card{
-  background:#FAFAFA;border:1px solid var(--line);border-radius:14px;
-  padding:16px;display:grid;gap:13px;
+  background:#fafafa;padding:16px;display:flex;flex-direction:column;gap:0;font-size:12.5px;
 }
-.pp-side-head{font-size:11.5px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
-.pp-side-item{display:flex;align-items:flex-start;gap:10px;font-size:13px}
-.pp-side-ic{
-  width:32px;height:32px;border-radius:8px;background:#fff;border:1px solid var(--line);
-  display:grid;place-items:center;flex-shrink:0;font-size:15px;
+.pp-side-head{
+  display:flex;align-items:center;justify-content:space-between;
+  font-size:12px;font-weight:600;color:#757575;margin-bottom:10px;
 }
+.pp-side-item{
+  display:flex;align-items:flex-start;justify-content:space-between;gap:10px;
+  padding:10px 0;border-bottom:1px solid #eceef2;
+}
+.pp-side-item.no-border{border-bottom:0;padding-bottom:4px}
+.pp-side-left{display:flex;align-items:flex-start;gap:10px;min-width:0}
+.pp-side-ic{width:18px;text-align:center;color:#757575;font-size:14px;flex-shrink:0;margin-top:1px}
+.pp-side-change{
+  background:transparent;color:#1a9cb7;border:0;padding:0;min-height:auto;
+  font-size:11.5px;font-weight:600;text-transform:uppercase;flex-shrink:0;
+}
+.pp-side-change:hover{background:transparent;text-decoration:underline;color:#15849c}
 .pp-specs-card{
-  margin-top:18px;background:#f8faf9;border:1px solid var(--line);
-  border-radius:12px;padding:16px;
+  margin-top:14px;background:#fff;border:1px solid #e5e7eb;
+  border-radius:4px;padding:18px 20px;box-shadow:0 2px 8px rgba(0,0,0,.03);
 }
-.pp-related-wrap{margin-top:24px}
+.pp-related-wrap{margin-top:20px}
 
 /* Right Sidebar */
 .right-col{display:flex;flex-direction:column;gap:14px}
@@ -309,7 +386,12 @@ button:disabled{opacity:.5;cursor:not-allowed}
   .store-grid{grid-template-columns:220px minmax(0,1fr)}
   .right-col{grid-column:1 / -1;display:grid;grid-template-columns:repeat(3,1fr)}
   .products-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
-  .pp-layout{grid-template-columns:300px minmax(0,1fr) 250px;gap:18px}
+  .pp-layout{grid-template-columns:34% 40% 26%}
+}
+@media(max-width:960px){
+  .pp-layout{grid-template-columns:1fr}
+  .pp-gallery-col,.pp-info-col{border-right:0;border-bottom:1px solid #f1f5f9}
+  .pp-stage{max-height:340px}
 }
 @media(max-width:900px){
   .trust-badges{display:none}
@@ -324,8 +406,6 @@ button:disabled{opacity:.5;cursor:not-allowed}
   .products-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
   .right-col{grid-template-columns:1fr}
   .footer-inner{grid-template-columns:1fr 1fr}
-  .pp-layout{grid-template-columns:1fr}
-  .pp-stage{max-height:320px}
 }
 @media(max-width:520px){
   .topbar-inner{font-size:11.5px;justify-content:center}
@@ -333,7 +413,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
   .p-img-wrap{padding:8px}
   .form-row{grid-template-columns:1fr}
   .footer-inner{grid-template-columns:1fr}
-  .pp-shell{padding:14px}
+  .pp-info-col,.pp-gallery-col,.pp-side-card,.pp-specs-card{padding:14px}
 }
 </style>
 </head>
@@ -518,140 +598,182 @@ button:disabled{opacity:.5;cursor:not-allowed}
 
   <!-- FULL LANDSCAPE 3-COLUMN PRODUCT PREVIEW PAGE -->
   <section id="productPreviewPage" class="hidden">
-    <div class="pp-topbar">
-      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-        <button type="button" class="outline sm" id="ppBackBtn">← Back to Products</button>
-        <div class="pp-breadcrumb" id="ppBreadcrumb">Home › Category › Brand</div>
+    <div class="pp-wrap">
+      <div class="pp-topbar">
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          <button type="button" class="outline sm" id="ppBackBtn">← Back to Products</button>
+          <div class="pp-breadcrumb" id="ppBreadcrumb">Home › Category › Brand</div>
+        </div>
       </div>
-    </div>
 
-    <div class="pp-shell">
-      <div class="pp-layout">
-        <!-- Left Column: Gallery Showcase + Scrollable Thumbnail Carousel -->
-        <div class="pp-gallery-col">
-          <div class="pp-stage">
-            <span class="p-badge hidden" id="ppDiscBadge"></span>
-            <img id="ppMainImg" alt="Product Preview">
-          </div>
-          <div class="pp-thumb-bar">
-            <button type="button" class="pp-thumb-arrow" id="ppThumbPrev" aria-label="Previous image">‹</button>
-            <div class="pp-thumbs" id="ppThumbs"></div>
-            <button type="button" class="pp-thumb-arrow" id="ppThumbNext" aria-label="Next image">›</button>
-          </div>
-        </div>
-
-        <!-- Center Column: Countdown Bar, Title, Ratings, Share/Wish, Price, Variant, Qty, CTAs -->
-        <div class="pp-info-col">
-          <div class="pp-flash-bar hidden" id="ppFlashBar">
-            <span id="ppFlashBadge">⚡ FLASH SALE</span>
-            <span id="ppFlashTimer" style="font-variant-numeric:tabular-nums">Ends soon</span>
-            <span class="pp-meter-meter pp-flash-meter">
-              <span id="ppFlashSoldText">0 sold</span>
-              <span class="pp-meter-track"><span class="pp-meter-fill" id="ppFlashMeterFill" style="width:65%"></span></span>
-            </span>
-          </div>
-
-          <h1 id="ppTitle" style="font-size:clamp(19px,2vw,24px);line-height:1.3;margin-bottom:8px;color:var(--ink)"></h1>
-
-          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap">
-            <div id="ppRating" class="p-rating" style="font-size:13px"></div>
-            <div style="display:flex;gap:6px">
-              <button type="button" class="outline sm" id="ppShareBtn" title="Share product">🔗 Share</button>
-              <button type="button" class="outline sm" id="ppWishBtn" title="Save to wishlist">♡</button>
+      <div class="pp-shell">
+        <div class="pp-layout">
+          <!-- Left Column: Product Gallery & Thumbnail Carousel -->
+          <div class="pp-gallery-col">
+            <div class="pp-stage">
+              <div class="pp-promo-overlay hidden" id="ppPromoOverlay">
+                <div class="pp-promo-left">
+                  <div class="pp-promo-badge" id="ppPromoBadge">SALE</div>
+                  <div class="pp-promo-sub">Live Offer</div>
+                </div>
+                <div class="pp-promo-right">
+                  <div class="pp-promo-window" id="ppPromoWindow"></div>
+                  <div class="pp-promo-offer" id="ppPromoOffer"></div>
+                </div>
+              </div>
+              <span class="p-badge hidden" id="ppDiscBadge" style="left:auto;right:8px"></span>
+              <img id="ppMainImg" alt="Product Preview" onerror="this.src='assets/favicon.svg'">
+            </div>
+            <div class="pp-thumb-bar">
+              <button type="button" class="pp-thumb-arrow" id="ppThumbPrev" aria-label="Previous image">‹</button>
+              <div class="pp-thumbs" id="ppThumbs"></div>
+              <button type="button" class="pp-thumb-arrow" id="ppThumbNext" aria-label="Next image">›</button>
             </div>
           </div>
 
-          <div style="font-size:13px;color:var(--muted);padding-bottom:12px;border-bottom:1px solid var(--line);margin-bottom:14px">
-            Brand: <b id="ppBrand" style="color:var(--ink)"></b>
-            <span style="margin:0 8px">|</span>
-            <a href="#productsSection" id="ppMoreCatLink" style="color:var(--emerald-dark);font-weight:700"></a>
-          </div>
-
-          <div class="p-price-row" style="margin-bottom:16px">
-            <span class="p-price" id="ppPrice" style="font-size:30px;color:#F97316"></span>
-            <span class="p-old" id="ppOldPrice" style="font-size:15px"></span>
-            <span class="badge red hidden" id="ppDiscInline"></span>
-          </div>
-
-          <div style="margin-bottom:16px">
-            <div style="font-size:13px;font-weight:700;color:var(--muted)">
-              Option / Variant: <b id="ppVariantLabel" style="color:var(--ink)">Standard</b>
-            </div>
-            <div class="pd-var-row" id="ppVariantChips"></div>
-          </div>
-
-          <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;flex-wrap:wrap">
-            <span style="font-size:13px;font-weight:700;color:var(--muted)">Quantity</span>
-            <div class="pd-qty-box">
-              <button type="button" id="ppQtyMinus">−</button>
-              <b id="ppQtyVal" style="min-width:28px;text-align:center">1</b>
-              <button type="button" id="ppQtyPlus">+</button>
-            </div>
-            <span id="ppStockHint" style="font-size:12.5px;font-weight:700"></span>
-          </div>
-
-          <div style="display:flex;gap:12px;flex-wrap:wrap">
-            <button type="button" class="sky" id="ppBuyBtn" style="flex:1;min-width:150px;min-height:48px;font-size:15px">⚡ Buy Now</button>
-            <button type="button" class="gold" id="ppAddBtn" style="flex:1;min-width:150px;min-height:48px;font-size:15px">🛒 Add to Cart</button>
-          </div>
-        </div>
-
-        <!-- Right Column: Delivery Options & Return / Warranty (Cash on Delivery Only) -->
-        <aside class="pp-side-card">
-          <div class="pp-side-head">Delivery Options</div>
-          <div class="pp-side-item">
-            <div class="pp-side-ic">🚚</div>
-            <div>
-              <b>Standard Delivery</b>
-              <div style="color:var(--muted);font-size:12px">
-                Dhaka ৳60 · Outside Dhaka ৳120<br>
-                <span style="color:var(--emerald-dark);font-weight:700">Free delivery over ৳3,000</span>
+          <!-- Center Column: Flash Sale Bar, Mall Badge, Title, Ratings, Share/Wish, Price, Variants, Qty, Buy Now / Add to Cart -->
+          <div class="pp-info-col">
+            <div class="pp-flash-bar hidden" id="ppFlashBar">
+              <div class="pp-flash-left">
+                <span class="pp-flash-tag" id="ppFlashBadge">SALE</span>
+                <span style="color:#fde047">FLASH</span>
+                <span>SALE</span>
+              </div>
+              <div class="pp-flash-timer" id="ppFlashTimer">Ends soon</div>
+              <div class="pp-flash-meter">
+                <span id="ppFlashSoldText">0 sold</span>
+                <div class="pp-meter-track"><div class="pp-meter-fill" id="ppFlashMeterFill" style="width:65%"></div></div>
               </div>
             </div>
-          </div>
-          <div class="pp-side-item">
-            <div class="pp-side-ic">💵</div>
+
             <div>
-              <b>Cash on Delivery Available</b>
-              <div style="color:var(--muted);font-size:12px">Pay cash at doorstep across all 64 districts</div>
+              <span class="pp-mall-badge">SPR Mall</span>
+            </div>
+
+            <h1 class="pp-title" id="ppTitle"></h1>
+
+            <div class="pp-meta-row">
+              <a href="#ppSpecsCard" class="pp-stars-link" id="ppRating"></a>
+              <div class="pp-icon-actions">
+                <button type="button" class="pp-icon-btn" id="ppShareBtn" title="Share product" aria-label="Share product">🔗</button>
+                <button type="button" class="pp-icon-btn" id="ppWishBtn" title="Add to wishlist" aria-label="Add to wishlist">♡</button>
+              </div>
+            </div>
+
+            <div class="pp-brand-row">
+              Brand: <a href="#productsSection" id="ppBrandLink"></a>
+              <span style="margin:0 6px;color:#d1d5db">|</span>
+              <a href="#productsSection" id="ppMoreCatLink"></a>
+            </div>
+
+            <div class="pp-price-box">
+              <div class="pp-price-now" id="ppPrice"></div>
+              <div class="pp-price-sub" id="ppPriceSubRow">
+                <span class="pp-price-old" id="ppOldPrice"></span>
+                <span class="pp-price-disc hidden" id="ppDiscInline"></span>
+              </div>
+            </div>
+
+            <div class="pp-prop-row">
+              <span class="pp-prop-label">Option</span>
+              <div style="flex:1;min-width:0">
+                <div id="ppVariantLabel" style="font-size:12.5px;color:#212121;font-weight:500">Standard</div>
+                <div class="pd-var-row" id="ppVariantChips"></div>
+              </div>
+            </div>
+
+            <div class="pp-qty-row">
+              <span class="pp-prop-label" style="padding-top:0">Quantity</span>
+              <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+                <div class="pd-qty-box">
+                  <button type="button" id="ppQtyMinus" aria-label="Decrease quantity">−</button>
+                  <span id="ppQtyVal">1</span>
+                  <button type="button" id="ppQtyPlus" aria-label="Increase quantity">+</button>
+                </div>
+                <span id="ppStockHint" style="font-size:12px"></span>
+              </div>
+            </div>
+
+            <div class="pp-cta-row">
+              <button type="button" class="pp-btn-buy" id="ppBuyBtn">Buy Now</button>
+              <button type="button" class="pp-btn-cart" id="ppAddBtn">Add to Cart</button>
             </div>
           </div>
 
-          <hr style="border:0;border-top:1px solid var(--line);margin:2px 0">
-          <div class="pp-side-head">Return &amp; Warranty</div>
-          <div class="pp-side-item">
-            <div class="pp-side-ic">↺</div>
-            <div>
-              <b>14 Days Easy Return</b>
-              <div style="color:var(--muted);font-size:12px">Change of mind / damaged product protection</div>
+          <!-- Right Column: Delivery Options & Return / Warranty (Cash on Delivery Only) -->
+          <aside class="pp-side-card">
+            <div class="pp-side-head">
+              <span>Delivery Options</span>
+              <span title="Delivery fee depends on selected district. Orders ৳3,000+ ship free." style="cursor:help">ⓘ</span>
             </div>
-          </div>
-          <div class="pp-side-item">
-            <div class="pp-side-ic">🛡️</div>
-            <div>
-              <b>100% Authentic Warranty</b>
-              <div id="ppWarrantyNote" style="color:var(--muted);font-size:12px">Verified Brand Warranty</div>
-            </div>
-          </div>
-        </aside>
-      </div>
 
-      <!-- Product Specifications & Full Description -->
-      <div class="pp-specs-card">
-        <div style="font-size:12px;font-weight:800;color:var(--emerald-dark);text-transform:uppercase;margin-bottom:6px">
-          Specifications &amp; Product Details
+            <div class="pp-side-item">
+              <div class="pp-side-left">
+                <span class="pp-side-ic">📍</span>
+                <div id="ppDeliveryAddrText" style="color:#212121;line-height:1.4">Select your delivery district</div>
+              </div>
+              <button type="button" class="pp-side-change" id="ppChangeZoneBtn">CHANGE</button>
+            </div>
+
+            <div class="pp-side-item">
+              <div class="pp-side-left">
+                <span class="pp-side-ic">🚚</span>
+                <div>
+                  <div style="color:#212121;font-weight:600">Standard Delivery</div>
+                  <div id="ppDeliveryEta" style="color:#757575;font-size:11.5px;margin-top:2px"></div>
+                </div>
+              </div>
+              <b id="ppDeliveryFeeBadge" style="color:#212121;white-space:nowrap">৳ 60–120</b>
+            </div>
+
+            <div class="pp-side-item">
+              <div class="pp-side-left">
+                <span class="pp-side-ic">💵</span>
+                <div>
+                  <div style="color:#212121">Cash on Delivery Available</div>
+                  <div style="color:#757575;font-size:11px">All 64 districts of Bangladesh</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="pp-side-head" style="margin-top:14px">
+              <span>Return &amp; Warranty</span>
+              <span title="14-day return & verified seller/brand warranty" style="cursor:help">ⓘ</span>
+            </div>
+
+            <div class="pp-side-item" style="border-bottom:0;padding-bottom:6px">
+              <div class="pp-side-left">
+                <span class="pp-side-ic">↺</span>
+                <span style="color:#212121">14 days easy return</span>
+              </div>
+            </div>
+
+            <div class="pp-side-item no-border">
+              <div class="pp-side-left">
+                <span class="pp-side-ic">🛡️</span>
+                <span id="ppWarrantyNote" style="color:#212121">100% Authentic Product Warranty</span>
+              </div>
+            </div>
+          </aside>
         </div>
-        <div id="ppSpecs" style="font-size:13.5px;font-weight:700;color:var(--ink);margin-bottom:6px"></div>
-        <p id="ppDesc" style="font-size:13.5px;color:var(--muted);margin:0;white-space:pre-line"></p>
       </div>
-    </div>
 
-    <!-- Related Products -->
-    <div class="pp-related-wrap hidden" id="ppRelatedWrap">
-      <div class="section-head">
-        <h2>✨ Related Products</h2>
+      <!-- Product Specifications & Description -->
+      <div class="pp-specs-card" id="ppSpecsCard">
+        <div style="font-size:13px;font-weight:800;color:#212121;text-transform:uppercase;margin-bottom:8px;letter-spacing:.3px">
+          Product Details &amp; Specifications
+        </div>
+        <div id="ppSpecs" style="font-size:13.5px;font-weight:700;color:var(--emerald-dark);margin-bottom:8px"></div>
+        <p id="ppDesc" style="font-size:13.5px;color:#526059;margin:0;white-space:pre-line;line-height:1.6"></p>
       </div>
-      <div class="products-grid" id="ppRelatedGrid"></div>
+
+      <!-- Related Products -->
+      <div class="pp-related-wrap hidden" id="ppRelatedWrap">
+        <div class="section-head">
+          <h2>✨ Related Products</h2>
+        </div>
+        <div class="products-grid" id="ppRelatedGrid"></div>
+      </div>
     </div>
   </section>
 </main>
@@ -856,6 +978,36 @@ button:disabled{opacity:.5;cursor:not-allowed}
   </div>
 </div>
 
+<!-- Delivery Location Picker Modal (Product Preview) -->
+<div class="modal" id="deliveryZoneModal">
+  <div class="dialog" style="width:min(440px,100%)">
+    <div class="dialog-head">
+      <h2>📍 Select Delivery Area</h2>
+      <button class="outline sm" onclick="closeModal('deliveryZoneModal')">✕</button>
+    </div>
+    <form id="deliveryZoneForm">
+      <div class="field">
+        <label>Division *</label>
+        <select id="dzDivision">
+          <option value="Dhaka">Dhaka (৳60 Standard Delivery)</option>
+          <option value="Chattogram">Chattogram (৳120 Standard Delivery)</option>
+          <option value="Sylhet">Sylhet (৳120 Standard Delivery)</option>
+          <option value="Rajshahi">Rajshahi (৳120 Standard Delivery)</option>
+          <option value="Khulna">Khulna (৳120 Standard Delivery)</option>
+          <option value="Barishal">Barishal (৳120 Standard Delivery)</option>
+          <option value="Rangpur">Rangpur (৳120 Standard Delivery)</option>
+          <option value="Mymensingh">Mymensingh (৳120 Standard Delivery)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Area / Road / Thana (Optional)</label>
+        <input id="dzArea" placeholder="e.g. Mirpur 10, Dhaka or Agrabad, Chattogram">
+      </div>
+      <button type="submit" style="width:100%">Update Delivery Location</button>
+    </form>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script type="module">
@@ -902,6 +1054,9 @@ let sortMode = "featured";
 let appliedPromoCode = "";
 let registerMode = false;
 let unsubscribeCustomer = null;
+let previewDeliveryDivision = "";
+let previewDeliveryArea = "";
+let previewSelectedQty = 1;
 
 const $ = (id) => document.getElementById(id);
 const parseNum = (v) => {
@@ -1006,9 +1161,17 @@ function updateLiveSaleUI() {
     const p = products[activePreviewId];
     const showFlash = Boolean(sale || p.isFlashDeal);
     $("ppFlashBar").classList.toggle("hidden", !showFlash);
+    $("ppPromoOverlay").classList.toggle("hidden", !sale);
+    if (sale) {
+      $("ppPromoBadge").textContent = sale.badge || "SALE";
+      const startStr = sale.startAt ? new Date(Number(sale.startAt)).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : "";
+      const endStr = sale.endAt ? new Date(Number(sale.endAt)).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : "";
+      $("ppPromoWindow").textContent = startStr && endStr ? `${startStr} – ${endStr}` : "Limited Time";
+      $("ppPromoOffer").innerHTML = safe(sale.discountText || sale.title || "Special Deal");
+    }
     if (showFlash) {
-      $("ppFlashBadge").textContent = `⚡ ${sale?.badge || "FLASH SALE DEAL"}`;
-      $("ppFlashTimer").textContent = sale?.endAt ? formatCountdownText(sale.endAt) : "Limited Time Flash Offer";
+      $("ppFlashBadge").textContent = sale?.badge || "DEAL";
+      $("ppFlashTimer").textContent = sale?.endAt ? formatCountdownText(sale.endAt) : "Limited Time Offer";
       const sold = parseNum(p.soldCount || 0);
       $("ppFlashSoldText").textContent = sold > 0 ? `${sold} sold` : `${Number(p.stock || 0)} left`;
       const pct = sale?.soldPercent ? Number(sale.soldPercent) : Math.min(95, Math.max(25, sold ? Math.round((sold / (sold + Math.max(1, parseNum(p.stock)))) * 100) : 65));
@@ -1219,6 +1382,33 @@ window.resetStoreFilters = () => {
   renderProducts();
 };
 
+function refreshPreviewDeliveryUI(p) {
+  const savedList = Object.values(userAddresses || {});
+  const savedDef = savedList.find((a) => a && a.isDefault) || savedList[0];
+  const activeDiv = previewDeliveryDivision || (savedDef ? savedDef.division : "");
+  const activeArea = previewDeliveryArea || (savedDef ? `${savedDef.street}, ${savedDef.thana}, ${savedDef.division}` : "");
+
+  $("ppDeliveryAddrText").textContent = activeArea || (activeDiv ? `${activeDiv}, Bangladesh` : "Select your delivery district");
+
+  const unitPrice = parseNum(p?.price || 0);
+  const lineTotal = unitPrice * Math.max(1, previewSelectedQty);
+  if (lineTotal >= 3000) {
+    $("ppDeliveryFeeBadge").textContent = "FREE";
+    $("ppDeliveryFeeBadge").style.color = "var(--emerald-dark)";
+  } else if (activeDiv) {
+    $("ppDeliveryFeeBadge").textContent = `৳ ${deliveryFeeForDivision(activeDiv)}`;
+    $("ppDeliveryFeeBadge").style.color = "#212121";
+  } else {
+    $("ppDeliveryFeeBadge").textContent = "৳ 60–120";
+    $("ppDeliveryFeeBadge").style.color = "#212121";
+  }
+
+  const d1 = new Date(Date.now() + 2 * 86400000);
+  const d2 = new Date(Date.now() + 5 * 86400000);
+  const fmt = (dt) => dt.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+  $("ppDeliveryEta").textContent = `Guaranteed by ${fmt(d1)} – ${fmt(d2)}`;
+}
+
 function openProductPreview(id, pushUrl = true) {
   const p = products[id];
   if (!p) return;
@@ -1230,8 +1420,16 @@ function openProductPreview(id, pushUrl = true) {
 
   $("ppBreadcrumb").textContent = `Home › ${p.category || "Store"} › ${p.brand || "Official"} › ${p.name}`;
   $("ppTitle").textContent = p.name;
-  $("ppRating").innerHTML = `${stars} ${ratingNum.toFixed(1)} <span>Ratings ${Number(p.reviewCount || 0)}</span>`;
-  $("ppBrand").textContent = p.brand || "SPR ZONE BD";
+  $("ppRating").innerHTML = `<span class="stars">${stars}</span> <span>Ratings ${Number(p.reviewCount || 0)}</span>`;
+  $("ppBrandLink").textContent = p.brand || "SPR ZONE BD";
+  $("ppBrandLink").onclick = (e) => {
+    e.preventDefault();
+    closeProductPreview();
+    searchTerm = String(p.brand || "").toLowerCase();
+    $("searchInput").value = p.brand || "";
+    renderProducts();
+    $("productsSection").scrollIntoView({ behavior: "smooth" });
+  };
   $("ppMoreCatLink").textContent = `More ${p.category || "Products"} from ${p.brand || "SPR ZONE BD"}`;
   $("ppMoreCatLink").onclick = (e) => {
     e.preventDefault();
@@ -1242,8 +1440,9 @@ function openProductPreview(id, pushUrl = true) {
     $("productsSection").scrollIntoView({ behavior: "smooth" });
   };
 
-  $("ppPrice").textContent = money(p.price);
-  $("ppOldPrice").textContent = p.oldPrice > p.price ? money(p.oldPrice) : "";
+  $("ppPrice").textContent = `৳ ${parseNum(p.price).toLocaleString("en-BD")}`;
+  $("ppOldPrice").textContent = p.oldPrice > p.price ? `৳ ${parseNum(p.oldPrice).toLocaleString("en-BD")}` : "";
+  $("ppPriceSubRow").classList.toggle("hidden", !(p.oldPrice > p.price));
   $("ppDiscBadge").textContent = `-${disc}%`;
   $("ppDiscBadge").classList.toggle("hidden", disc <= 0);
   $("ppDiscInline").textContent = `-${disc}%`;
@@ -1251,7 +1450,7 @@ function openProductPreview(id, pushUrl = true) {
 
   $("ppSpecs").textContent = p.specs || "100% Original & Quality Checked";
   $("ppDesc").textContent = p.description || "Order online from SPR ZONE BD with fast Cash on Delivery anywhere in Bangladesh.";
-  $("ppWarrantyNote").textContent = p.specs || "Authentic Brand Warranty";
+  $("ppWarrantyNote").textContent = p.specs || "100% Authentic Product Warranty";
 
   // Gallery thumbnails + carousel arrows
   const imgs = [p.image, ...String(p.gallery || "").split(",").map((s) => s.trim())].filter(Boolean);
@@ -1280,16 +1479,21 @@ function openProductPreview(id, pushUrl = true) {
   };
   showGalleryIndex(0);
 
-  // Variant selector
+  // Variant selector with product thumbnail + corner checkmark
   const vars = String(p.variants || "Standard").split(",").map((s) => s.trim()).filter(Boolean);
   let selectedVar = vars[0] || "Standard";
+  const thumbPreviewUrl = uniqImgs[0] || "assets/favicon.svg";
   const renderVarChips = () => {
     $("ppVariantLabel").textContent = selectedVar;
-    $("ppVariantChips").innerHTML = vars.map((v) => `
-      <button type="button" class="pd-var-chip ${v === selectedVar ? "active" : ""}" data-var="${safe(v)}">
-        ${v === selectedVar ? "✓ " : ""}${safe(v)}
-      </button>
-    `).join("");
+    $("ppVariantChips").innerHTML = vars.map((v, idx) => {
+      const chipImg = uniqImgs[idx] || thumbPreviewUrl;
+      const isAct = v === selectedVar;
+      return `<button type="button" class="pd-var-chip ${isAct ? "active" : ""}" data-var="${safe(v)}">
+        <img class="pd-var-thumb" src="${safe(chipImg)}" alt="" onerror="this.src='assets/favicon.svg'">
+        <span>${safe(v)}</span>
+        ${isAct ? `<span class="pd-var-check">✓</span>` : ""}
+      </button>`;
+    }).join("");
     $("ppVariantChips").querySelectorAll("[data-var]").forEach((b) => {
       b.onclick = () => { selectedVar = b.dataset.var; renderVarChips(); };
     });
@@ -1297,24 +1501,43 @@ function openProductPreview(id, pushUrl = true) {
   renderVarChips();
 
   // Quantity stepper
-  let qty = 1;
+  previewSelectedQty = 1;
   const maxQty = Math.max(1, stock);
-  $("ppQtyVal").textContent = qty;
+  $("ppQtyVal").textContent = previewSelectedQty;
   $("ppStockHint").textContent = stock <= 0 ? "Out of stock" : stock <= 5 ? "Almost sold out, buy now!" : `In Stock (${stock} available)`;
-  $("ppStockHint").style.color = stock <= 5 ? "var(--crimson)" : "var(--emerald-dark)";
-  $("ppQtyMinus").onclick = () => { if (qty > 1) { qty--; $("ppQtyVal").textContent = qty; } };
-  $("ppQtyPlus").onclick = () => { if (qty < maxQty) { qty++; $("ppQtyVal").textContent = qty; } };
+  $("ppStockHint").style.color = stock <= 5 ? "#ef4444" : "#757575";
+  $("ppQtyMinus").onclick = () => {
+    if (previewSelectedQty > 1) {
+      previewSelectedQty--;
+      $("ppQtyVal").textContent = previewSelectedQty;
+      refreshPreviewDeliveryUI(p);
+    }
+  };
+  $("ppQtyPlus").onclick = () => {
+    if (previewSelectedQty < maxQty) {
+      previewSelectedQty++;
+      $("ppQtyVal").textContent = previewSelectedQty;
+      refreshPreviewDeliveryUI(p);
+    } else {
+      toast(`Maximum available stock reached (${maxQty} units).`);
+    }
+  };
 
   // Wishlist & Share
   const updatePreviewWish = () => {
     const liked = wishlist.includes(id);
-    $("ppWishBtn").textContent = liked ? "♥ Saved" : "♡ Save";
-    $("ppWishBtn").style.color = liked ? "var(--crimson)" : "var(--ink)";
+    $("ppWishBtn").textContent = liked ? "♥" : "♡";
+    $("ppWishBtn").classList.toggle("liked", liked);
   };
   updatePreviewWish();
   $("ppWishBtn").onclick = () => {
-    if (wishlist.includes(id)) wishlist = wishlist.filter((x) => x !== id);
-    else wishlist.push(id);
+    if (wishlist.includes(id)) {
+      wishlist = wishlist.filter((x) => x !== id);
+      toast("Removed from Wishlist");
+    } else {
+      wishlist.push(id);
+      toast("Added to Wishlist");
+    }
     saveWishlist();
     updatePreviewWish();
     renderProducts();
@@ -1325,11 +1548,18 @@ function openProductPreview(id, pushUrl = true) {
     catch (_) { toast(shareUrl); }
   };
 
+  $("ppChangeZoneBtn").onclick = () => {
+    $("dzDivision").value = previewDeliveryDivision || "Dhaka";
+    $("dzArea").value = previewDeliveryArea || "";
+    openModal("deliveryZoneModal");
+  };
+  refreshPreviewDeliveryUI(p);
+
   $("ppAddBtn").disabled = stock <= 0;
   $("ppBuyBtn").disabled = stock <= 0;
-  $("ppAddBtn").onclick = () => addToCart(id, selectedVar, qty);
+  $("ppAddBtn").onclick = () => addToCart(id, selectedVar, previewSelectedQty);
   $("ppBuyBtn").onclick = () => {
-    addToCart(id, selectedVar, qty);
+    addToCart(id, selectedVar, previewSelectedQty);
     openCheckout();
   };
 
@@ -1516,6 +1746,8 @@ function openCheckout() {
       $("cName").value = $("cName").value || userProfile?.name || currentUser.displayName || "";
       $("cPhone").value = $("cPhone").value || userProfile?.phone || "";
     }
+    if (previewDeliveryDivision) $("cDivision").value = previewDeliveryDivision;
+    if (previewDeliveryArea && !$("cAddress").value.trim()) $("cAddress").value = previewDeliveryArea;
   }
   syncCheckoutTotalsUI();
   openModal("checkoutModal");
@@ -1669,6 +1901,9 @@ onAuthStateChanged(auth, async (user) => {
       userAddresses = val.addresses || {};
       if (val.name) $("accountBtn").textContent = `👤 ${val.name}`;
       renderAccountModalData();
+      if (activePreviewId && products[activePreviewId]) {
+        refreshPreviewDeliveryUI(products[activePreviewId]);
+      }
     });
   } else {
     $("accountBtn").textContent = "👤 Login | Register";
@@ -1689,6 +1924,17 @@ window.addEventListener("popstate", () => {
   if (pid && products[pid]) openProductPreview(pid, false);
   else closeProductPreview(false);
 });
+
+$("deliveryZoneForm").onsubmit = (e) => {
+  e.preventDefault();
+  previewDeliveryDivision = $("dzDivision").value;
+  previewDeliveryArea = $("dzArea").value.trim();
+  closeModal("deliveryZoneModal");
+  if (activePreviewId && products[activePreviewId]) {
+    refreshPreviewDeliveryUI(products[activePreviewId]);
+  }
+  toast("Delivery location updated");
+};
 
 $("ppBackBtn").onclick = () => closeProductPreview();
 $("brandHomeLink").onclick = (e) => { e.preventDefault(); closeProductPreview(); window.scrollTo({ top: 0, behavior: "smooth" }); };
