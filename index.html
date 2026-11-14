@@ -456,7 +456,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
       <span class="topbar-sep">|</span>
       <span>💵 Cash on Delivery (All 64 Districts)</span>
       <span class="topbar-sep">|</span>
-      <span>📞 24/7 Support: <b id="topHotline">09678-123456</b></span>
+      <span>📞 24/7 Support: <b id="topHotline"></b></span>
     </div>
     <div class="topbar-right">
       <button class="top-pill" id="myOrdersBtn">📦 My Orders</button>
@@ -572,7 +572,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
           <div class="benefit"><div class="benefit-ic">🚚</div><div><b>Fast Delivery</b><span>Across Bangladesh</span></div></div>
           <div class="benefit"><div class="benefit-ic">💵</div><div><b>Cash on Delivery</b><span>All 64 Districts</span></div></div>
           <div class="benefit"><div class="benefit-ic">🏷️</div><div><b>Big Discounts</b><span>Everyday Deals</span></div></div>
-          <div class="benefit"><div class="benefit-ic">🎧</div><div><b>24/7 Support</b><span id="benHotline">09678-123456</span></div></div>
+          <div class="benefit"><div class="benefit-ic">🎧</div><div><b>24/7 Support</b><span id="benHotline"></span></div></div>
           <div class="benefit"><div class="benefit-ic">↺</div><div><b>14 Days Return</b><span>Easy Warranty</span></div></div>
         </div>
 
@@ -853,9 +853,9 @@ button:disabled{opacity:.5;cursor:not-allowed}
     <div>
       <h4>Contact &amp; Legal Info</h4>
       <ul>
-        <li>Hotline: <span id="footHotline">09678-123456</span></li>
-        <li>Email: <span id="footEmail">support@sprzonebd.com</span></li>
-        <li>Address: <span id="footAddress">Dhaka, Bangladesh</span></li>
+        <li>Hotline: <span id="footHotline"></span></li>
+        <li>Email: <span id="footEmail"></span></li>
+        <li>Address: <span id="footAddress"></span></li>
         <li id="footBinItem" class="hidden">BIN No: <span id="footBin"></span></li>
         <li id="footTradeItem" class="hidden">Trade Licence: <span id="footTrade"></span></li>
       </ul>
@@ -1115,11 +1115,11 @@ const BD_DISTRICTS_BY_DIVISION = {
 };
 const DEFAULT_STORE_SETTINGS = {
   storeName: "SPR ZONE BD",
-  hotline: "09678-123456",
-  email: "support@sprzonebd.com",
+  hotline: "",
+  email: "",
   binNumber: "",
   tradeLicence: "",
-  address: "Dhaka, Bangladesh"
+  address: ""
 };
 
 let currentUser = null;
