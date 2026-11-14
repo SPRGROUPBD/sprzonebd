@@ -126,6 +126,16 @@ data class MerchantPaymentSettings(
     val autoVerifyEnabled: Boolean = true
 )
 
+data class AppNotificationItem(
+    val id: String,
+    val title: String,
+    val message: String,
+    val type: String = "promo",
+    val productId: String = "",
+    val targetEmail: String = "",
+    val createdAt: Long = System.currentTimeMillis()
+)
+
 enum class PaymentMethod(
     val displayName: String,
     val subtitle: String,

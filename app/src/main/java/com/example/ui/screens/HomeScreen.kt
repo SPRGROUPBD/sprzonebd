@@ -29,9 +29,13 @@ import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.LocalShipping
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.VerifiedUser
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
@@ -86,11 +90,16 @@ fun HomeScreen(
     filterState: CatalogFilterState,
     countdownSeconds: Long,
     isDarkMode: Boolean,
+    unreadNotificationCount: Int,
+    locationPermissionGranted: Boolean,
+    notificationPermissionGranted: Boolean,
     onSearchChange: (String) -> Unit,
     onSelectCategory: (String) -> Unit,
     onSortChange: (ProductSortOption) -> Unit,
     onToggleDarkMode: (Boolean) -> Unit,
     onRefreshStore: () -> Unit,
+    onOpenNotifications: () -> Unit,
+    onRequestPermissions: () -> Unit,
     onProductClick: (String) -> Unit,
     onToggleWishlist: (String) -> Unit,
     onQuickAdd: (ProductEntity) -> Unit,
@@ -147,7 +156,7 @@ fun HomeScreen(
                 }
             }
 
-            // White Brand Header + Red Track Order Pill (NO Admin UI)
+            // White Brand Header + Notification Bell, Sync & Theme (NO Admin UI)
             item {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -162,7 +171,9 @@ fun HomeScreen(
                             text = stringResource(R.string.app_name),
                             style = MaterialTheme.typography.titleLarge,
                             color = EmeraldPrimary,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                         Text(
                             text = stringResource(R.string.brand_tagline),
@@ -173,31 +184,25 @@ fun HomeScreen(
                         )
                     }
 
-                    Surface(
-                        color = CrimsonSecondary,
-                        shape = RoundedCornerShape(10.dp),
-                        modifier = Modifier
-                            .minimumInteractiveComponentSize()
-                            .clip(RoundedCornerShape(10.dp))
-                            .testTag("home_track_order_button")
-                            .clickable(onClick = onOpenTrackOrder)
+                    IconButton(
+                        onClick = onOpenNotifications,
+                        modifier = Modifier.testTag("home_notifications_button")
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp)
-                        ) {
+                        if (unreadNotificationCount > 0) {
+                            BadgedBox(
+                                badge = { Badge { Text("$unreadNotificationCount") } }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.Notifications,
+                                    contentDescription = stringResource(R.string.cd_notifications),
+                                    tint = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                        } else {
                             Icon(
-                                imageVector = Icons.Filled.LocationOn,
-                                contentDescription = null,
-                                tint = Color.White,
-                                modifier = Modifier.size(15.dp)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = stringResource(R.string.track_your_order),
-                                style = MaterialTheme.typography.labelMedium,
-                                color = Color.White,
-                                fontWeight = FontWeight.Bold
+                                imageVector = Icons.Filled.Notifications,
+                                contentDescription = stringResource(R.string.cd_notifications),
+                                tint = MaterialTheme.colorScheme.onSurface
                             )
                         }
                     }
@@ -219,6 +224,43 @@ fun HomeScreen(
                             contentDescription = "Toggle theme",
                             tint = MaterialTheme.colorScheme.onSurface
                         )
+                    }
+                }
+            }
+
+            if (!locationPermissionGranted || !notificationPermissionGranted) {
+                item {
+                    Surface(
+                        color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.7f),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.NotificationsActive,
+                                contentDescription = null,
+                                tint = EmeraldPrimary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Text(
+                                text = "Enable Location & Notification alerts for offers and local delivery.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                modifier = Modifier.weight(1f)
+                            )
+                            TextButton(
+                                onClick = onRequestPermissions,
+                                modifier = Modifier.testTag("home_enable_permissions_button")
+                            ) {
+                                Text("Enable", fontWeight = FontWeight.Bold)
+                            }
+                        }
                     }
                 }
             }
@@ -399,7 +441,7 @@ fun HomeScreen(
                     }
                 }
 
-                // Benefits Strip
+                // Benefits & Quick Actions Strip
                 item {
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -417,6 +459,33 @@ fun HomeScreen(
                             text = "Cash on Delivery",
                             modifier = Modifier.weight(1f)
                         )
+                        Surface(
+                            color = CrimsonSecondary,
+                            shape = RoundedCornerShape(10.dp),
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(10.dp))
+                                .testTag("home_track_order_button")
+                                .clickable(onClick = onOpenTrackOrder)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.LocationOn,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(15.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = stringResource(R.string.track_your_order),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
                     }
                 }
             }

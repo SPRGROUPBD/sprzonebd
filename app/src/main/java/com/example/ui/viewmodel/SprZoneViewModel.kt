@@ -9,6 +9,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.data.local.SessionPreferences
 import com.example.data.local.SprZoneDatabase
 import com.example.data.model.AddressEntity
+import com.example.data.model.AppNotificationItem
 import com.example.data.model.CartItemEntity
 import com.example.data.model.MerchantPaymentSettings
 import com.example.data.model.OrderEntity
@@ -19,6 +20,7 @@ import com.example.data.model.StoreConstants
 import com.example.data.model.UserAccountEntity
 import com.example.data.repository.PromoResult
 import com.example.data.repository.SprZoneRepository
+import com.example.notifications.SprNotificationHelper
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -63,7 +65,8 @@ data class CatalogFilterState(
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SprZoneViewModel(
-    private val repository: SprZoneRepository
+    private val repository: SprZoneRepository,
+    private val onNewNotification: (AppNotificationItem) -> Unit = {}
 ) : ViewModel() {
 
     private val _snackbarEvents = MutableSharedFlow<String>(extraBufferCapacity = 8)
@@ -88,6 +91,26 @@ class SprZoneViewModel(
 
     val isDarkMode: StateFlow<Boolean> = repository.isDarkModeFlow
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), false)
+
+    private val _detectedLocationLabel = MutableStateFlow<String?>(null)
+    val detectedLocationLabel: StateFlow<String?> = _detectedLocationLabel.asStateFlow()
+
+    val notifications: StateFlow<List<AppNotificationItem>> = combine(
+        repository.allNotifications,
+        loggedInEmail
+    ) { all, email ->
+        val norm = email?.trim()?.lowercase().orEmpty()
+        all.filter { n ->
+            n.targetEmail.isBlank() || (norm.isNotBlank() && n.targetEmail == norm)
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), emptyList())
+
+    val readNotificationIds: StateFlow<Set<String>> = repository.readNotificationIdsFlow
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), emptySet())
+
+    val unreadNotificationCount: StateFlow<Int> = combine(notifications, readNotificationIds) { list, readIds ->
+        list.count { it.id !in readIds }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), 0)
 
     val currentUser: StateFlow<UserAccountEntity?> = loggedInEmail
         .flatMapLatest { email ->
@@ -182,6 +205,7 @@ class SprZoneViewModel(
     init {
         viewModelScope.launch {
             repository.ensureSeededAndSync()
+            fetchAndDispatchNotifications()
         }
         viewModelScope.launch {
             while (true) {
@@ -190,11 +214,63 @@ class SprZoneViewModel(
                 _flashCountdownSeconds.value = if (next <= 0L) 6 * 3600L else next
             }
         }
+        viewModelScope.launch {
+            while (true) {
+                delay(25_000L)
+                fetchAndDispatchNotifications()
+            }
+        }
+    }
+
+    private suspend fun fetchAndDispatchNotifications() {
+        val unseen = repository.syncAppNotifications()
+        unseen.take(3).forEach { item ->
+            onNewNotification(item)
+        }
+    }
+
+    fun syncNotificationsNow(showFeedback: Boolean = false) {
+        viewModelScope.launch {
+            val unseen = repository.syncAppNotifications()
+            unseen.take(3).forEach { item ->
+                onNewNotification(item)
+            }
+            if (showFeedback) {
+                _snackbarEvents.tryEmit(
+                    if (unseen.isNotEmpty()) "${unseen.size} new notification(s) received"
+                    else "Notifications synced with SPR Zone BD"
+                )
+            }
+        }
+    }
+
+    fun markNotificationRead(id: String) {
+        viewModelScope.launch {
+            repository.markNotificationsRead(listOf(id))
+        }
+    }
+
+    fun markAllNotificationsRead() {
+        viewModelScope.launch {
+            val ids = notifications.value.map { it.id }
+            if (ids.isNotEmpty()) {
+                repository.markNotificationsRead(ids)
+            }
+        }
+    }
+
+    fun updateDetectedLocationLabel(label: String) {
+        _detectedLocationLabel.value = label
+    }
+
+    fun showMessage(msg: String) {
+        _snackbarEvents.tryEmit(msg)
     }
 
     fun refreshStore() {
         viewModelScope.launch {
             repository.syncRemoteCatalogAndSettings()
+            fetchAndDispatchNotifications()
             loggedInEmail.value?.let { repository.syncUserOrdersFromRemote(it) }
             _snackbarEvents.tryEmit("Store synced with SPR Zone BD")
         }
@@ -511,7 +587,11 @@ class SprZoneViewModel(
                 val app = checkNotNull(this[APPLICATION_KEY])
                 val db = SprZoneDatabase.getInstance(app)
                 val prefs = SessionPreferences(app)
-                SprZoneViewModel(SprZoneRepository(db, prefs, filesDir = app.filesDir))
+                SprNotificationHelper.ensureChannel(app)
+                SprZoneViewModel(
+                    repository = SprZoneRepository(db, prefs, filesDir = app.filesDir),
+                    onNewNotification = { item -> SprNotificationHelper.showSystemNotification(app, item) }
+                )
             }
         }
     }

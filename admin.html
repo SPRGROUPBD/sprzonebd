@@ -168,7 +168,10 @@ button:disabled{opacity:.5;cursor:not-allowed}
     <div class="tabs">
       <button class="tab-btn active" data-tab="products">📦 Products</button>
       <button class="tab-btn" data-tab="categories">🗂️ Categories</button>
-      <button class="tab-btn" data-tab="deals">🔥 Sales, End Time &amp; Coupons</button>
+      <button class="tab-btn" data-tab="deals">🔥 Sales, Hero Slider &amp; Coupons</button>
+      <button class="tab-btn" data-tab="delivery">🚚 Courier &amp; Free Delivery</button>
+      <button class="tab-btn" data-tab="store">🏪 Store Settings</button>
+      <button class="tab-btn" data-tab="notifications">🔔 App Notifications</button>
       <button class="tab-btn" data-tab="orders">🧾 COD Orders &amp; Invoices</button>
       <button class="tab-btn" data-tab="customers">👥 Customers &amp; Addresses</button>
     </div>
@@ -189,17 +192,30 @@ button:disabled{opacity:.5;cursor:not-allowed}
             <div class="field"><label>Brand</label><input id="pBrand" placeholder="Brand Name"></div>
           </div>
           <div class="form-row">
-            <div class="field"><label>Price (৳ BDT) *</label><input id="pPrice" type="number" min="1" required></div>
-            <div class="field"><label>Old / Regular Price (৳)</label><input id="pOldPrice" type="number" min="0" value="0"></div>
+            <div class="field"><label>Regular / Old Price (৳)</label><input id="pOldPrice" type="number" min="0" value="0"></div>
+            <div class="field"><label>Selling Price (৳ BDT) *</label><input id="pPrice" type="number" min="1" required></div>
           </div>
+          <div class="form-row">
+            <div class="field">
+              <label>Product-wise Discount</label>
+              <select id="pDiscountType">
+                <option value="none">None (Manual Price)</option>
+                <option value="percent">Percent Discount (%)</option>
+                <option value="flat">Flat Discount (৳)</option>
+              </select>
+            </div>
+            <div class="field"><label>Discount Value (% or ৳)</label><input id="pDiscountValue" type="number" min="0" value="0"></div>
+          </div>
+          <div id="pDiscountPreview" style="font-size:12px;color:var(--emerald-dark);font-weight:700;margin:-4px 0 10px"></div>
           <div class="form-row">
             <div class="field"><label>Stock Qty *</label><input id="pStock" type="number" min="0" value="10" required></div>
             <div class="field"><label>Sold Count</label><input id="pSoldCount" type="number" min="0" value="0"></div>
           </div>
           <div class="form-row">
+            <div class="field"><label>Free Delivery Min Qty (0 = off)</label><input id="pFreeShipMinQty" type="number" min="0" value="0" title="Set 1 for always free delivery on this product, or 2+ for qty-wise free delivery"></div>
             <div class="field"><label>Rating (1.0 - 5.0)</label><input id="pRating" type="number" min="1" max="5" step="0.1" value="4.8"></div>
-            <div class="field"><label>Variants (comma-separated)</label><input id="pVariants" value="Standard" placeholder="Silver, Black"></div>
           </div>
+          <div class="field"><label>Variants (comma-separated)</label><input id="pVariants" value="Standard" placeholder="Silver, Black"></div>
           <div class="field"><label>Main Product Image URL *</label><input id="pImage" required placeholder="https://..."></div>
           <div class="field"><label>Gallery Image URLs (comma-separated, optional)</label><input id="pGallery" placeholder="https://img2.jpg, https://img3.jpg"></div>
           <div class="field"><label>Short Key Specs / Warranty</label><input id="pSpecs" placeholder="1 Year Brand Warranty • 14 Days Easy Return"></div>
@@ -247,7 +263,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
       </div>
     </section>
 
-    <!-- TAB 3: SALES (ADD/EDIT/DELETE + END TIME), HERO BANNER & COUPONS -->
+    <!-- TAB 3: SALES, HERO SLIDER (PRODUCT + CUSTOM IMAGE) & COUPONS -->
     <section id="tab-deals" class="split-grid hidden">
       <div class="card">
         <h3 id="saleFormTitle" style="margin-bottom:6px">🔥 Add / Edit Sale &amp; End Time</h3>
@@ -279,14 +295,51 @@ button:disabled{opacity:.5;cursor:not-allowed}
         </form>
 
         <hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
-        <h3 style="margin-bottom:12px">Homepage Hero Banner</h3>
+        <h3 style="margin-bottom:12px">Homepage Hero Default Text</h3>
         <form id="heroForm">
           <div class="field"><label>Top Red Tag Badge</label><input id="hBadge" required></div>
           <div class="field"><label>Main Headline</label><input id="hTitle" required></div>
           <div class="field"><label>Subtitle / Tagline</label><input id="hSubtitle" required></div>
           <div style="display:flex;gap:8px">
-            <button type="submit" style="flex:1">💾 Update Hero Banner</button>
+            <button type="submit" style="flex:1">💾 Update Hero Text</button>
             <button type="button" class="outline" id="heroResetBtn">Reset</button>
+          </div>
+        </form>
+
+        <hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
+        <h3 id="heroSlideFormTitle" style="margin-bottom:6px">🖼️ Hero Banner Slider (Product / Custom Image)</h3>
+        <p class="muted" style="font-size:12px;margin:0 0 10px">
+          Add multiple sliding banners on the homepage — pick a product to feature or upload a custom banner image URL.
+        </p>
+        <form id="heroSlideForm">
+          <input type="hidden" id="hsEditId">
+          <div class="form-row">
+            <div class="field">
+              <label>Slide Type *</label>
+              <select id="hsType">
+                <option value="product">Product-wise Slide</option>
+                <option value="image">Custom Image Banner</option>
+              </select>
+            </div>
+            <div class="field"><label>Sort Order</label><input id="hsOrder" type="number" min="1" value="1"></div>
+          </div>
+          <div class="field" id="hsProductWrap">
+            <label>Featured Product *</label>
+            <select id="hsProductId"></select>
+          </div>
+          <div class="field"><label>Custom Image URL (Optional override for Product slide, Required for Image Banner)</label><input id="hsImageUrl" placeholder="https://..."></div>
+          <div class="form-row">
+            <div class="field"><label>Badge / Tag (Optional)</label><input id="hsBadge" placeholder="e.g. HOT DEAL"></div>
+            <div class="field"><label>Button Label</label><input id="hsBtnText" value="Shop Now →"></div>
+          </div>
+          <div class="field"><label>Headline Override (Optional)</label><input id="hsTitle" placeholder="Auto-filled from selected product if blank"></div>
+          <div class="field"><label>Subtitle Override (Optional)</label><input id="hsSubtitle" placeholder="Offer details or product tagline"></div>
+          <label style="display:flex;align-items:center;gap:6px;font-weight:600;margin-bottom:12px">
+            <input type="checkbox" id="hsActive" checked style="width:auto"> Show Slide on Homepage Hero
+          </label>
+          <div style="display:flex;gap:8px">
+            <button type="submit" style="flex:1" id="hsSaveBtn">➕ Add Hero Slide</button>
+            <button type="button" class="secondary" id="hsResetBtn">Clear</button>
           </div>
         </form>
 
@@ -318,6 +371,10 @@ button:disabled{opacity:.5;cursor:not-allowed}
 
       <div style="display:grid;gap:18px">
         <div class="card">
+          <h3 style="margin-bottom:12px">Homepage Hero Slides (<span id="heroSlidesCount">0</span>)</h3>
+          <div id="adminHeroSlideList"></div>
+        </div>
+        <div class="card">
           <h3 style="margin-bottom:12px">Sale Campaigns &amp; Countdowns (<span id="salesCount">0</span>)</h3>
           <div id="adminSaleList"></div>
         </div>
@@ -325,6 +382,117 @@ button:disabled{opacity:.5;cursor:not-allowed}
           <h3 style="margin-bottom:12px">Active Coupons (<span id="couponsCount">0</span>)</h3>
           <div id="adminCouponList"></div>
         </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: ZONE-WISE COURIER RATES & AMOUNT-WISE FREE DELIVERY -->
+    <section id="tab-delivery" class="split-grid hidden">
+      <div class="card">
+        <h3 style="margin-bottom:6px">🆓 Amount-wise Free Delivery Rule</h3>
+        <p class="muted" style="font-size:12px;margin:0 0 12px">
+          When an order reaches this subtotal (or includes a product meeting its Qty-wise Free Delivery threshold), courier charge becomes <b>৳0 (FREE)</b>.
+        </p>
+        <form id="freeDeliveryForm">
+          <div class="field">
+            <label>Minimum Order Amount for Free Delivery (৳, 0 = disabled)</label>
+            <input id="delFreeMinAmount" type="number" min="0" value="3000" required>
+          </div>
+          <button type="submit" style="width:100%">💾 Save Amount-wise Free Delivery</button>
+        </form>
+
+        <hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
+        <h3 id="zoneFormTitle" style="margin-bottom:10px">🚚 Add / Edit Zone Courier Rate</h3>
+        <form id="zoneRateForm">
+          <input type="hidden" id="zrEditKey">
+          <div class="field"><label>Zone / District / Division Name *</label><input id="zrName" required placeholder="e.g. Dhaka City, Gazipur, Chattogram"></div>
+          <div class="form-row">
+            <div class="field"><label>Courier Rate (৳) *</label><input id="zrRate" type="number" min="0" value="60" required></div>
+            <div class="field"><label>Estimated Delivery</label><input id="zrEta" value="2-4 Days" placeholder="e.g. 1-2 Days"></div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button type="submit" style="flex:1" id="zrSaveBtn">➕ Save Zone Rate</button>
+            <button type="button" class="secondary" id="zrResetBtn">Clear</button>
+          </div>
+        </form>
+        <button type="button" class="outline sm" id="zrRestoreDefaultsBtn" style="width:100%;margin-top:10px">↻ Seed Default 8 BD Divisions</button>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-bottom:12px">Zone-wise Courier Rates (<span id="zonesCount">0</span>)</h3>
+        <div id="adminZoneList"></div>
+      </div>
+    </section>
+
+    <!-- TAB 5: STORE SETTINGS -->
+    <section id="tab-store" class="split-grid hidden">
+      <div class="card">
+        <h3 style="margin-bottom:6px">🏪 Store Settings &amp; Business Details</h3>
+        <p class="muted" style="font-size:12px;margin:0 0 14px">
+          Updates appear live on the Website header/footer and printed Customer COD Invoices.
+        </p>
+        <form id="storeSettingsForm">
+          <div class="field"><label>Store Name *</label><input id="ssName" required placeholder="SPR ZONE BD"></div>
+          <div class="form-row">
+            <div class="field"><label>Hotline Number *</label><input id="ssHotline" required placeholder="09678-123456"></div>
+            <div class="field"><label>Support Email *</label><input id="ssEmail" type="email" required placeholder="support@sprzonebd.com"></div>
+          </div>
+          <div class="form-row">
+            <div class="field"><label>BIN Number (VAT Reg No.)</label><input id="ssBin" placeholder="e.g. 001234567-0101"></div>
+            <div class="field"><label>Trade Licence Number</label><input id="ssTradeLicence" placeholder="e.g. TRAD/DSCC/000000/2026"></div>
+          </div>
+          <div class="field"><label>Store / Business Address *</label><textarea id="ssAddress" rows="2" required placeholder="House, Road, Area, Dhaka, Bangladesh"></textarea></div>
+          <div style="display:flex;gap:8px">
+            <button type="submit" style="flex:1">💾 Save Store Settings</button>
+            <button type="button" class="outline" id="ssResetBtn">Reset</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-bottom:12px">Live Storefront &amp; Invoice Identity Preview</h3>
+        <div id="storeSettingsPreview" style="background:#f8faf9;border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:8px;font-size:13.5px"></div>
+      </div>
+    </section>
+
+    <!-- TAB 6: MOBILE APP NOTIFICATIONS -->
+    <section id="tab-notifications" class="split-grid hidden">
+      <div class="card">
+        <h3 id="notifFormTitle" style="margin-bottom:6px">🔔 Send Mobile App Notification</h3>
+        <p class="muted" style="font-size:12px;margin:0 0 12px">
+          Notifications sent here are delivered directly to the <b>SPR Zone BD Android App</b> notification tray &amp; in-app inbox.
+        </p>
+        <form id="appNotifForm">
+          <input type="hidden" id="notifEditId">
+          <div class="field"><label>Notification Title *</label><input id="notifTitle" required placeholder="e.g. Flash Sale Live — Up to 50% OFF!"></div>
+          <div class="form-row">
+            <div class="field">
+              <label>Category / Type *</label>
+              <select id="notifType">
+                <option value="promo">🔥 Promo / Flash Sale</option>
+                <option value="order">🚚 Delivery / Order Alert</option>
+                <option value="info">📢 Store Announcement</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Link Product (Optional)</label>
+              <select id="notifProductId"><option value="">-- No linked product --</option></select>
+            </div>
+          </div>
+          <div class="field"><label>Target Customer Email (Leave blank for All App Users)</label><input id="notifTargetEmail" type="email" placeholder="All mobile app users (or customer@example.com)"></div>
+          <div class="field"><label>Notification Message *</label><textarea id="notifMessage" rows="3" required placeholder="Enter offer details, discount code, or announcement..."></textarea></div>
+          <label style="display:flex;align-items:center;gap:6px;font-weight:600;margin-bottom:12px">
+            <input type="checkbox" id="notifActive" checked style="width:auto"> Active (Visible &amp; Pushed to Mobile App)
+          </label>
+          <div style="display:flex;gap:8px">
+            <button type="submit" style="flex:1" id="notifSaveBtn">📤 Send Notification to App</button>
+            <button type="button" class="secondary" id="notifResetBtn">Clear</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-bottom:12px">Sent Mobile App Notifications (<span id="notifCount">0</span>)</h3>
+        <div id="adminNotificationList"></div>
       </div>
     </section>
 
@@ -512,6 +680,26 @@ const STANDARD_CATEGORIES = [
   "Groceries & Daily Needs"
 ];
 
+const DEFAULT_ZONES = [
+  { key: "dhaka", name: "Dhaka", rate: 60, eta: "1-2 Days" },
+  { key: "chattogram", name: "Chattogram", rate: 120, eta: "2-4 Days" },
+  { key: "sylhet", name: "Sylhet", rate: 120, eta: "2-4 Days" },
+  { key: "rajshahi", name: "Rajshahi", rate: 120, eta: "2-4 Days" },
+  { key: "khulna", name: "Khulna", rate: 120, eta: "2-4 Days" },
+  { key: "barishal", name: "Barishal", rate: 120, eta: "2-4 Days" },
+  { key: "rangpur", name: "Rangpur", rate: 120, eta: "2-4 Days" },
+  { key: "mymensingh", name: "Mymensingh", rate: 120, eta: "2-4 Days" }
+];
+
+const DEFAULT_STORE_SETTINGS = {
+  storeName: "SPR ZONE BD",
+  hotline: "09678-123456",
+  email: "support@sprzonebd.com",
+  binNumber: "",
+  tradeLicence: "",
+  address: "Dhaka, Bangladesh"
+};
+
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getDatabase(app);
@@ -519,9 +707,16 @@ const db = getDatabase(app);
 let products = {};
 let categories = {};
 let sales = {};
+let heroSlides = {};
+let appNotifications = {};
 let coupons = {};
 let orders = {};
 let customers = {};
+let deliveryConfig = {
+  freeDeliveryMinAmount: 3000,
+  zones: Object.fromEntries(DEFAULT_ZONES.map((z) => [z.key, { name: z.name, rate: z.rate, eta: z.eta }]))
+};
+let storeSettings = { ...DEFAULT_STORE_SETTINGS };
 let listenersStarted = false;
 
 const $ = (id) => document.getElementById(id);
@@ -540,7 +735,7 @@ function switchAdminTab(tabName) {
   document.querySelectorAll("[data-tab]").forEach((x) => {
     x.classList.toggle("active", x.dataset.tab === tabName);
   });
-  ["products", "categories", "deals", "orders", "customers"].forEach((t) => {
+  ["products", "categories", "deals", "delivery", "store", "notifications", "orders", "customers"].forEach((t) => {
     $("tab-" + t).classList.toggle("hidden", t !== tabName);
   });
 }
@@ -618,6 +813,22 @@ function parseOrderItems(o) {
   return [{ id: "", name: "Store Item", variant: "Standard", qty: 1, price: parseNum(o?.subtotal ?? o?.total ?? o?.totalBdt) }];
 }
 
+function getZoneCourierRate(division = "Dhaka") {
+  const target = String(division || "Dhaka").trim().toLowerCase();
+  const zonesObj = deliveryConfig?.zones || {};
+  const match = Object.values(zonesObj).find((z) => String(z?.name || "").trim().toLowerCase() === target);
+  if (match) return Math.max(0, parseNum(match.rate));
+  return target === "dhaka" ? 60 : 120;
+}
+
+function populateOrderZoneDropdown() {
+  const zones = Object.values(deliveryConfig?.zones || {});
+  const list = zones.length ? zones : DEFAULT_ZONES;
+  const cur = $("oeDivision").value || list[0].name;
+  $("oeDivision").innerHTML = list.map((z) => `<option value="${safe(z.name)}">${safe(z.name)} (৳${parseNum(z.rate)})</option>`).join("");
+  if ([...$("oeDivision").options].some((o) => o.value === cur)) $("oeDivision").value = cur;
+}
+
 function computeOrderFinancials(o) {
   const items = parseOrderItems(o);
   const itemsSubtotal = items.reduce((s, it) => s + parseNum(it.price) * Math.max(1, it.qty), 0);
@@ -631,8 +842,14 @@ function computeOrderFinancials(o) {
   const discount = storedDisc;
   let deliveryFee = storedFee;
   if (subtotal > 0 && storedSub === 0 && storedTotal === 0 && !hasStoredFee) {
-    const div = String(o?.customer?.division || "Dhaka").trim().toLowerCase();
-    deliveryFee = subtotal >= 3000 ? 0 : (div === "dhaka" ? 60 : 120);
+    const minAmt = parseNum(deliveryConfig?.freeDeliveryMinAmount ?? 3000);
+    const hasQtyFree = items.some((it) => {
+      const p = it.id ? products[it.id] : Object.values(products).find((x) => x.name === it.name);
+      const minQ = parseNum(p?.freeDeliveryMinQty || 0);
+      return minQ > 0 && it.qty >= minQ;
+    });
+    const isFree = (minAmt > 0 && subtotal >= minAmt) || hasQtyFree;
+    deliveryFee = isFree ? 0 : getZoneCourierRate(o?.customer?.division || "Dhaka");
   }
   if (subtotal === 0 && storedTotal > 0) {
     subtotal = Math.max(0, storedTotal + discount - deliveryFee);
@@ -658,6 +875,26 @@ function renderCategoryDatalist() {
   $("categoryOptionsList").innerHTML = [...names].map((n) => `<option value="${safe(n)}">`).join("");
 }
 
+function updateProductDiscountPreview() {
+  const reg = parseNum($("pOldPrice").value);
+  const dType = $("pDiscountType").value;
+  const dVal = parseNum($("pDiscountValue").value);
+  if (dType === "percent" && reg > 0 && dVal > 0) {
+    const clamped = Math.min(99, Math.max(0, dVal));
+    const finalP = Math.max(1, Math.round(reg * (1 - clamped / 100)));
+    $("pPrice").value = finalP;
+    $("pDiscountPreview").textContent = `Product Discount Active: -${clamped}% (Save ${money(reg - finalP)}) → Selling Price ${money(finalP)}`;
+  } else if (dType === "flat" && reg > 0 && dVal > 0) {
+    const finalP = Math.max(1, reg - dVal);
+    $("pPrice").value = finalP;
+    $("pDiscountPreview").textContent = `Product Discount Active: -${money(dVal)} flat → Selling Price ${money(finalP)}`;
+  } else {
+    const sell = parseNum($("pPrice").value);
+    const pct = reg > sell && reg > 0 ? Math.round(((reg - sell) / reg) * 100) : 0;
+    $("pDiscountPreview").textContent = pct > 0 ? `Calculated Discount vs Regular Price: -${pct}%` : "";
+  }
+}
+
 function renderAdminProducts() {
   const q = $("adminProdSearch").value.trim().toLowerCase();
   const entries = Object.entries(products).filter(([_, p]) =>
@@ -665,12 +902,23 @@ function renderAdminProducts() {
   );
   $("prodListCount").textContent = Object.keys(products).length;
 
+  const prodOptions = Object.entries(products).map(([id, p]) => `<option value="${safe(id)}">${safe(p.name)} (${money(p.price)})</option>`).join("");
+  const prevSlideProd = $("hsProductId").value;
+  $("hsProductId").innerHTML = prodOptions || `<option value="">-- Add a product first --</option>`;
+  if (prevSlideProd && products[prevSlideProd]) $("hsProductId").value = prevSlideProd;
+
+  const prevNotifProd = $("notifProductId").value;
+  $("notifProductId").innerHTML = `<option value="">-- No linked product --</option>` + prodOptions;
+  if (prevNotifProd && products[prevNotifProd]) $("notifProductId").value = prevNotifProd;
+
   if (!entries.length) {
     $("adminProductList").innerHTML = `<p class="muted" style="text-align:center;padding:24px 0">No products yet. Add your first product using the form.</p>`;
     return;
   }
 
-  $("adminProductList").innerHTML = entries.map(([id, p]) => `
+  $("adminProductList").innerHTML = entries.map(([id, p]) => {
+    const freeMinQ = parseNum(p.freeDeliveryMinQty || 0);
+    return `
     <div class="list-item">
       <div style="display:flex;gap:12px;align-items:center;min-width:0;flex:1">
         <img src="${safe(p.image || "assets/favicon.svg")}" alt="${safe(p.name)}" onerror="this.src='assets/favicon.svg'">
@@ -680,6 +928,8 @@ function renderAdminProducts() {
           <div style="margin-top:4px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
             <b style="color:var(--crimson)">${money(p.price)}</b>
             ${p.oldPrice > p.price ? `<span class="muted" style="text-decoration:line-through;font-size:12px">${money(p.oldPrice)}</span>` : ""}
+            ${p.discountType && p.discountType !== "none" && p.discountValue > 0 ? `<span class="badge blue">${p.discountType === "percent" ? `-${p.discountValue}% Discount` : `-${money(p.discountValue)} Off`}</span>` : ""}
+            ${freeMinQ > 0 ? `<span class="badge green">🆓 Free Delivery (Qty ≥ ${freeMinQ})</span>` : ""}
             ${p.isFlashDeal ? `<span class="badge red">Flash Sale</span>` : ""}
             ${p.isFeatured ? `<span class="badge green">Featured</span>` : ""}
           </div>
@@ -689,8 +939,8 @@ function renderAdminProducts() {
         <button type="button" class="secondary sm" data-edit-prod="${safe(id)}">Edit</button>
         <button type="button" class="crimson sm" data-del-prod="${safe(id)}">Delete</button>
       </div>
-    </div>
-  `).join("");
+    </div>`;
+  }).join("");
 
   $("adminProductList").querySelectorAll("[data-edit-prod]").forEach((b) => {
     b.onclick = () => {
@@ -703,8 +953,11 @@ function renderAdminProducts() {
       $("pName").value = p.name || "";
       $("pCategory").value = p.category || "";
       $("pBrand").value = p.brand || "";
-      $("pPrice").value = p.price || 0;
       $("pOldPrice").value = p.oldPrice || 0;
+      $("pPrice").value = p.price || 0;
+      $("pDiscountType").value = p.discountType || "none";
+      $("pDiscountValue").value = p.discountValue || 0;
+      $("pFreeShipMinQty").value = p.freeDeliveryMinQty || 0;
       $("pStock").value = p.stock ?? 0;
       $("pSoldCount").value = p.soldCount ?? 0;
       $("pRating").value = p.rating || 4.8;
@@ -715,6 +968,7 @@ function renderAdminProducts() {
       $("pDesc").value = p.description || "";
       $("pFlashDeal").checked = !!p.isFlashDeal;
       $("pFeatured").checked = !!p.isFeatured;
+      updateProductDiscountPreview();
       window.scrollTo({ top: 0, behavior: "smooth" });
     };
   });
@@ -737,7 +991,12 @@ function resetProductForm() {
   $("pRating").value = "4.8";
   $("pStock").value = "10";
   $("pSoldCount").value = "0";
+  $("pOldPrice").value = "0";
+  $("pDiscountType").value = "none";
+  $("pDiscountValue").value = "0";
+  $("pFreeShipMinQty").value = "0";
   $("pVariants").value = "Standard";
+  $("pDiscountPreview").textContent = "";
 }
 
 function renderAdminCategories() {
@@ -917,16 +1176,167 @@ function orderProductSummaryText(o) {
   return items.map((i) => `${i.name} ×${i.qty}`).join(", ");
 }
 
+function renderAdminHeroSlides() {
+  const entries = Object.entries(heroSlides).sort((a, b) => (parseNum(a[1].order) || 99) - (parseNum(b[1].order) || 99));
+  $("heroSlidesCount").textContent = entries.length;
+  $("adminHeroSlideList").innerHTML = entries.length
+    ? entries.map(([id, s]) => {
+      const linked = s.productId ? products[s.productId] : null;
+      const thumb = s.imageUrl || linked?.image || "assets/favicon.svg";
+      const title = s.title || linked?.name || "Custom Banner Slide";
+      return `
+        <div class="list-item">
+          <div style="display:flex;gap:12px;align-items:center;min-width:0;flex:1">
+            <img src="${safe(thumb)}" alt="" onerror="this.src='assets/favicon.svg'">
+            <div style="min-width:0">
+              <div style="font-weight:800;display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+                <span>${safe(title)}</span>
+                <span class="badge blue">${s.type === "product" ? "Product Slide" : "Custom Image"}</span>
+                <span class="badge ${s.active !== false ? "green" : "amber"}">${s.active !== false ? "Active" : "Hidden"}</span>
+              </div>
+              <div style="font-size:12px;color:var(--muted)">Order: #${Number(s.order || 1)} · Button: ${safe(s.btnText || "Shop Now →")}</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:6px;flex-shrink:0">
+            <button type="button" class="secondary sm" data-edit-hs="${safe(id)}">Edit</button>
+            <button type="button" class="crimson sm" data-del-hs="${safe(id)}">Delete</button>
+          </div>
+        </div>
+      `;
+    }).join("")
+    : `<p class="muted" style="text-align:center;padding:18px 0">No hero slides added yet. Add a Product Slide or Custom Image Banner on the left.</p>`;
+
+  $("adminHeroSlideList").querySelectorAll("[data-edit-hs]").forEach((b) => {
+    b.onclick = () => {
+      const id = b.dataset.editHs;
+      const s = heroSlides[id];
+      if (!s) return;
+      $("hsEditId").value = id;
+      $("heroSlideFormTitle").textContent = "✏️ Edit Hero Slide";
+      $("hsSaveBtn").textContent = "💾 Update Slide";
+      $("hsType").value = s.type || "product";
+      $("hsProductWrap").classList.toggle("hidden", $("hsType").value !== "product");
+      $("hsProductId").value = s.productId || "";
+      $("hsImageUrl").value = s.imageUrl || "";
+      $("hsBadge").value = s.badge || "";
+      $("hsBtnText").value = s.btnText || "Shop Now →";
+      $("hsTitle").value = s.title || "";
+      $("hsSubtitle").value = s.subtitle || "";
+      $("hsOrder").value = s.order || 1;
+      $("hsActive").checked = s.active !== false;
+    };
+  });
+
+  $("adminHeroSlideList").querySelectorAll("[data-del-hs]").forEach((b) => {
+    b.onclick = async () => {
+      if (!confirm("Delete this hero slide?")) return;
+      await remove(ref(db, "deals/heroSlides/" + b.dataset.delHs));
+      toast("Hero slide deleted");
+    };
+  });
+}
+
+function resetHeroSlideForm() {
+  $("heroSlideForm").reset();
+  $("hsEditId").value = "";
+  $("heroSlideFormTitle").textContent = "🖼️ Hero Banner Slider (Product / Custom Image)";
+  $("hsSaveBtn").textContent = "➕ Add Hero Slide";
+  $("hsType").value = "product";
+  $("hsProductWrap").classList.remove("hidden");
+  $("hsBtnText").value = "Shop Now →";
+  $("hsOrder").value = "1";
+  $("hsActive").checked = true;
+}
+
+function renderAdminDeliveryZones() {
+  $("delFreeMinAmount").value = parseNum(deliveryConfig?.freeDeliveryMinAmount ?? 3000);
+  const zonesObj = deliveryConfig?.zones || {};
+  const entries = Object.entries(zonesObj).sort((a, b) => String(a[1].name || "").localeCompare(String(b[1].name || "")));
+  $("zonesCount").textContent = entries.length;
+  $("adminZoneList").innerHTML = entries.length
+    ? entries.map(([key, z]) => `
+      <div class="list-item">
+        <div>
+          <div style="font-weight:800">📍 ${safe(z.name)} <span class="badge green">${parseNum(z.rate) === 0 ? "FREE" : money(z.rate)}</span></div>
+          <div style="font-size:12px;color:var(--muted)">ETA: ${safe(z.eta || "2-4 Days")}</div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button type="button" class="secondary sm" data-edit-zr="${safe(key)}">Edit</button>
+          <button type="button" class="crimson sm" data-del-zr="${safe(key)}">Delete</button>
+        </div>
+      </div>
+    `).join("")
+    : `<p class="muted" style="text-align:center;padding:20px 0">No zones configured yet. Click "Seed Default 8 BD Divisions" or add a custom zone.</p>`;
+
+  $("adminZoneList").querySelectorAll("[data-edit-zr]").forEach((b) => {
+    b.onclick = () => {
+      const key = b.dataset.editZr;
+      const z = deliveryConfig?.zones?.[key];
+      if (!z) return;
+      $("zrEditKey").value = key;
+      $("zoneFormTitle").textContent = "✏️ Edit Zone Courier Rate";
+      $("zrSaveBtn").textContent = "💾 Update Zone";
+      $("zrName").value = z.name || "";
+      $("zrRate").value = parseNum(z.rate);
+      $("zrEta").value = z.eta || "2-4 Days";
+    };
+  });
+
+  $("adminZoneList").querySelectorAll("[data-del-zr]").forEach((b) => {
+    b.onclick = async () => {
+      if (!confirm("Delete this zone courier rate?")) return;
+      await remove(ref(db, `deals/deliveryConfig/zones/${b.dataset.delZr}`));
+      await remove(ref(db, `settings/delivery/zones/${b.dataset.delZr}`));
+      toast("Zone rate deleted");
+    };
+  });
+}
+
+function resetZoneRateForm() {
+  $("zoneRateForm").reset();
+  $("zrEditKey").value = "";
+  $("zoneFormTitle").textContent = "🚚 Add / Edit Zone Courier Rate";
+  $("zrSaveBtn").textContent = "➕ Save Zone Rate";
+  $("zrRate").value = "60";
+  $("zrEta").value = "2-4 Days";
+}
+
+function renderStoreSettingsUI() {
+  const s = { ...DEFAULT_STORE_SETTINGS, ...storeSettings };
+  $("ssName").value = s.storeName || "";
+  $("ssHotline").value = s.hotline || "";
+  $("ssEmail").value = s.email || "";
+  $("ssBin").value = s.binNumber || "";
+  $("ssTradeLicence").value = s.tradeLicence || "";
+  $("ssAddress").value = s.address || "";
+
+  $("storeSettingsPreview").innerHTML = `
+    <div><b>Store Name:</b> ${safe(s.storeName)}</div>
+    <div><b>Hotline:</b> ${safe(s.hotline)}</div>
+    <div><b>Support Email:</b> ${safe(s.email)}</div>
+    <div><b>BIN Number:</b> ${safe(s.binNumber || "Not set")}</div>
+    <div><b>Trade Licence:</b> ${safe(s.tradeLicence || "Not set")}</div>
+    <div><b>Address:</b> ${safe(s.address)}</div>
+  `;
+}
+
 function openInvoiceModal(orderId) {
   const o = orders[orderId];
   if (!o) return toast("Order not found");
   const fin = computeOrderFinancials(o);
+  const st = { ...DEFAULT_STORE_SETTINGS, ...storeSettings };
 
   $("invoicePrintArea").innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;border-bottom:2px solid var(--emerald);padding-bottom:14px;flex-wrap:wrap">
       <div>
-        <img src="assets/logo.svg" alt="SPR ZONE BD" style="height:44px;margin-bottom:6px">
-        <div style="font-size:12.5px;color:var(--muted)">Hotline: 09678-123456 · support@sprzonebd.com<br>Dhaka, Bangladesh</div>
+        <img src="assets/logo.svg" alt="${safe(st.storeName)}" style="height:44px;margin-bottom:6px">
+        <div style="font-weight:800;font-size:15px">${safe(st.storeName)}</div>
+        <div style="font-size:12.5px;color:var(--muted)">
+          Hotline: ${safe(st.hotline)} · ${safe(st.email)}<br>
+          ${safe(st.address)}
+          ${st.binNumber ? `<br><b>BIN No:</b> ${safe(st.binNumber)}` : ""}
+          ${st.tradeLicence ? ` · <b>Trade Licence:</b> ${safe(st.tradeLicence)}` : ""}
+        </div>
       </div>
       <div style="text-align:right">
         <h2 style="color:var(--emerald-dark);font-size:22px">INVOICE</h2>
@@ -988,20 +1398,22 @@ function openInvoiceModal(orderId) {
     </div>
 
     <div style="margin-top:18px;padding-top:12px;border-top:1px dashed var(--line);font-size:12px;color:var(--muted);text-align:center">
-      Thank you for shopping with <b>SPR ZONE BD</b>! Payment Method: Cash on Delivery. Confirmed orders cannot be cancelled.
+      Thank you for shopping with <b>${safe(st.storeName)}</b>! Payment Method: Cash on Delivery. Confirmed orders cannot be cancelled.
     </div>
   `;
   openModal("invoiceModal");
 }
 
 function openOrderEditModal(orderId = "") {
+  populateOrderZoneDropdown();
   const o = orderId ? orders[orderId] : null;
-  const fin = o ? computeOrderFinancials(o) : { subtotal: 0, discount: 0, deliveryFee: 60, grandTotal: 60 };
+  const defDiv = o?.customer?.division || "Dhaka";
+  const fin = o ? computeOrderFinancials(o) : { subtotal: 0, discount: 0, deliveryFee: getZoneCourierRate(defDiv), grandTotal: getZoneCourierRate(defDiv) };
   $("oeOrderId").value = orderId;
   $("oeModalTitle").textContent = o ? `✏️ Edit Order ${orderId}` : "➕ Add Manual COD Order";
   $("oeName").value = o?.customer?.name || "";
   $("oePhone").value = o?.customer?.phone || "";
-  $("oeDivision").value = o?.customer?.division || "Dhaka";
+  $("oeDivision").value = defDiv;
   $("oeStatus").value = o?.status || "Pending";
   $("oeAddress").value = o?.customer?.address || "";
   $("oeItemsSummary").value = o?.itemsSummary || (o ? orderProductSummaryText(o) : "");
@@ -1244,9 +1656,11 @@ function startAdminListeners() {
   if (listenersStarted) return;
   listenersStarted = true;
 
-  onValue(ref(db, "products"), (snap) => { products = snap.val() || {}; updateStats(); renderAdminProducts(); });
+  onValue(ref(db, "products"), (snap) => { products = snap.val() || {}; updateStats(); renderAdminProducts(); renderAdminHeroSlides(); });
   onValue(ref(db, "categories"), (snap) => { categories = snap.val() || {}; renderAdminCategories(); });
   onValue(ref(db, "deals/sales"), (snap) => { sales = snap.val() || {}; updateStats(); renderAdminSales(); });
+  onValue(ref(db, "deals/heroSlides"), (snap) => { heroSlides = snap.val() || {}; renderAdminHeroSlides(); });
+  onValue(ref(db, "deals/appNotifications"), (snap) => { appNotifications = snap.val() || {}; renderAdminNotifications(); });
   onValue(ref(db, "coupons"), (snap) => { coupons = snap.val() || {}; renderAdminCoupons(); });
   onValue(ref(db, "orders"), (snap) => { orders = snap.val() || {}; updateStats(); renderAdminOrders(); });
   onValue(ref(db, "customers"), (snap) => { customers = snap.val() || {}; updateStats(); renderAdminCustomers(); });
@@ -1255,6 +1669,21 @@ function startAdminListeners() {
     $("hBadge").value = v.badge || "সাশ্রয়ে সেরা অনলাইন শপিং সারা বাংলাদেশে!";
     $("hTitle").value = v.title || "SPR ZONE BD";
     $("hSubtitle").value = v.subtitle || "এখন আরও কাছে, আরও সাশ্রয়ী!";
+  });
+  onValue(ref(db, "deals/deliveryConfig"), (snap) => {
+    if (snap.exists()) {
+      const val = snap.val() || {};
+      deliveryConfig = {
+        freeDeliveryMinAmount: val.freeDeliveryMinAmount !== undefined ? parseNum(val.freeDeliveryMinAmount) : 3000,
+        zones: val.zones || deliveryConfig.zones
+      };
+    }
+    renderAdminDeliveryZones();
+    populateOrderZoneDropdown();
+  });
+  onValue(ref(db, "deals/storeConfig"), (snap) => {
+    storeSettings = { ...DEFAULT_STORE_SETTINGS, ...(snap.val() || {}) };
+    renderStoreSettingsUI();
   });
 
   setInterval(() => {
@@ -1321,24 +1750,50 @@ $("adminOrderSearch").oninput = renderAdminOrders;
 $("adminOrderStatusFilter").onchange = renderAdminOrders;
 $("adminCustSearch").oninput = renderAdminCustomers;
 $("addManualOrderBtn").onclick = () => openOrderEditModal("");
-$("oeSubtotal").oninput = syncOrderEditTotal;
+$("oeSubtotal").oninput = () => {
+  const sub = parseNum($("oeSubtotal").value);
+  const minAmt = parseNum(deliveryConfig?.freeDeliveryMinAmount ?? 3000);
+  if (minAmt > 0 && sub >= minAmt) $("oeDeliveryFee").value = 0;
+  syncOrderEditTotal();
+};
 $("oeDiscount").oninput = syncOrderEditTotal;
 $("oeDeliveryFee").oninput = syncOrderEditTotal;
+$("oeDivision").onchange = () => {
+  const sub = parseNum($("oeSubtotal").value);
+  const minAmt = parseNum(deliveryConfig?.freeDeliveryMinAmount ?? 3000);
+  $("oeDeliveryFee").value = (minAmt > 0 && sub >= minAmt) ? 0 : getZoneCourierRate($("oeDivision").value);
+  syncOrderEditTotal();
+};
 $("printInvoiceBtn").onclick = () => window.print();
+
+$("pOldPrice").oninput = updateProductDiscountPreview;
+$("pPrice").oninput = updateProductDiscountPreview;
+$("pDiscountType").onchange = updateProductDiscountPreview;
+$("pDiscountValue").oninput = updateProductDiscountPreview;
+$("hsType").onchange = () => {
+  $("hsProductWrap").classList.toggle("hidden", $("hsType").value !== "product");
+};
 
 /* ---------- Form Submissions ---------- */
 $("productForm").onsubmit = async (e) => {
   e.preventDefault();
   const editId = $("pEditId").value;
   const prodId = editId || push(ref(db, "products")).key;
-  const price = Number($("pPrice").value);
-  const oldPrice = Number($("pOldPrice").value || 0);
+  const price = parseNum($("pPrice").value);
+  const oldPrice = parseNum($("pOldPrice").value || 0);
+  const discountType = $("pDiscountType").value;
+  const discountValue = parseNum($("pDiscountValue").value || 0);
+  const freeDeliveryMinQty = Math.max(0, Math.round(parseNum($("pFreeShipMinQty").value || 0)));
+
   await set(ref(db, "products/" + prodId), {
     name: $("pName").value.trim(),
     category: $("pCategory").value.trim(),
-    brand: $("pBrand").value.trim() || "SPR ZONE BD",
+    brand: $("pBrand").value.trim() || storeSettings.storeName || "SPR ZONE BD",
     price,
     oldPrice: oldPrice > price ? oldPrice : 0,
+    discountType,
+    discountValue: discountType === "none" ? 0 : discountValue,
+    freeDeliveryMinQty,
     stock: Number($("pStock").value || 0),
     soldCount: Number($("pSoldCount").value || 0),
     rating: Number($("pRating").value || 4.8),
@@ -1414,6 +1869,192 @@ $("heroResetBtn").onclick = async () => {
   await remove(ref(db, "deals/hero"));
   toast("Hero banner reset to default");
 };
+
+$("heroSlideForm").onsubmit = async (e) => {
+  e.preventDefault();
+  const type = $("hsType").value;
+  const productId = type === "product" ? $("hsProductId").value : "";
+  const imageUrl = $("hsImageUrl").value.trim();
+  if (type === "product" && !productId) return toast("Please select a product for this Product Slide.");
+  if (type === "image" && !imageUrl) return toast("Please enter a Custom Image URL.");
+  const editId = $("hsEditId").value;
+  const slideId = editId || push(ref(db, "deals/heroSlides")).key;
+  await set(ref(db, "deals/heroSlides/" + slideId), {
+    type,
+    productId,
+    imageUrl,
+    badge: $("hsBadge").value.trim(),
+    btnText: $("hsBtnText").value.trim() || "Shop Now →",
+    title: $("hsTitle").value.trim(),
+    subtitle: $("hsSubtitle").value.trim(),
+    order: Math.max(1, parseNum($("hsOrder").value || 1)),
+    active: $("hsActive").checked,
+    updatedAt: Date.now()
+  });
+  resetHeroSlideForm();
+  toast(editId ? "Hero slide updated!" : "Hero slide added!");
+};
+$("hsResetBtn").onclick = resetHeroSlideForm;
+
+$("freeDeliveryForm").onsubmit = async (e) => {
+  e.preventDefault();
+  const minAmt = Math.max(0, parseNum($("delFreeMinAmount").value));
+  await update(ref(db, "deals/deliveryConfig"), { freeDeliveryMinAmount: minAmt, updatedAt: Date.now() });
+  try { await update(ref(db, "settings/delivery"), { freeDeliveryMinAmount: minAmt, updatedAt: Date.now() }); } catch (_) {}
+  toast(minAmt > 0 ? `Free delivery enabled for orders over ${money(minAmt)}` : "Amount-wise free delivery disabled");
+};
+
+$("zoneRateForm").onsubmit = async (e) => {
+  e.preventDefault();
+  const name = $("zrName").value.trim();
+  if (!name) return;
+  const rate = Math.max(0, parseNum($("zrRate").value));
+  const eta = $("zrEta").value.trim() || "2-4 Days";
+  const editKey = $("zrEditKey").value;
+  const key = editKey || name.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "") || push(ref(db, "deals/deliveryConfig/zones")).key;
+  const payload = { name, rate, eta };
+  await set(ref(db, `deals/deliveryConfig/zones/${key}`), payload);
+  try { await set(ref(db, `settings/delivery/zones/${key}`), payload); } catch (_) {}
+  resetZoneRateForm();
+  toast(editKey ? `Updated zone rate for ${name}` : `Added zone rate for ${name}`);
+};
+$("zrResetBtn").onclick = resetZoneRateForm;
+
+$("zrRestoreDefaultsBtn").onclick = async () => {
+  const zonesMap = Object.fromEntries(DEFAULT_ZONES.map((z) => [z.key, { name: z.name, rate: z.rate, eta: z.eta }]));
+  await update(ref(db, "deals/deliveryConfig/zones"), zonesMap);
+  try { await update(ref(db, "settings/delivery/zones"), zonesMap); } catch (_) {}
+  toast("Default 8 Bangladesh divisions seeded!");
+};
+
+$("storeSettingsForm").onsubmit = async (e) => {
+  e.preventDefault();
+  const payload = {
+    storeName: $("ssName").value.trim() || DEFAULT_STORE_SETTINGS.storeName,
+    hotline: $("ssHotline").value.trim() || DEFAULT_STORE_SETTINGS.hotline,
+    email: $("ssEmail").value.trim() || DEFAULT_STORE_SETTINGS.email,
+    binNumber: $("ssBin").value.trim(),
+    tradeLicence: $("ssTradeLicence").value.trim(),
+    address: $("ssAddress").value.trim() || DEFAULT_STORE_SETTINGS.address,
+    updatedAt: Date.now()
+  };
+  await set(ref(db, "deals/storeConfig"), payload);
+  try { await set(ref(db, "settings/store"), payload); } catch (_) {}
+  toast("Store settings saved!");
+};
+
+$("ssResetBtn").onclick = async () => {
+  if (!confirm("Reset Store Settings to defaults?")) return;
+  await remove(ref(db, "deals/storeConfig"));
+  try { await remove(ref(db, "settings/store")); } catch (_) {}
+  toast("Store settings reset");
+};
+
+function renderAdminNotifications() {
+  const entries = Object.entries(appNotifications || {}).sort((a, b) => (b[1]?.createdAt || 0) - (a[1]?.createdAt || 0));
+  $("notifCount").textContent = entries.length;
+  $("adminNotificationList").innerHTML = entries.length
+    ? entries.map(([id, n]) => {
+      const linked = n.productId ? products[n.productId] : null;
+      const typeLabel = n.type === "order" ? "🚚 Delivery/Order" : n.type === "info" ? "📢 Announcement" : "🔥 Promo/Sale";
+      return `
+        <div class="list-item">
+          <div style="min-width:0;flex:1">
+            <div style="font-weight:800;display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+              <span>${safe(n.title)}</span>
+              <span class="badge blue">${typeLabel}</span>
+              <span class="badge ${n.active !== false ? "green" : "amber"}">${n.active !== false ? "Active" : "Paused"}</span>
+            </div>
+            <div style="font-size:12.5px;color:#334155;margin-top:4px">${safe(n.message)}</div>
+            <div style="font-size:11.5px;color:var(--muted);margin-top:4px">
+              Target: <b>${safe(n.targetEmail || "All App Users")}</b>
+              ${linked ? ` · Linked: <b>${safe(linked.name)}</b>` : ""}
+              · ${new Date(n.createdAt || Date.now()).toLocaleString()}
+            </div>
+          </div>
+          <div style="display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap">
+            <button type="button" class="gold sm" data-resend-notif="${safe(id)}" title="Push again as a new notification">Re-send</button>
+            <button type="button" class="secondary sm" data-edit-notif="${safe(id)}">Edit</button>
+            <button type="button" class="crimson sm" data-del-notif="${safe(id)}">Delete</button>
+          </div>
+        </div>
+      `;
+    }).join("")
+    : `<p class="muted" style="text-align:center;padding:20px 0">No notifications sent yet. Send one using the form to alert mobile app users.</p>`;
+
+  $("adminNotificationList").querySelectorAll("[data-edit-notif]").forEach((b) => {
+    b.onclick = () => {
+      const id = b.dataset.editNotif;
+      const n = appNotifications[id];
+      if (!n) return;
+      $("notifEditId").value = id;
+      $("notifFormTitle").textContent = "✏️ Edit Mobile App Notification";
+      $("notifSaveBtn").textContent = "💾 Update Notification";
+      $("notifTitle").value = n.title || "";
+      $("notifType").value = n.type || "promo";
+      $("notifProductId").value = n.productId || "";
+      $("notifTargetEmail").value = n.targetEmail || "";
+      $("notifMessage").value = n.message || "";
+      $("notifActive").checked = n.active !== false;
+    };
+  });
+
+  $("adminNotificationList").querySelectorAll("[data-resend-notif]").forEach((b) => {
+    b.onclick = async () => {
+      const src = appNotifications[b.dataset.resendNotif];
+      if (!src) return;
+      const newId = push(ref(db, "deals/appNotifications")).key;
+      await set(ref(db, "deals/appNotifications/" + newId), {
+        title: src.title || "",
+        message: src.message || "",
+        type: src.type || "promo",
+        productId: src.productId || "",
+        targetEmail: src.targetEmail || "",
+        active: true,
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      });
+      toast("Notification re-sent to mobile app!");
+    };
+  });
+
+  $("adminNotificationList").querySelectorAll("[data-del-notif]").forEach((b) => {
+    b.onclick = async () => {
+      if (!confirm("Delete this mobile app notification?")) return;
+      await remove(ref(db, "deals/appNotifications/" + b.dataset.delNotif));
+      toast("Notification deleted");
+    };
+  });
+}
+
+function resetNotifForm() {
+  $("appNotifForm").reset();
+  $("notifEditId").value = "";
+  $("notifFormTitle").textContent = "🔔 Send Mobile App Notification";
+  $("notifSaveBtn").textContent = "📤 Send Notification to App";
+  $("notifType").value = "promo";
+  $("notifActive").checked = true;
+}
+
+$("appNotifForm").onsubmit = async (e) => {
+  e.preventDefault();
+  const editId = $("notifEditId").value;
+  const notifId = editId || push(ref(db, "deals/appNotifications")).key;
+  const prev = editId ? appNotifications[editId] : null;
+  await set(ref(db, "deals/appNotifications/" + notifId), {
+    title: $("notifTitle").value.trim(),
+    message: $("notifMessage").value.trim(),
+    type: $("notifType").value,
+    productId: $("notifProductId").value,
+    targetEmail: $("notifTargetEmail").value.trim().toLowerCase(),
+    active: $("notifActive").checked,
+    createdAt: prev?.createdAt || Date.now(),
+    updatedAt: Date.now()
+  });
+  resetNotifForm();
+  toast(editId ? "Notification updated!" : "Notification sent to mobile app!");
+};
+$("notifResetBtn").onclick = resetNotifForm;
 
 $("couponForm").onsubmit = async (e) => {
   e.preventDefault();

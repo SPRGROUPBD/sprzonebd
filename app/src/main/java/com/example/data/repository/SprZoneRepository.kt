@@ -11,6 +11,7 @@ import com.example.data.local.SprZoneDatabase
 import com.example.data.local.UserDao
 import com.example.data.local.WishlistDao
 import com.example.data.model.AddressEntity
+import com.example.data.model.AppNotificationItem
 import com.example.data.model.CartItemEntity
 import com.example.data.model.DeliveryZone
 import com.example.data.model.MerchantPaymentSettings
@@ -37,6 +38,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
@@ -74,9 +76,13 @@ class SprZoneRepository(
     private val _coupons = MutableStateFlow<Map<String, RemoteCouponDto>>(emptyMap())
     val coupons: StateFlow<Map<String, RemoteCouponDto>> = _coupons.asStateFlow()
 
+    private val _allNotifications = MutableStateFlow<List<AppNotificationItem>>(emptyList())
+    val allNotifications: StateFlow<List<AppNotificationItem>> = _allNotifications.asStateFlow()
+
     val loggedInEmailFlow: Flow<String?> = prefs.loggedInEmail
     val deliveryZoneFlow: Flow<DeliveryZone> = prefs.deliveryZone
     val isDarkModeFlow: Flow<Boolean> = prefs.isDarkMode
+    val readNotificationIdsFlow: Flow<Set<String>> = prefs.readNotificationIds
 
     suspend fun ensureSeededAndSync() {
         syncRemoteCatalogAndSettings()
@@ -167,6 +173,49 @@ class SprZoneRepository(
             if (t is CancellationException) throw t
             // Retain Room offline catalog
         }
+    }
+
+    suspend fun syncAppNotifications(): List<AppNotificationItem> = withContext(Dispatchers.IO) {
+        return@withContext try {
+            val resp = rtdb.getAppNotifications()
+            if (!resp.isSuccessful) return@withContext emptyList()
+            val items = resp.body().orEmpty()
+                .entries
+                .mapNotNull { (id, dto) ->
+                    if (dto.active == false) return@mapNotNull null
+                    val title = dto.title?.trim()?.takeIf { it.isNotBlank() } ?: return@mapNotNull null
+                    val msg = dto.message?.trim()?.takeIf { it.isNotBlank() } ?: return@mapNotNull null
+                    AppNotificationItem(
+                        id = id,
+                        title = title.take(180),
+                        message = msg.take(1000),
+                        type = dto.type?.trim()?.lowercase()?.ifBlank { "promo" } ?: "promo",
+                        productId = dto.productId?.trim().orEmpty(),
+                        targetEmail = dto.targetEmail?.trim()?.lowercase().orEmpty(),
+                        createdAt = dto.createdAt ?: dto.updatedAt ?: System.currentTimeMillis()
+                    )
+                }
+                .sortedByDescending { it.createdAt }
+            _allNotifications.value = items
+
+            val activeEmail = prefs.loggedInEmail.first()?.trim()?.lowercase()
+            val eligible = items.filter { n ->
+                n.targetEmail.isBlank() || (!activeEmail.isNullOrBlank() && n.targetEmail == activeEmail)
+            }
+            val seen = prefs.seenNotificationIds.first()
+            val unseen = eligible.filter { it.id !in seen }
+            if (unseen.isNotEmpty()) {
+                prefs.markNotificationsSeen(unseen.map { it.id })
+            }
+            unseen
+        } catch (t: Throwable) {
+            if (t is CancellationException) throw t
+            emptyList()
+        }
+    }
+
+    suspend fun markNotificationsRead(ids: Collection<String>) {
+        prefs.markNotificationsRead(ids)
     }
 
     suspend fun syncUserOrdersFromRemote(email: String) = withContext(Dispatchers.IO) {

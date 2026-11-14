@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.example.data.model.DeliveryZone
 import kotlinx.coroutines.flow.Flow
@@ -18,6 +19,8 @@ class SessionPreferences(private val context: Context) {
         val LOGGED_IN_EMAIL = stringPreferencesKey("logged_in_email")
         val DELIVERY_ZONE = stringPreferencesKey("delivery_zone")
         val DARK_MODE = booleanPreferencesKey("dark_mode")
+        val SEEN_NOTIFICATION_IDS = stringSetPreferencesKey("seen_notification_ids")
+        val READ_NOTIFICATION_IDS = stringSetPreferencesKey("read_notification_ids")
     }
 
     val loggedInEmail: Flow<String?> = context.dataStore.data.map { prefs ->
@@ -31,6 +34,14 @@ class SessionPreferences(private val context: Context) {
 
     val isDarkMode: Flow<Boolean> = context.dataStore.data.map { prefs ->
         prefs[Keys.DARK_MODE] ?: false
+    }
+
+    val seenNotificationIds: Flow<Set<String>> = context.dataStore.data.map { prefs ->
+        prefs[Keys.SEEN_NOTIFICATION_IDS] ?: emptySet()
+    }
+
+    val readNotificationIds: Flow<Set<String>> = context.dataStore.data.map { prefs ->
+        prefs[Keys.READ_NOTIFICATION_IDS] ?: emptySet()
     }
 
     suspend fun setLoggedInEmail(email: String?) {
@@ -52,6 +63,22 @@ class SessionPreferences(private val context: Context) {
     suspend fun setDarkMode(enabled: Boolean) {
         context.dataStore.edit { prefs ->
             prefs[Keys.DARK_MODE] = enabled
+        }
+    }
+
+    suspend fun markNotificationsSeen(ids: Collection<String>) {
+        if (ids.isEmpty()) return
+        context.dataStore.edit { prefs ->
+            val current = prefs[Keys.SEEN_NOTIFICATION_IDS] ?: emptySet()
+            prefs[Keys.SEEN_NOTIFICATION_IDS] = (current + ids).toList().takeLast(200).toSet()
+        }
+    }
+
+    suspend fun markNotificationsRead(ids: Collection<String>) {
+        if (ids.isEmpty()) return
+        context.dataStore.edit { prefs ->
+            val current = prefs[Keys.READ_NOTIFICATION_IDS] ?: emptySet()
+            prefs[Keys.READ_NOTIFICATION_IDS] = (current + ids).toList().takeLast(200).toSet()
         }
     }
 }

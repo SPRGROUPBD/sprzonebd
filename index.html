@@ -124,25 +124,54 @@ button:disabled{opacity:.5;cursor:not-allowed}
   padding:5px 12px;border-radius:10px;font-weight:800;font-variant-numeric:tabular-nums;
 }
 
-/* Hero Banner */
+/* Hero Banner & Slider */
 .hero{
-  border-radius:18px;padding:28px 30px;min-height:260px;color:#fff;
+  border-radius:18px;padding:28px 30px;min-height:270px;color:#fff;
   background:linear-gradient(115deg,#004A24 0%,#007B3D 52%,#049852 100%);
   display:grid;grid-template-columns:1.2fr 0.85fr;gap:20px;align-items:center;
   position:relative;overflow:hidden;box-shadow:var(--shadow);
 }
+.hero.hero-image-mode{padding:0;grid-template-columns:1fr;min-height:280px}
+.hero-custom-img{width:100%;height:290px;object-fit:cover;display:block}
+.hero-image-caption{
+  position:absolute;inset:auto 0 0 0;padding:22px 26px;
+  background:linear-gradient(180deg,transparent,rgba(0,25,12,.82));color:#fff;
+  display:flex;justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap;
+}
 .hero::after{
-  content:"";position:absolute;right:-60px;top:-60px;width:280px;height:280px;
+  content:"";position:absolute;right:-60px;top:-60px;width:280px;height:280px;pointer-events:none;
   border-radius:50%;background:radial-gradient(circle,rgba(245,158,11,.22),transparent 70%);
 }
 .hero-tag{
   display:inline-block;background:var(--crimson);color:#fff;padding:6px 14px;
   border-radius:8px;font-weight:800;font-size:13px;box-shadow:0 4px 12px rgba(225,29,72,.35);
 }
-.hero h1{font-size:clamp(26px,3.2vw,42px);margin:10px 0 6px;letter-spacing:-.4px;color:#fff}
+.hero h1{font-size:clamp(24px,3vw,40px);margin:10px 0 6px;letter-spacing:-.4px;color:#fff}
 .hero h1 .red{color:#FFE4E6;background:rgba(225,29,72,.9);padding:0 8px;border-radius:8px}
-.hero-bn{font-size:clamp(16px,1.8vw,21px);font-weight:700;color:#DCFCE7;margin:4px 0 16px}
+.hero-bn{font-size:clamp(15px,1.7vw,20px);font-weight:700;color:#DCFCE7;margin:4px 0 16px}
 .hero-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.hero-prod-stage{
+  background:#fff;border-radius:16px;padding:14px;max-width:255px;width:100%;aspect-ratio:1/1;
+  display:flex;align-items:center;justify-content:center;box-shadow:0 12px 30px rgba(0,0,0,.22);cursor:pointer;
+}
+.hero-prod-stage img{width:100%;height:100%;object-fit:contain;display:block}
+.hero-nav-btn{
+  position:absolute;top:50%;transform:translateY(-50%);z-index:4;
+  width:36px;height:36px;min-height:36px;padding:0;border-radius:50%;
+  background:rgba(0,0,0,.38);color:#fff;font-size:18px;
+}
+.hero-nav-btn:hover{background:rgba(0,0,0,.65)}
+.hero-nav-prev{left:12px}
+.hero-nav-next{right:12px}
+.hero-dots{
+  position:absolute;bottom:10px;left:50%;transform:translateX(-50%);z-index:4;
+  display:flex;gap:7px;
+}
+.hero-dot{
+  width:9px;height:9px;min-height:9px;padding:0;border-radius:50%;
+  background:rgba(255,255,255,.45);border:0;
+}
+.hero-dot.active{width:22px;border-radius:10px;background:#FEF08A}
 
 /* 5-Card Benefit Strip */
 .benefits{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin:14px 0 18px}
@@ -423,11 +452,11 @@ button:disabled{opacity:.5;cursor:not-allowed}
 <div class="topbar">
   <div class="topbar-inner">
     <div class="topbar-left">
-      <span>🇧🇩 Free Home Delivery over ৳3,000</span>
+      <span id="topFreeShipMsg">🇧🇩 Free Home Delivery over ৳3,000</span>
       <span class="topbar-sep">|</span>
       <span>💵 Cash on Delivery (All 64 Districts)</span>
       <span class="topbar-sep">|</span>
-      <span>📞 24/7 Support: <b>09678-123456</b></span>
+      <span>📞 24/7 Support: <b id="topHotline">09678-123456</b></span>
     </div>
     <div class="topbar-right">
       <button class="top-pill" id="myOrdersBtn">📦 My Orders</button>
@@ -493,7 +522,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
 
       <!-- Center Column -->
       <section>
-        <!-- Hero Banner -->
+        <!-- Hero Banner (Supports Product-wise Slider, Custom Image Slides, or Default Hero) -->
         <div class="hero" id="heroBanner">
           <div>
             <span class="hero-tag" id="heroBadgeView">সাশ্রয়ে সেরা অনলাইন শপিং সারা বাংলাদেশে!</span>
@@ -543,7 +572,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
           <div class="benefit"><div class="benefit-ic">🚚</div><div><b>Fast Delivery</b><span>Across Bangladesh</span></div></div>
           <div class="benefit"><div class="benefit-ic">💵</div><div><b>Cash on Delivery</b><span>All 64 Districts</span></div></div>
           <div class="benefit"><div class="benefit-ic">🏷️</div><div><b>Big Discounts</b><span>Everyday Deals</span></div></div>
-          <div class="benefit"><div class="benefit-ic">🎧</div><div><b>24/7 Support</b><span>09678-123456</span></div></div>
+          <div class="benefit"><div class="benefit-ic">🎧</div><div><b>24/7 Support</b><span id="benHotline">09678-123456</span></div></div>
           <div class="benefit"><div class="benefit-ic">↺</div><div><b>14 Days Return</b><span>Easy Warranty</span></div></div>
         </div>
 
@@ -783,7 +812,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
   <div class="footer-inner">
     <div>
       <img src="assets/logo.svg" alt="SPR ZONE BD" style="height:46px;background:#fff;padding:6px 10px;border-radius:10px;margin-bottom:10px">
-      <p><b>SPR ZONE BD</b> — Bangladesh's trusted A to Z online marketplace.</p>
+      <p><b id="footStoreName">SPR ZONE BD</b> — Bangladesh's trusted A to Z online marketplace.</p>
       <p>Fast nationwide delivery across all 64 districts with 100% authentic products and easy Cash on Delivery.</p>
     </div>
     <div>
@@ -796,25 +825,27 @@ button:disabled{opacity:.5;cursor:not-allowed}
       </ul>
     </div>
     <div>
-      <h4>Payment Method</h4>
+      <h4>Payment &amp; Delivery</h4>
       <ul>
         <li>Cash on Delivery (COD)</li>
         <li>Pay Cash on Doorstep</li>
         <li>All 64 Districts of Bangladesh</li>
-        <li>Free Delivery over ৳3,000</li>
+        <li id="footFreeShipRule">Free Delivery over ৳3,000</li>
       </ul>
     </div>
     <div>
-      <h4>Contact Us</h4>
+      <h4>Contact &amp; Legal Info</h4>
       <ul>
-        <li>Hotline: 09678-123456</li>
-        <li>Email: support@sprzonebd.com</li>
-        <li>Dhaka, Bangladesh</li>
+        <li>Hotline: <span id="footHotline">09678-123456</span></li>
+        <li>Email: <span id="footEmail">support@sprzonebd.com</span></li>
+        <li>Address: <span id="footAddress">Dhaka, Bangladesh</span></li>
+        <li id="footBinItem" class="hidden">BIN No: <span id="footBin"></span></li>
+        <li id="footTradeItem" class="hidden">Trade Licence: <span id="footTrade"></span></li>
       </ul>
     </div>
   </div>
   <p style="text-align:center;margin-top:22px;padding-top:14px;border-top:1px solid rgba(255,255,255,.15);font-size:12.5px">
-    © <span id="year"></span> SPR ZONE BD. All rights reserved.
+    © <span id="year"></span> <span id="footCopyName">SPR ZONE BD</span>. All rights reserved.
   </p>
 </footer>
 
@@ -951,7 +982,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
 
       <div class="cod-box">
         <div style="font-weight:800;color:var(--emerald-dark)">💵 Payment Method: Cash on Delivery (COD)</div>
-        <div style="font-size:12.5px;color:var(--muted);margin-top:3px">
+        <div id="checkoutCodNote" style="font-size:12.5px;color:var(--muted);margin-top:3px">
           Pay cash upon doorstep delivery across all 64 districts of Bangladesh. Free delivery on orders over ৳3,000.
         </div>
       </div>
@@ -1031,6 +1062,25 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getDatabase(app);
 
+const DEFAULT_ZONES = [
+  { key: "dhaka", name: "Dhaka", rate: 60, eta: "1-2 Days" },
+  { key: "chattogram", name: "Chattogram", rate: 120, eta: "2-4 Days" },
+  { key: "sylhet", name: "Sylhet", rate: 120, eta: "2-4 Days" },
+  { key: "rajshahi", name: "Rajshahi", rate: 120, eta: "2-4 Days" },
+  { key: "khulna", name: "Khulna", rate: 120, eta: "2-4 Days" },
+  { key: "barishal", name: "Barishal", rate: 120, eta: "2-4 Days" },
+  { key: "rangpur", name: "Rangpur", rate: 120, eta: "2-4 Days" },
+  { key: "mymensingh", name: "Mymensingh", rate: 120, eta: "2-4 Days" }
+];
+const DEFAULT_STORE_SETTINGS = {
+  storeName: "SPR ZONE BD",
+  hotline: "09678-123456",
+  email: "support@sprzonebd.com",
+  binNumber: "",
+  tradeLicence: "",
+  address: "Dhaka, Bangladesh"
+};
+
 let currentUser = null;
 let userProfile = null;
 let userAddresses = {};
@@ -1038,6 +1088,14 @@ let products = {};
 let categories = {};
 let coupons = {};
 let sales = {};
+let heroSlides = {};
+let heroSlideIdx = 0;
+let heroSlideTimer = null;
+let deliveryConfig = {
+  freeDeliveryMinAmount: 3000,
+  zones: Object.fromEntries(DEFAULT_ZONES.map((z) => [z.key, { name: z.name, rate: z.rate, eta: z.eta }]))
+};
+let storeSettings = { ...DEFAULT_STORE_SETTINGS };
 let activePreviewId = "";
 let heroData = {
   badge: "সাশ্রয়ে সেরা অনলাইন শপিং সারা বাংলাদেশে!",
@@ -1074,10 +1132,11 @@ function healCartWithProducts() {
     const live = products[x.id];
     const pPrice = live ? parseNum(live.price) : 0;
     const curPrice = parseNum(x.price);
-    const fixedPrice = curPrice > 0 ? curPrice : pPrice;
+    const fixedPrice = live && pPrice > 0 ? pPrice : curPrice;
     const fixedQty = Math.max(1, Math.round(parseNum(x.qty) || 1));
-    if (fixedPrice !== x.price || fixedQty !== x.qty) changed = true;
-    return { ...x, price: fixedPrice, qty: fixedQty };
+    const fixedFreeQty = live ? Math.max(0, parseNum(live.freeDeliveryMinQty || 0)) : Math.max(0, parseNum(x.freeDeliveryMinQty || 0));
+    if (fixedPrice !== x.price || fixedQty !== x.qty || fixedFreeQty !== x.freeDeliveryMinQty) changed = true;
+    return { ...x, price: fixedPrice, qty: fixedQty, freeDeliveryMinQty: fixedFreeQty };
   });
   if (changed) saveCart();
 }
@@ -1107,8 +1166,92 @@ function canCancelOrder(status = "") {
   return status === "Pending" || status === "Placed";
 }
 
+function getZonesList() {
+  const arr = Object.values(deliveryConfig?.zones || {}).filter((z) => z && z.name);
+  return arr.length ? arr : DEFAULT_ZONES;
+}
+
+function findZoneInfo(division = "Dhaka") {
+  const target = String(division || "Dhaka").trim().toLowerCase();
+  return getZonesList().find((z) => String(z.name || "").trim().toLowerCase() === target) || null;
+}
+
 function deliveryFeeForDivision(division = "Dhaka") {
+  const match = findZoneInfo(division);
+  if (match) return Math.max(0, parseNum(match.rate));
   return String(division).trim().toLowerCase() === "dhaka" ? 60 : 120;
+}
+
+function setSelectValueSafely(selectEl, desired) {
+  if (!selectEl) return "";
+  const val = String(desired || "").trim();
+  const opts = [...selectEl.options];
+  const exact = opts.find((o) => o.value === val);
+  if (exact) {
+    selectEl.value = exact.value;
+    return exact.value;
+  }
+  const ci = opts.find((o) => o.value.toLowerCase() === val.toLowerCase());
+  if (ci) {
+    selectEl.value = ci.value;
+    return ci.value;
+  }
+  if (val) {
+    const opt = document.createElement("option");
+    opt.value = val;
+    opt.textContent = `${val} (৳${deliveryFeeForDivision(val)} Delivery)`;
+    selectEl.appendChild(opt);
+    selectEl.value = val;
+    return val;
+  }
+  if (opts[0]) selectEl.value = opts[0].value;
+  return selectEl.value;
+}
+
+function populateZoneSelectors() {
+  const zones = getZonesList();
+  const buildOpts = (selectedVal, withRate = true) => zones.map((z) =>
+    `<option value="${safe(z.name)}" ${z.name === selectedVal ? "selected" : ""}>${safe(z.name)}${withRate ? ` (৳${parseNum(z.rate)} Delivery)` : ""}</option>`
+  ).join("");
+  if ($("dzDivision")) {
+    const curDz = $("dzDivision").value || previewDeliveryDivision || zones[0].name;
+    $("dzDivision").innerHTML = buildOpts(curDz, true);
+  }
+  if ($("cDivision")) {
+    const curC = $("cDivision").value || zones[0].name;
+    $("cDivision").innerHTML = buildOpts(curC, true);
+  }
+  if ($("addrDivision")) {
+    const curA = $("addrDivision").value || zones[0].name;
+    $("addrDivision").innerHTML = buildOpts(curA, false);
+  }
+}
+
+function applyStoreIdentityAndDeliveryText() {
+  const st = { ...DEFAULT_STORE_SETTINGS, ...storeSettings };
+  const minAmt = parseNum(deliveryConfig?.freeDeliveryMinAmount ?? 3000);
+  document.title = `${st.storeName} | Shop Smart • Live Better`;
+  $("topHotline").textContent = st.hotline;
+  $("benHotline").textContent = st.hotline;
+  $("footStoreName").textContent = st.storeName;
+  $("footCopyName").textContent = st.storeName;
+  $("footHotline").textContent = st.hotline;
+  $("footEmail").textContent = st.email;
+  $("footAddress").textContent = st.address;
+  $("footBinItem").classList.toggle("hidden", !st.binNumber);
+  $("footBin").textContent = st.binNumber || "";
+  $("footTradeItem").classList.toggle("hidden", !st.tradeLicence);
+  $("footTrade").textContent = st.tradeLicence || "";
+
+  $("topFreeShipMsg").textContent = minAmt > 0
+    ? `🇧🇩 Free Home Delivery over ${money(minAmt)}`
+    : "🇧🇩 Product Qty-wise Free Delivery Available";
+  $("footFreeShipRule").textContent = minAmt > 0
+    ? `Free Delivery over ${money(minAmt)}`
+    : "Qty-wise Free Delivery Selected Items";
+  $("checkoutCodNote").textContent = minAmt > 0
+    ? `Pay cash upon doorstep delivery across all 64 districts of Bangladesh. Free delivery on orders over ${money(minAmt)} or eligible product qty.`
+    : "Pay cash upon doorstep delivery across all 64 districts of Bangladesh.";
 }
 
 function getActiveSale() {
@@ -1217,10 +1360,145 @@ function computeTotals(division = "") {
   }, 0);
   const promo = evaluateCoupon(appliedPromoCode, subtotal);
   const discount = promo ? promo.discount : 0;
-  const divFee = division ? deliveryFeeForDivision(division) : 60;
-  const deliveryFee = cart.length === 0 || subtotal <= 0 || subtotal >= 3000 || promo?.freeShip ? 0 : divFee;
+  const minAmt = parseNum(deliveryConfig?.freeDeliveryMinAmount ?? 3000);
+  const amountFree = minAmt > 0 && subtotal >= minAmt;
+  const qtyFree = cart.some((x) => {
+    const mq = Math.max(0, parseNum(x.freeDeliveryMinQty ?? products[x.id]?.freeDeliveryMinQty ?? 0));
+    const q = Math.max(1, Math.round(parseNum(x.qty) || 1));
+    return mq > 0 && q >= mq;
+  });
+  const couponFree = Boolean(promo?.freeShip);
+  const isFreeDelivery = cart.length === 0 || subtotal <= 0 || amountFree || qtyFree || couponFree;
+  const freeReason = qtyFree ? "Qty-wise Free Delivery" : amountFree ? `Order ≥ ${money(minAmt)}` : couponFree ? "Promo Free Delivery" : "";
+  const zones = getZonesList();
+  const baseDiv = division || zones[0]?.name || "Dhaka";
+  const divFee = deliveryFeeForDivision(baseDiv);
+  const deliveryFee = isFreeDelivery ? 0 : divFee;
   const total = Math.max(0, subtotal - discount + deliveryFee);
-  return { subtotal, discount, deliveryFee, total, promo };
+  return { subtotal, discount, deliveryFee, total, promo, isFreeDelivery, freeReason };
+}
+
+function renderHeroBanner() {
+  const el = $("heroBanner");
+  clearInterval(heroSlideTimer);
+  const slides = Object.entries(heroSlides || {})
+    .map(([id, s]) => ({ id, ...s }))
+    .filter((s) => s.active !== false)
+    .sort((a, b) => (parseNum(a.order) || 99) - (parseNum(b.order) || 99));
+
+  if (!slides.length) {
+    el.classList.remove("hero-image-mode");
+    el.innerHTML = `
+      <div>
+        <span class="hero-tag" id="heroBadgeView">${safe(heroData.badge)}</span>
+        <h1 id="heroTitleView">${safe(heroData.title).replace("ZONE", '<span class="red">ZONE</span>')}</h1>
+        <div class="hero-bn" id="heroSubtitleView">${safe(heroData.subtitle)}</div>
+        <div class="hero-actions">
+          <button class="gold" id="heroShopBtn">Shop Now →</button>
+          <button class="secondary" id="heroTrackBtn">📍 Track Order</button>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:center;align-items:center">
+        <svg viewBox="0 0 260 175" width="100%" style="max-width:260px" aria-hidden="true">
+          <rect x="0" y="148" width="260" height="27" rx="8" fill="rgba(255,255,255,.16)"/>
+          <polygon points="150,148 182,24 214,148" fill="#E2EFE7" opacity=".95"/>
+          <polygon points="134,148 182,42 230,148" fill="#CBE4D5" opacity=".75"/>
+          <polygon points="118,148 182,66 246,148" fill="#B2D8C2" opacity=".55"/>
+          <rect x="218" y="34" width="3.5" height="114" fill="#FEF08A"/>
+          <rect x="221" y="36" width="36" height="23" rx="2" fill="#006A4E" stroke="#fff" stroke-width="1"/>
+          <circle cx="237" cy="47.5" r="6.5" fill="#F42A41"/>
+          <rect x="22" y="64" width="54" height="66" rx="10" fill="#F59E0B"/>
+          <path d="M36 64v-8a13 13 0 0 1 26 0v8" fill="none" stroke="#FEF3C7" stroke-width="4.5" stroke-linecap="round"/>
+          <rect x="64" y="78" width="50" height="58" rx="10" fill="#E11D48"/>
+          <path d="M77 78v-7a12 12 0 0 1 24 0v7" fill="none" stroke="#FFE4E6" stroke-width="4" stroke-linecap="round"/>
+          <circle cx="89" cy="108" r="10" fill="#fff"/>
+          <path d="M84 108l3.5 3.5 6.5-7" fill="none" stroke="#007B3D" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+    `;
+    $("heroShopBtn").onclick = () => $("productsSection").scrollIntoView({ behavior: "smooth" });
+    $("heroTrackBtn").onclick = () => openOrdersModal();
+    return;
+  }
+
+  heroSlideIdx = ((heroSlideIdx % slides.length) + slides.length) % slides.length;
+  const s = slides[heroSlideIdx];
+  const p = s.type === "product" && s.productId ? products[s.productId] : null;
+  const arrowsHtml = slides.length > 1
+    ? `<button type="button" class="hero-nav-btn hero-nav-prev" id="heroSlidePrev" aria-label="Previous slide">‹</button>
+       <button type="button" class="hero-nav-btn hero-nav-next" id="heroSlideNext" aria-label="Next slide">›</button>
+       <div class="hero-dots">${slides.map((_, i) => `<button type="button" class="hero-dot ${i === heroSlideIdx ? "active" : ""}" data-hero-dot="${i}" aria-label="Slide ${i + 1}"></button>`).join("")}</div>`
+    : "";
+
+  if (s.type === "image") {
+    el.classList.add("hero-image-mode");
+    const hasCaption = Boolean(s.badge || s.title || s.subtitle || s.btnText);
+    el.innerHTML = `
+      <img class="hero-custom-img" src="${safe(s.imageUrl)}" alt="${safe(s.title || "Hero Banner")}" onerror="this.src='assets/favicon.svg'">
+      ${hasCaption ? `<div class="hero-image-caption">
+        <div>
+          ${s.badge ? `<span class="hero-tag" style="margin-bottom:6px">${safe(s.badge)}</span>` : ""}
+          ${s.title ? `<h1 style="margin:4px 0;font-size:clamp(20px,2.4vw,30px)">${safe(s.title)}</h1>` : ""}
+          ${s.subtitle ? `<div style="font-size:14px;color:#dcfce7;font-weight:600">${safe(s.subtitle)}</div>` : ""}
+        </div>
+        ${s.btnText ? `<button type="button" class="gold" id="heroSlideCta">${safe(s.btnText)}</button>` : ""}
+      </div>` : ""}
+      ${arrowsHtml}
+    `;
+    if ($("heroSlideCta")) {
+      $("heroSlideCta").onclick = () => {
+        if (s.productId && products[s.productId]) openProductPreview(s.productId);
+        else $("productsSection").scrollIntoView({ behavior: "smooth" });
+      };
+    }
+  } else {
+    el.classList.remove("hero-image-mode");
+    const title = s.title || p?.name || heroData.title;
+    const sub = s.subtitle || (p ? `${p.brand ? p.brand + " · " : ""}Cash on Delivery Available` : heroData.subtitle);
+    const badge = s.badge || (p?.oldPrice > p?.price ? `SAVE ${Math.round(((p.oldPrice - p.price) / p.oldPrice) * 100)}%` : heroData.badge);
+    const imgUrl = s.imageUrl || p?.image || "assets/favicon.svg";
+    el.innerHTML = `
+      <div>
+        <span class="hero-tag">${safe(badge)}</span>
+        <h1>${safe(title)}</h1>
+        <div class="hero-bn">${safe(sub)}</div>
+        ${p ? `<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:14px">
+          <span style="font-size:26px;font-weight:900;color:#FEF08A">${money(p.price)}</span>
+          ${p.oldPrice > p.price ? `<span style="font-size:15px;color:#cbd5e1;text-decoration:line-through">${money(p.oldPrice)}</span>` : ""}
+        </div>` : ""}
+        <div class="hero-actions">
+          <button type="button" class="gold" id="heroSlideCta">${safe(s.btnText || "Shop Now →")}</button>
+          <button type="button" class="secondary" id="heroTrackBtn">📍 Track Order</button>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:center;align-items:center">
+        <div class="hero-prod-stage" id="heroProdImgBtn">
+          <img src="${safe(imgUrl)}" alt="${safe(title)}" onerror="this.src='assets/favicon.svg'">
+        </div>
+      </div>
+      ${arrowsHtml}
+    `;
+    const openTarget = () => {
+      if (p) openProductPreview(s.productId);
+      else $("productsSection").scrollIntoView({ behavior: "smooth" });
+    };
+    $("heroSlideCta").onclick = openTarget;
+    $("heroProdImgBtn").onclick = openTarget;
+    $("heroTrackBtn").onclick = () => openOrdersModal();
+  }
+
+  if (slides.length > 1) {
+    $("heroSlidePrev").onclick = () => { heroSlideIdx--; renderHeroBanner(); };
+    $("heroSlideNext").onclick = () => { heroSlideIdx++; renderHeroBanner(); };
+    el.querySelectorAll("[data-hero-dot]").forEach((d) => {
+      d.onclick = () => { heroSlideIdx = Number(d.dataset.heroDot); renderHeroBanner(); };
+    });
+    heroSlideTimer = setInterval(() => {
+      if ($("storefrontView").classList.contains("hidden")) return;
+      heroSlideIdx++;
+      renderHeroBanner();
+    }, 4500);
+  }
 }
 
 /* ---------- Storefront & Full Product Preview Page ---------- */
@@ -1272,12 +1550,14 @@ function renderCategories() {
 
 function productCardHtml(p) {
   const disc = p.oldPrice > p.price ? Math.round(((p.oldPrice - p.price) / p.oldPrice) * 100) : 0;
+  const freeMinQ = parseNum(p.freeDeliveryMinQty || 0);
   const liked = wishlist.includes(p.id);
   const imgSrc = p.image || "assets/favicon.svg";
   const stars = "★".repeat(Math.max(1, Math.min(5, Math.round(Number(p.rating || 4.6)))));
   return `<article class="product-card">
     <div class="p-img-wrap" data-open="${safe(p.id)}">
       ${disc > 0 ? `<span class="p-badge">-${disc}%</span>` : ""}
+      ${freeMinQ > 0 ? `<span class="p-badge" style="left:auto;right:8px;background:var(--emerald)">${freeMinQ === 1 ? "Free Delivery" : `Free (${freeMinQ}+ qty)`}</span>` : ""}
       <img src="${safe(imgSrc)}" alt="${safe(p.name)}" onerror="this.src='assets/favicon.svg'">
     </div>
     <div class="p-body">
@@ -1391,22 +1671,40 @@ function refreshPreviewDeliveryUI(p) {
   $("ppDeliveryAddrText").textContent = activeArea || (activeDiv ? `${activeDiv}, Bangladesh` : "Select your delivery district");
 
   const unitPrice = parseNum(p?.price || 0);
-  const lineTotal = unitPrice * Math.max(1, previewSelectedQty);
-  if (lineTotal >= 3000) {
+  const qty = Math.max(1, previewSelectedQty);
+  const lineTotal = unitPrice * qty;
+  const freeQtyReq = Math.max(0, parseNum(p?.freeDeliveryMinQty || 0));
+  const minAmt = parseNum(deliveryConfig?.freeDeliveryMinAmount ?? 3000);
+  const isFreeByQty = freeQtyReq > 0 && qty >= freeQtyReq;
+  const isFreeByAmt = minAmt > 0 && lineTotal >= minAmt;
+
+  if (isFreeByQty || isFreeByAmt) {
     $("ppDeliveryFeeBadge").textContent = "FREE";
     $("ppDeliveryFeeBadge").style.color = "var(--emerald-dark)";
   } else if (activeDiv) {
     $("ppDeliveryFeeBadge").textContent = `৳ ${deliveryFeeForDivision(activeDiv)}`;
     $("ppDeliveryFeeBadge").style.color = "#212121";
   } else {
-    $("ppDeliveryFeeBadge").textContent = "৳ 60–120";
+    const rates = getZonesList().map((z) => parseNum(z.rate));
+    const minR = Math.min(...rates);
+    const maxR = Math.max(...rates);
+    $("ppDeliveryFeeBadge").textContent = minR === maxR ? `৳ ${minR}` : `৳ ${minR}–${maxR}`;
     $("ppDeliveryFeeBadge").style.color = "#212121";
   }
 
-  const d1 = new Date(Date.now() + 2 * 86400000);
-  const d2 = new Date(Date.now() + 5 * 86400000);
-  const fmt = (dt) => dt.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
-  $("ppDeliveryEta").textContent = `Guaranteed by ${fmt(d1)} – ${fmt(d2)}`;
+  const zoneMeta = activeDiv ? findZoneInfo(activeDiv) : null;
+  if (isFreeByQty) {
+    $("ppDeliveryEta").textContent = `Free Delivery (${freeQtyReq}+ qty) · Courier Charge ৳0`;
+  } else if (isFreeByAmt) {
+    $("ppDeliveryEta").textContent = `Free Delivery (Order ≥ ${money(minAmt)}) · Courier Charge ৳0`;
+  } else if (zoneMeta?.eta) {
+    $("ppDeliveryEta").textContent = `Estimated: ${zoneMeta.eta}${freeQtyReq > 1 ? ` · Free at ${freeQtyReq}+ pcs` : ""}`;
+  } else {
+    const d1 = new Date(Date.now() + 2 * 86400000);
+    const d2 = new Date(Date.now() + 5 * 86400000);
+    const fmt = (dt) => dt.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+    $("ppDeliveryEta").textContent = `Guaranteed by ${fmt(d1)} – ${fmt(d2)}${freeQtyReq > 1 ? ` · Free at ${freeQtyReq}+ pcs` : ""}`;
+  }
 }
 
 function openProductPreview(id, pushUrl = true) {
@@ -1549,7 +1847,7 @@ function openProductPreview(id, pushUrl = true) {
   };
 
   $("ppChangeZoneBtn").onclick = () => {
-    $("dzDivision").value = previewDeliveryDivision || "Dhaka";
+    setSelectValueSafely($("dzDivision"), previewDeliveryDivision || getZonesList()[0]?.name || "Dhaka");
     $("dzArea").value = previewDeliveryArea || "";
     openModal("deliveryZoneModal");
   };
@@ -1581,14 +1879,16 @@ function addToCart(id, variant = "", qty = 1) {
   const stock = parseNum(p?.stock);
   if (!p || stock <= 0) return toast("Product is out of stock");
   const unitPrice = parseNum(p.price);
+  const freeDeliveryMinQty = Math.max(0, parseNum(p.freeDeliveryMinQty || 0));
   const chosen = variant || String(p.variants || "Standard").split(",")[0].trim() || "Standard";
   const addQty = Math.max(1, Math.round(parseNum(qty) || 1));
   const found = cart.find((x) => x.id === id && x.variant === chosen);
   if (found) {
     found.price = unitPrice;
+    found.freeDeliveryMinQty = freeDeliveryMinQty;
     found.qty = Math.min(stock || 99, found.qty + addQty);
   } else {
-    cart.push({ id, name: p.name, price: unitPrice, image: p.image || "", variant: chosen, qty: Math.min(stock || 99, addQty) });
+    cart.push({ id, name: p.name, price: unitPrice, freeDeliveryMinQty, image: p.image || "", variant: chosen, qty: Math.min(stock || 99, addQty) });
   }
   saveCart();
   toast(`Added ${p.name} (×${addQty}) to cart`);
@@ -1633,7 +1933,10 @@ function renderCartDrawer() {
   $("cartSummaryBox").innerHTML = `
     <div style="display:flex;justify-content:space-between"><span>Subtotal</span><b>${money(t.subtotal)}</b></div>
     ${t.discount > 0 ? `<div style="display:flex;justify-content:space-between;color:var(--emerald)"><span>Promo (${safe(t.promo.code)})</span><b>-${money(t.discount)}</b></div>` : ""}
-    <div style="display:flex;justify-content:space-between"><span>Delivery Fee (Est.)</span><b>${t.deliveryFee === 0 ? "FREE" : money(t.deliveryFee)}</b></div>
+    <div style="display:flex;justify-content:space-between">
+      <span>Courier / Delivery ${t.freeReason ? `(${safe(t.freeReason)})` : "(Est.)"}</span>
+      <b style="color:${t.deliveryFee === 0 ? "var(--emerald-dark)" : "inherit"}">${t.deliveryFee === 0 ? "FREE (৳0)" : money(t.deliveryFee)}</b>
+    </div>
     <div style="display:flex;justify-content:space-between;font-size:16px;padding-top:4px;border-top:1px solid var(--line)"><b>Grand Total (COD)</b><b style="color:var(--crimson)">${money(t.total)}</b></div>
   `;
 }
@@ -1675,7 +1978,7 @@ function renderAccountModalData() {
       $("addrLabel").value = a.label || "Home";
       $("addrRecipient").value = a.recipientName || "";
       $("addrPhone").value = a.phone || "";
-      $("addrDivision").value = a.division || "Dhaka";
+      setSelectValueSafely($("addrDivision"), a.division || "Dhaka");
       $("addrThana").value = a.thana || "";
       $("addrStreet").value = a.street || "";
       $("addrDefault").checked = !!a.isDefault;
@@ -1714,12 +2017,15 @@ function resetAddressForm() {
 /* ---------- Cash on Delivery Checkout ---------- */
 function syncCheckoutTotalsUI() {
   healCartWithProducts();
-  const division = $("cDivision").value || "Dhaka";
+  const division = $("cDivision").value || getZonesList()[0]?.name || "Dhaka";
   const t = computeTotals(division);
   $("checkoutTotals").innerHTML = `
     <div style="display:flex;justify-content:space-between"><span>Subtotal (${cart.reduce((s, x) => s + Math.max(1, parseNum(x.qty) || 1), 0)} items)</span><b>${money(t.subtotal)}</b></div>
     ${t.discount > 0 ? `<div style="display:flex;justify-content:space-between;color:var(--emerald)"><span>Discount</span><b>-${money(t.discount)}</b></div>` : ""}
-    <div style="display:flex;justify-content:space-between"><span>Delivery Fee (${safe(division)})</span><b>${t.deliveryFee === 0 ? "FREE" : money(t.deliveryFee)}</b></div>
+    <div style="display:flex;justify-content:space-between">
+      <span>Courier Rate (${safe(division)}${t.freeReason ? ` · ${safe(t.freeReason)}` : ""})</span>
+      <b style="color:${t.deliveryFee === 0 ? "var(--emerald-dark)" : "inherit"}">${t.deliveryFee === 0 ? "FREE (৳0)" : money(t.deliveryFee)}</b>
+    </div>
     <div style="display:flex;justify-content:space-between;font-size:16px;margin-top:4px;padding-top:4px;border-top:1px solid var(--line)"><b>Grand Total (Cash on Delivery)</b><b style="color:var(--crimson)">${money(t.total)}</b></div>
   `;
 }
@@ -1737,7 +2043,7 @@ function openCheckout() {
     if (def) {
       $("cName").value = def[1].recipientName || "";
       $("cPhone").value = def[1].phone || "";
-      $("cDivision").value = def[1].division || "Dhaka";
+      setSelectValueSafely($("cDivision"), def[1].division || "Dhaka");
       $("cAddress").value = `${def[1].street}, ${def[1].thana}, ${def[1].division}`;
     }
   } else {
@@ -1746,7 +2052,7 @@ function openCheckout() {
       $("cName").value = $("cName").value || userProfile?.name || currentUser.displayName || "";
       $("cPhone").value = $("cPhone").value || userProfile?.phone || "";
     }
-    if (previewDeliveryDivision) $("cDivision").value = previewDeliveryDivision;
+    if (previewDeliveryDivision) setSelectValueSafely($("cDivision"), previewDeliveryDivision);
     if (previewDeliveryArea && !$("cAddress").value.trim()) $("cAddress").value = previewDeliveryArea;
   }
   syncCheckoutTotalsUI();
@@ -1844,6 +2150,7 @@ function subscribeStoreData() {
     healCartWithProducts();
     renderCategories();
     renderProducts();
+    renderHeroBanner();
     if (!deepLinkOpened) {
       const targetId = new URLSearchParams(location.search).get("product");
       if (targetId && products[targetId]) {
@@ -1851,6 +2158,7 @@ function subscribeStoreData() {
         openProductPreview(targetId, false);
       }
     } else if (activePreviewId && products[activePreviewId]) {
+      refreshPreviewDeliveryUI(products[activePreviewId]);
       renderRelatedProducts(activePreviewId);
     }
   });
@@ -1872,10 +2180,34 @@ function subscribeStoreData() {
   onValue(ref(db, "deals/hero"), (snap) => {
     if (snap.exists()) {
       heroData = { ...heroData, ...snap.val() };
-      $("heroBadgeView").textContent = heroData.badge;
-      $("heroTitleView").innerHTML = safe(heroData.title).replace("ZONE", `<span class="red">ZONE</span>`);
-      $("heroSubtitleView").textContent = heroData.subtitle;
+      renderHeroBanner();
     }
+  });
+
+  onValue(ref(db, "deals/heroSlides"), (snap) => {
+    heroSlides = snap.val() || {};
+    heroSlideIdx = 0;
+    renderHeroBanner();
+  });
+
+  onValue(ref(db, "deals/deliveryConfig"), (snap) => {
+    if (snap.exists()) {
+      const val = snap.val() || {};
+      deliveryConfig = {
+        freeDeliveryMinAmount: val.freeDeliveryMinAmount !== undefined ? parseNum(val.freeDeliveryMinAmount) : 3000,
+        zones: val.zones || deliveryConfig.zones
+      };
+    }
+    populateZoneSelectors();
+    applyStoreIdentityAndDeliveryText();
+    if (activePreviewId && products[activePreviewId]) {
+      refreshPreviewDeliveryUI(products[activePreviewId]);
+    }
+  });
+
+  onValue(ref(db, "deals/storeConfig"), (snap) => {
+    storeSettings = { ...DEFAULT_STORE_SETTINGS, ...(snap.val() || {}) };
+    applyStoreIdentityAndDeliveryText();
   });
 }
 
@@ -1959,8 +2291,8 @@ document.querySelectorAll("[data-nav]").forEach((btn) => {
 
 $("bigSaleBtn").onclick = () => { closeProductPreview(); navMode = "deals"; renderProducts(); $("productsSection").scrollIntoView({ behavior: "smooth" }); };
 $("sfSaleShopBtn").onclick = () => { closeProductPreview(); navMode = "deals"; renderProducts(); $("productsSection").scrollIntoView({ behavior: "smooth" }); };
-$("heroShopBtn").onclick = () => $("productsSection").scrollIntoView({ behavior: "smooth" });
-$("heroTrackBtn").onclick = () => openOrdersModal();
+if ($("heroShopBtn")) $("heroShopBtn").onclick = () => $("productsSection").scrollIntoView({ behavior: "smooth" });
+if ($("heroTrackBtn")) $("heroTrackBtn").onclick = () => openOrdersModal();
 $("trackOrderNavBtn").onclick = () => openOrdersModal();
 $("myOrdersBtn").onclick = () => openOrdersModal();
 $("trackOrderForm").onsubmit = (e) => { e.preventDefault(); openOrdersModal($("trackOrderInput").value.trim()); };
@@ -1987,7 +2319,7 @@ $("checkoutSavedAddr").onchange = () => {
   if (a) {
     $("cName").value = a.recipientName || "";
     $("cPhone").value = a.phone || "";
-    $("cDivision").value = a.division || "Dhaka";
+    setSelectValueSafely($("cDivision"), a.division || "Dhaka");
     $("cAddress").value = `${a.street}, ${a.thana}, ${a.division}`;
     syncCheckoutTotalsUI();
   }

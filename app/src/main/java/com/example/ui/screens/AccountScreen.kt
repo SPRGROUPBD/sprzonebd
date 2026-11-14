@@ -27,7 +27,11 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.MyLocation
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -67,6 +71,7 @@ import com.example.data.model.AddressEntity
 import com.example.data.model.ProductEntity
 import com.example.data.model.StoreConstants
 import com.example.data.model.UserAccountEntity
+import com.example.notifications.AppPermissionStatus
 import com.example.ui.components.EmptyStatePanel
 import com.example.ui.components.ProductCard
 import com.example.ui.components.SprBrandLogo
@@ -80,6 +85,13 @@ fun AccountScreen(
     wishlistProducts: List<ProductEntity>,
     addresses: List<AddressEntity>,
     isDarkMode: Boolean,
+    permissionStatus: AppPermissionStatus,
+    detectedLocationLabel: String?,
+    onRequestLocationPermission: () -> Unit,
+    onRequestNotificationPermission: () -> Unit,
+    onDetectLocation: () -> Unit,
+    onOpenNotifications: () -> Unit,
+    onOpenAppSettings: () -> Unit,
     onLogin: (email: String, password: String, onResult: (Result<UserAccountEntity>) -> Unit) -> Unit,
     onRegister: (fullName: String, email: String, phone: String, password: String, onResult: (Result<UserAccountEntity>) -> Unit) -> Unit,
     onUpdateProfile: (fullName: String, phone: String, bio: String, onResult: (Result<UserAccountEntity>) -> Unit) -> Unit,
@@ -120,6 +132,13 @@ fun AccountScreen(
     ) {
         if (currentUser == null) {
             AuthCardView(
+                permissionStatus = permissionStatus,
+                detectedLocationLabel = detectedLocationLabel,
+                onRequestLocationPermission = onRequestLocationPermission,
+                onRequestNotificationPermission = onRequestNotificationPermission,
+                onDetectLocation = onDetectLocation,
+                onOpenNotifications = onOpenNotifications,
+                onOpenAppSettings = onOpenAppSettings,
                 onLogin = onLogin,
                 onRegister = onRegister
             )
@@ -290,6 +309,18 @@ fun AccountScreen(
                                 }
                             }
                         }
+                    }
+
+                    item {
+                        AppPermissionsCard(
+                            permissionStatus = permissionStatus,
+                            detectedLocationLabel = detectedLocationLabel,
+                            onRequestLocationPermission = onRequestLocationPermission,
+                            onRequestNotificationPermission = onRequestNotificationPermission,
+                            onDetectLocation = onDetectLocation,
+                            onOpenNotifications = onOpenNotifications,
+                            onOpenAppSettings = onOpenAppSettings
+                        )
                     }
                 }
 
@@ -669,7 +700,144 @@ private fun AddressFormDialog(
 }
 
 @Composable
+private fun AppPermissionsCard(
+    permissionStatus: AppPermissionStatus,
+    detectedLocationLabel: String?,
+    onRequestLocationPermission: () -> Unit,
+    onRequestNotificationPermission: () -> Unit,
+    onDetectLocation: () -> Unit,
+    onOpenNotifications: () -> Unit,
+    onOpenAppSettings: () -> Unit
+) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        shape = MaterialTheme.shapes.medium,
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("app_permissions_card")
+    ) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Text("App Permissions (Internet, Location, Notification)", style = MaterialTheme.typography.titleMedium)
+
+            PermissionStatusRow(
+                icon = Icons.Filled.Wifi,
+                title = "Internet Access",
+                subtitle = if (permissionStatus.isOnline) "Connected to SPR Zone BD Cloud" else "Currently offline (cached mode)",
+                granted = permissionStatus.internetGranted,
+                actionLabel = null,
+                onAction = {}
+            )
+
+            HorizontalDivider()
+
+            PermissionStatusRow(
+                icon = Icons.Filled.MyLocation,
+                title = "Location Access",
+                subtitle = when {
+                    !permissionStatus.locationGranted -> "Allow location to auto-detect delivery zone"
+                    !detectedLocationLabel.isNullOrBlank() -> "Detected: $detectedLocationLabel"
+                    else -> "Granted — tap Detect to find your BD division"
+                },
+                granted = permissionStatus.locationGranted,
+                actionLabel = if (permissionStatus.locationGranted) "Detect" else "Allow",
+                onAction = {
+                    if (permissionStatus.locationGranted) onDetectLocation() else onRequestLocationPermission()
+                }
+            )
+
+            HorizontalDivider()
+
+            PermissionStatusRow(
+                icon = Icons.Filled.Notifications,
+                title = "App Notifications",
+                subtitle = if (permissionStatus.notificationGranted) {
+                    "Enabled — receives Admin offer & order alerts"
+                } else {
+                    "Allow notifications for Admin sales & delivery alerts"
+                },
+                granted = permissionStatus.notificationGranted,
+                actionLabel = if (permissionStatus.notificationGranted) "Inbox" else "Allow",
+                onAction = {
+                    if (permissionStatus.notificationGranted) onOpenNotifications() else onRequestNotificationPermission()
+                }
+            )
+
+            if (!permissionStatus.locationGranted || !permissionStatus.notificationGranted) {
+                OutlinedButton(
+                    onClick = onOpenAppSettings,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Filled.Settings, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Open Android App Permission Settings")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PermissionStatusRow(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    title: String,
+    subtitle: String,
+    granted: Boolean,
+    actionLabel: String?,
+    onAction: () -> Unit
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = if (granted) EmeraldPrimary else DiscountRed,
+            modifier = Modifier.size(22.dp)
+        )
+        Column(modifier = Modifier.weight(1f)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(title, style = MaterialTheme.typography.titleSmall)
+                Surface(
+                    color = if (granted) Color(0xFFE8F6EE) else Color(0xFFFEE2E2),
+                    shape = RoundedCornerShape(6.dp)
+                ) {
+                    Text(
+                        text = if (granted) "Granted" else "Needed",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (granted) EmeraldPrimary else DiscountRed,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                    )
+                }
+            }
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        if (actionLabel != null) {
+            TextButton(onClick = onAction) {
+                Text(actionLabel, fontWeight = FontWeight.Bold)
+            }
+        }
+    }
+}
+
+@Composable
 private fun AuthCardView(
+    permissionStatus: AppPermissionStatus,
+    detectedLocationLabel: String?,
+    onRequestLocationPermission: () -> Unit,
+    onRequestNotificationPermission: () -> Unit,
+    onDetectLocation: () -> Unit,
+    onOpenNotifications: () -> Unit,
+    onOpenAppSettings: () -> Unit,
     onLogin: (email: String, password: String, onResult: (Result<UserAccountEntity>) -> Unit) -> Unit,
     onRegister: (fullName: String, email: String, phone: String, password: String, onResult: (Result<UserAccountEntity>) -> Unit) -> Unit
 ) {
@@ -801,6 +969,17 @@ private fun AuthCardView(
                     }
                 }
             }
+
+            Spacer(modifier = Modifier.height(14.dp))
+            AppPermissionsCard(
+                permissionStatus = permissionStatus,
+                detectedLocationLabel = detectedLocationLabel,
+                onRequestLocationPermission = onRequestLocationPermission,
+                onRequestNotificationPermission = onRequestNotificationPermission,
+                onDetectLocation = onDetectLocation,
+                onOpenNotifications = onOpenNotifications,
+                onOpenAppSettings = onOpenAppSettings
+            )
         }
     }
 }

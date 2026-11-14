@@ -59,6 +59,18 @@ data class RemoteCouponDto(
 )
 
 @JsonClass(generateAdapter = true)
+data class RemoteAppNotificationDto(
+    val title: String? = null,
+    val message: String? = null,
+    val type: String? = null,
+    val productId: String? = null,
+    val targetEmail: String? = null,
+    val active: Boolean? = null,
+    val createdAt: Long? = null,
+    val updatedAt: Long? = null
+)
+
+@JsonClass(generateAdapter = true)
 data class RemoteSmsRecordDto(
     val senderNumber: String? = null,
     val provider: String? = null,
@@ -125,6 +137,9 @@ interface SprZoneRtdbService {
 
     @GET("coupons.json")
     suspend fun getCoupons(): Response<Map<String, RemoteCouponDto>?>
+
+    @GET("deals/appNotifications.json")
+    suspend fun getAppNotifications(): Response<Map<String, RemoteAppNotificationDto>?>
 
     @GET("sms_inbox/{trxId}.json")
     suspend fun getSmsInboxRecord(@Path("trxId") trxId: String): Response<RemoteSmsRecordDto?>

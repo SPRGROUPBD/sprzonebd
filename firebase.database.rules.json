@@ -17,6 +17,14 @@
       ".write": "auth != null && (auth.token.email == 'mail.sajjadahmed@gmail.com' || auth.token.admin === true)"
     },
     "settings": {
+      "store": {
+        ".read": true,
+        ".write": "auth != null && (auth.token.email == 'mail.sajjadahmed@gmail.com' || auth.token.admin === true)"
+      },
+      "delivery": {
+        ".read": true,
+        ".write": "auth != null && (auth.token.email == 'mail.sajjadahmed@gmail.com' || auth.token.admin === true)"
+      },
       "payment": {
         ".read": true,
         ".write": "auth != null && (auth.token.email == 'mail.sajjadahmed@gmail.com' || auth.token.admin === true)"

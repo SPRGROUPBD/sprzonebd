@@ -1,28 +1,51 @@
 package com.example.ui
 
+import android.Manifest
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.automirrored.outlined.ReceiptLong
 import androidx.compose.material.icons.filled.Category
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Storefront
 import androidx.compose.material.icons.outlined.Category
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material.icons.outlined.Storefront
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationRail
@@ -30,16 +53,29 @@ import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -50,6 +86,8 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.R
+import com.example.data.model.AppNotificationItem
+import com.example.notifications.SprNotificationHelper
 import com.example.ui.components.SprBrandLogo
 import com.example.ui.screens.AccountScreen
 import com.example.ui.screens.CartScreen
@@ -58,9 +96,17 @@ import com.example.ui.screens.CheckoutScreen
 import com.example.ui.screens.HomeScreen
 import com.example.ui.screens.OrdersScreen
 import com.example.ui.screens.ProductDetailScreen
+import com.example.ui.theme.CrimsonSecondary
+import com.example.ui.theme.EmeraldPrimary
 import com.example.ui.theme.SprZoneTheme
 import com.example.ui.viewmodel.SprZoneViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 object SprRoutes {
     const val HOME = "home"
@@ -90,10 +136,18 @@ private val TOP_TABS = listOf(
 )
 
 @Composable
-fun SprZoneApp(viewModel: SprZoneViewModel) {
+fun SprZoneApp(
+    viewModel: SprZoneViewModel,
+    openNotificationsNonce: Int = 0,
+    deepLinkProductId: String? = null,
+    onDeepLinkConsumed: () -> Unit = {}
+) {
     val isDarkMode by viewModel.isDarkMode.collectAsStateWithLifecycle()
 
     SprZoneTheme(darkTheme = isDarkMode) {
+        val context = LocalContext.current
+        val lifecycleOwner = LocalLifecycleOwner.current
+        val scope = rememberCoroutineScope()
         val navController = rememberNavController()
         val snackbarHostState = remember { SnackbarHostState() }
 
@@ -110,6 +164,96 @@ fun SprZoneApp(viewModel: SprZoneViewModel) {
         val addresses by viewModel.addresses.collectAsStateWithLifecycle()
         val userOrders by viewModel.userOrders.collectAsStateWithLifecycle()
         val paymentSettings by viewModel.paymentSettings.collectAsStateWithLifecycle()
+        val notifications by viewModel.notifications.collectAsStateWithLifecycle()
+        val readNotificationIds by viewModel.readNotificationIds.collectAsStateWithLifecycle()
+        val unreadNotificationCount by viewModel.unreadNotificationCount.collectAsStateWithLifecycle()
+        val detectedLocationLabel by viewModel.detectedLocationLabel.collectAsStateWithLifecycle()
+
+        var showNotificationsDialog by remember { mutableStateOf(false) }
+        var permissionStatus by remember {
+            mutableStateOf(SprNotificationHelper.readPermissionStatus(context))
+        }
+
+        fun refreshLocationEstimate(notifyIfMissing: Boolean = false) {
+            if (!SprNotificationHelper.hasLocationPermission(context)) {
+                if (notifyIfMissing) {
+                    viewModel.showMessage("Location permission is needed to detect your division")
+                }
+                return
+            }
+            scope.launch {
+                val res = withContext(Dispatchers.IO) {
+                    SprNotificationHelper.detectCurrentLocation(context)
+                }
+                viewModel.updateDetectedLocationLabel(res.displayText)
+            }
+        }
+
+        val multiPermissionLauncher = rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.RequestMultiplePermissions()
+        ) { _ ->
+            permissionStatus = SprNotificationHelper.readPermissionStatus(context)
+            if (permissionStatus.locationGranted) {
+                refreshLocationEstimate()
+            }
+        }
+
+        fun requestMissingPermissions() {
+            val missing = buildList {
+                if (!SprNotificationHelper.hasLocationPermission(context)) {
+                    add(Manifest.permission.ACCESS_COARSE_LOCATION)
+                }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                    !SprNotificationHelper.hasNotificationPermission(context)
+                ) {
+                    add(Manifest.permission.POST_NOTIFICATIONS)
+                }
+            }
+            if (missing.isNotEmpty()) {
+                multiPermissionLauncher.launch(missing.toTypedArray())
+            } else {
+                permissionStatus = SprNotificationHelper.readPermissionStatus(context)
+            }
+        }
+
+        DisposableEffect(lifecycleOwner) {
+            val observer = LifecycleEventObserver { _, event ->
+                if (event == Lifecycle.Event.ON_RESUME) {
+                    permissionStatus = SprNotificationHelper.readPermissionStatus(context)
+                }
+            }
+            lifecycleOwner.lifecycle.addObserver(observer)
+            onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+        }
+
+        LaunchedEffect(Unit) {
+            permissionStatus = SprNotificationHelper.readPermissionStatus(context)
+            val missing = buildList {
+                if (!permissionStatus.locationGranted) add(Manifest.permission.ACCESS_COARSE_LOCATION)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !permissionStatus.notificationGranted) {
+                    add(Manifest.permission.POST_NOTIFICATIONS)
+                }
+            }
+            if (missing.isNotEmpty()) {
+                multiPermissionLauncher.launch(missing.toTypedArray())
+            } else if (permissionStatus.locationGranted) {
+                refreshLocationEstimate()
+            }
+        }
+
+        LaunchedEffect(openNotificationsNonce) {
+            if (openNotificationsNonce > 0) {
+                viewModel.syncNotificationsNow()
+                showNotificationsDialog = true
+            }
+        }
+
+        LaunchedEffect(deepLinkProductId) {
+            if (!deepLinkProductId.isNullOrBlank()) {
+                navController.navigate(SprRoutes.productDetail(deepLinkProductId))
+                onDeepLinkConsumed()
+            }
+        }
 
         LaunchedEffect(Unit) {
             viewModel.snackbarEvents.collectLatest { message ->
@@ -218,11 +362,19 @@ fun SprZoneApp(viewModel: SprZoneViewModel) {
                                     filterState = filterState,
                                     countdownSeconds = countdown,
                                     isDarkMode = isDarkMode,
+                                    unreadNotificationCount = unreadNotificationCount,
+                                    locationPermissionGranted = permissionStatus.locationGranted,
+                                    notificationPermissionGranted = permissionStatus.notificationGranted,
                                     onSearchChange = viewModel::updateSearchQuery,
                                     onSelectCategory = viewModel::selectCategory,
                                     onSortChange = viewModel::updateSortOption,
                                     onToggleDarkMode = viewModel::setDarkMode,
                                     onRefreshStore = viewModel::refreshStore,
+                                    onOpenNotifications = {
+                                        viewModel.syncNotificationsNow()
+                                        showNotificationsDialog = true
+                                    },
+                                    onRequestPermissions = { requestMissingPermissions() },
                                     onProductClick = { id -> navController.navigate(SprRoutes.productDetail(id)) },
                                     onToggleWishlist = viewModel::toggleWishlist,
                                     onQuickAdd = { prod -> viewModel.addToCart(prod) },
@@ -288,6 +440,22 @@ fun SprZoneApp(viewModel: SprZoneViewModel) {
                                     wishlistProducts = wishlistProducts,
                                     addresses = addresses,
                                     isDarkMode = isDarkMode,
+                                    permissionStatus = permissionStatus,
+                                    detectedLocationLabel = detectedLocationLabel,
+                                    onRequestLocationPermission = {
+                                        multiPermissionLauncher.launch(arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION))
+                                    },
+                                    onRequestNotificationPermission = {
+                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                            multiPermissionLauncher.launch(arrayOf(Manifest.permission.POST_NOTIFICATIONS))
+                                        }
+                                    },
+                                    onDetectLocation = { refreshLocationEstimate(notifyIfMissing = true) },
+                                    onOpenNotifications = {
+                                        viewModel.syncNotificationsNow(showFeedback = true)
+                                        showNotificationsDialog = true
+                                    },
+                                    onOpenAppSettings = { SprNotificationHelper.openAppPermissionSettings(context) },
                                     onLogin = viewModel::login,
                                     onRegister = viewModel::register,
                                     onUpdateProfile = viewModel::updateProfile,
@@ -364,5 +532,162 @@ fun SprZoneApp(viewModel: SprZoneViewModel) {
                 }
             }
         }
+
+        if (showNotificationsDialog) {
+            NotificationsInboxDialog(
+                notifications = notifications,
+                readIds = readNotificationIds,
+                onDismiss = { showNotificationsDialog = false },
+                onRefresh = { viewModel.syncNotificationsNow(showFeedback = true) },
+                onMarkAllRead = viewModel::markAllNotificationsRead,
+                onOpenNotification = { item ->
+                    viewModel.markNotificationRead(item.id)
+                    if (item.productId.isNotBlank()) {
+                        showNotificationsDialog = false
+                        navController.navigate(SprRoutes.productDetail(item.productId))
+                    }
+                }
+            )
+        }
     }
+}
+
+@Composable
+private fun NotificationsInboxDialog(
+    notifications: List<AppNotificationItem>,
+    readIds: Set<String>,
+    onDismiss: () -> Unit,
+    onRefresh: () -> Unit,
+    onMarkAllRead: () -> Unit,
+    onOpenNotification: (AppNotificationItem) -> Unit
+) {
+    val dateFormatter = remember { SimpleDateFormat("dd MMM, hh:mm a", Locale.US) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Icon(Icons.Filled.Notifications, contentDescription = null, tint = EmeraldPrimary)
+                    Text("App Notifications", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                }
+                IconButton(onClick = onRefresh) {
+                    Icon(Icons.Filled.Refresh, contentDescription = "Sync notifications", tint = EmeraldPrimary)
+                }
+            }
+        },
+        text = {
+            if (notifications.isEmpty()) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 24.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Notifications,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(36.dp)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text("No notifications yet", style = MaterialTheme.typography.titleSmall)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        "Offers, flash sales, and delivery updates sent by SPR Zone BD Admin appear here.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            } else {
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 380.dp)
+                ) {
+                    items(notifications, key = { it.id }) { item ->
+                        val isUnread = item.id !in readIds
+                        val badgeLabel = when (item.type.lowercase()) {
+                            "order" -> "Order / Delivery"
+                            "info" -> "Announcement"
+                            else -> "Promo / Sale"
+                        }
+                        Card(
+                            colors = CardDefaults.cardColors(
+                                containerColor = if (isUnread) Color(0xFFE8F6EE) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)
+                            ),
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onOpenNotification(item) }
+                        ) {
+                            Column(
+                                verticalArrangement = Arrangement.spacedBy(4.dp),
+                                modifier = Modifier.padding(12.dp)
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Surface(
+                                        color = if (item.type == "order") EmeraldPrimary else CrimsonSecondary,
+                                        shape = RoundedCornerShape(6.dp)
+                                    ) {
+                                        Text(
+                                            text = badgeLabel,
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = Color.White,
+                                            fontWeight = FontWeight.Bold,
+                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                        )
+                                    }
+                                    Text(
+                                        text = dateFormatter.format(Date(item.createdAt)),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                Text(
+                                    text = item.title,
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = if (isUnread) FontWeight.Bold else FontWeight.Medium
+                                )
+                                Text(
+                                    text = item.message,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                if (item.productId.isNotBlank()) {
+                                    Text(
+                                        text = "Tap to view product →",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = EmeraldPrimary,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            if (notifications.any { it.id !in readIds }) {
+                Button(onClick = onMarkAllRead) {
+                    Text("Mark All Read")
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Close")
+            }
+        }
+    )
 }

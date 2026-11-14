@@ -16,4 +16,7 @@
     <string name="track_your_order">Track Order</string>
     <string name="support_hotline">09678-123456</string>
     <string name="payment_trx_notice">Pay with Cash on Delivery (COD) across all 64 districts of Bangladesh.</string>
+    <string name="cd_notifications">Admin notifications inbox</string>
+    <string name="notif_channel_name">SPR Zone BD Offers &amp; Alerts</string>
+    <string name="notif_channel_desc">Sale alerts, order updates, and announcements sent by SPR Zone BD Admin.</string>
 </resources>
