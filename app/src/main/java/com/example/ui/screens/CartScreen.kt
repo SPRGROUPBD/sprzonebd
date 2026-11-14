@@ -109,7 +109,12 @@ fun CartScreen(
 
             // Free Shipping Progress Banner
             item {
-                val progress = (summary.subtotalBdt.toFloat() / StoreConstants.FREE_DELIVERY_THRESHOLD_BDT.toFloat()).coerceIn(0f, 1f)
+                val threshold = summary.freeDeliveryThresholdBdt.coerceAtLeast(1L)
+                val unlocked = summary.hasQtyFreeDelivery ||
+                    summary.freeDeliveryRemainingBdt == 0L ||
+                    summary.appliedPromo?.freeShipping == true
+                val progress = if (unlocked) 1f
+                else (summary.subtotalBdt.toFloat() / threshold.toFloat()).coerceIn(0f, 1f)
                 Card(
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f)),
                     shape = MaterialTheme.shapes.medium,
@@ -125,10 +130,13 @@ fun CartScreen(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = if (summary.freeDeliveryRemainingBdt == 0L || summary.appliedPromo?.freeShipping == true) {
-                                    "You unlocked FREE nationwide Bangladesh delivery!"
-                                } else {
-                                    "Add ${formatBdt(summary.freeDeliveryRemainingBdt)} more for FREE BD delivery"
+                                text = when {
+                                    summary.hasQtyFreeDelivery ->
+                                        "Qty Free Delivery unlocked — Delivery Fee ৳0 at Checkout!"
+                                    unlocked ->
+                                        "You unlocked FREE nationwide Bangladesh delivery!"
+                                    else ->
+                                        "Add ${formatBdt(summary.freeDeliveryRemainingBdt)} more for FREE BD delivery"
                                 },
                                 style = MaterialTheme.typography.labelLarge,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -181,6 +189,15 @@ fun CartScreen(
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
+                            if (item.freeDeliveryMinQty > 0 && item.quantity >= item.freeDeliveryMinQty) {
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = "Free Delivery (৳0)",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = VerifiedGreen,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
                             Spacer(modifier = Modifier.height(6.dp))
                             Text(
                                 text = formatBdt(item.unitPriceBdt * item.quantity),
@@ -312,14 +329,17 @@ fun CartScreen(
                         if (summary.discountBdt > 0) {
                             SummaryRow("Promo Discount", "-${formatBdt(summary.discountBdt)}", valueColor = VerifiedGreen)
                         }
+                        val isFreeUnlocked = summary.hasQtyFreeDelivery ||
+                            summary.freeDeliveryRemainingBdt == 0L ||
+                            summary.appliedPromo?.freeShipping == true
                         SummaryRow(
-                            label = "Estimated Delivery",
-                            value = if (summary.deliveryFeeBdt == 0L) "FREE" else formatBdt(summary.deliveryFeeBdt),
-                            valueColor = if (summary.deliveryFeeBdt == 0L) VerifiedGreen else MaterialTheme.colorScheme.onSurface
+                            label = "Delivery Fee",
+                            value = if (isFreeUnlocked) "FREE (৳0)" else "Calculated at Checkout",
+                            valueColor = if (isFreeUnlocked) VerifiedGreen else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
                         SummaryRow(
-                            label = "Total Payable",
+                            label = "Estimated Total",
                             value = formatBdt(summary.totalBdt),
                             bold = true,
                             valueColor = MaterialTheme.colorScheme.primary

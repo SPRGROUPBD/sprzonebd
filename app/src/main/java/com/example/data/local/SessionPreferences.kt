@@ -17,6 +17,9 @@ private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(na
 class SessionPreferences(private val context: Context) {
     private object Keys {
         val LOGGED_IN_EMAIL = stringPreferencesKey("logged_in_email")
+        val FIREBASE_UID = stringPreferencesKey("firebase_uid")
+        val FIREBASE_ID_TOKEN = stringPreferencesKey("firebase_id_token")
+        val FIREBASE_REFRESH_TOKEN = stringPreferencesKey("firebase_refresh_token")
         val DELIVERY_ZONE = stringPreferencesKey("delivery_zone")
         val DARK_MODE = booleanPreferencesKey("dark_mode")
         val SEEN_NOTIFICATION_IDS = stringSetPreferencesKey("seen_notification_ids")
@@ -25,6 +28,18 @@ class SessionPreferences(private val context: Context) {
 
     val loggedInEmail: Flow<String?> = context.dataStore.data.map { prefs ->
         prefs[Keys.LOGGED_IN_EMAIL]?.takeIf { it.isNotBlank() }
+    }
+
+    val firebaseUid: Flow<String?> = context.dataStore.data.map { prefs ->
+        prefs[Keys.FIREBASE_UID]?.takeIf { it.isNotBlank() }
+    }
+
+    val firebaseIdToken: Flow<String?> = context.dataStore.data.map { prefs ->
+        prefs[Keys.FIREBASE_ID_TOKEN]?.takeIf { it.isNotBlank() }
+    }
+
+    val firebaseRefreshToken: Flow<String?> = context.dataStore.data.map { prefs ->
+        prefs[Keys.FIREBASE_REFRESH_TOKEN]?.takeIf { it.isNotBlank() }
     }
 
     val deliveryZone: Flow<DeliveryZone> = context.dataStore.data.map { prefs ->
@@ -51,6 +66,14 @@ class SessionPreferences(private val context: Context) {
             } else {
                 prefs[Keys.LOGGED_IN_EMAIL] = email.trim().lowercase()
             }
+        }
+    }
+
+    suspend fun setFirebaseSession(uid: String?, idToken: String?, refreshToken: String?) {
+        context.dataStore.edit { prefs ->
+            if (uid.isNullOrBlank()) prefs.remove(Keys.FIREBASE_UID) else prefs[Keys.FIREBASE_UID] = uid.trim()
+            if (idToken.isNullOrBlank()) prefs.remove(Keys.FIREBASE_ID_TOKEN) else prefs[Keys.FIREBASE_ID_TOKEN] = idToken.trim()
+            if (refreshToken.isNullOrBlank()) prefs.remove(Keys.FIREBASE_REFRESH_TOKEN) else prefs[Keys.FIREBASE_REFRESH_TOKEN] = refreshToken.trim()
         }
     }
 

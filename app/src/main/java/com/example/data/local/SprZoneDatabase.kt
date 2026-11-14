@@ -22,7 +22,7 @@ import com.example.data.model.WishlistEntity
         OrderEntity::class,
         ReviewEntity::class
     ],
-    version = 4,
+    version = 5,
     exportSchema = false
 )
 abstract class SprZoneDatabase : RoomDatabase() {

@@ -70,6 +70,7 @@ import com.example.data.model.ReviewEntity
 import com.example.ui.components.ProductThumbnail
 import com.example.ui.components.formatBdt
 import com.example.ui.theme.DiscountRed
+import com.example.ui.theme.EmeraldPrimary
 import com.example.ui.theme.StarAmber
 import com.example.ui.theme.VerifiedGreen
 
@@ -82,8 +83,8 @@ fun ProductDetailScreen(
     isSignedIn: Boolean,
     onBack: () -> Unit,
     onToggleWishlist: () -> Unit,
-    onAddToCart: (variant: String, qty: Int) -> Unit,
-    onBuyNow: (variant: String, qty: Int) -> Unit,
+    onAddToCart: (variant: String, qty: Int, unitPrice: Long) -> Unit,
+    onBuyNow: (variant: String, qty: Int, unitPrice: Long) -> Unit,
     onSubmitReview: (rating: Int, comment: String, onDone: (Result<Unit>) -> Unit) -> Unit,
     onRequireAuth: () -> Unit,
     modifier: Modifier = Modifier
@@ -95,10 +96,29 @@ fun ProductDetailScreen(
         return
     }
 
-    val variants = remember(product.id, product.variantsCsv) {
+    val colors = remember(product.id, product.variantColorsCsv) { product.colors }
+    val sizes = remember(product.id, product.variantSizesCsv) { product.sizes }
+    val legacyVariants = remember(product.id, product.variantsCsv) {
         product.variants.ifEmpty { listOf("Standard") }
     }
-    var selectedVariant by remember(product.id) { mutableStateOf(variants.first()) }
+    var selectedColor by remember(product.id, colors) { mutableStateOf(colors.firstOrNull().orEmpty()) }
+    var selectedSize by remember(product.id, sizes) { mutableStateOf(sizes.firstOrNull().orEmpty()) }
+    var selectedLegacyVariant by remember(product.id, legacyVariants) { mutableStateOf(legacyVariants.first()) }
+    val selectedVariant = remember(colors, sizes, selectedColor, selectedSize, selectedLegacyVariant) {
+        when {
+            colors.isNotEmpty() && sizes.isNotEmpty() -> "$selectedColor / $selectedSize"
+            colors.isNotEmpty() -> selectedColor
+            sizes.isNotEmpty() -> selectedSize
+            else -> selectedLegacyVariant
+        }
+    }
+    val activeUnitPrice = remember(product, selectedVariant) {
+        product.priceForVariant(selectedVariant)
+    }
+    val activeDiscount = remember(product, activeUnitPrice) {
+        product.discountPercentForPrice(activeUnitPrice)
+    }
+
     var quantity by remember(product.id) { mutableIntStateOf(1) }
     var reviewRating by remember { mutableIntStateOf(5) }
     var reviewComment by remember { mutableStateOf("") }
@@ -153,7 +173,7 @@ fun ProductDetailScreen(
                         .padding(horizontal = 16.dp, vertical = 12.dp)
                 ) {
                     OutlinedButton(
-                        onClick = { onAddToCart(selectedVariant, quantity) },
+                        onClick = { onAddToCart(selectedVariant, quantity, activeUnitPrice) },
                         enabled = product.stock > 0,
                         modifier = Modifier
                             .weight(1f)
@@ -165,7 +185,7 @@ fun ProductDetailScreen(
                         Text("Add to Cart")
                     }
                     Button(
-                        onClick = { onBuyNow(selectedVariant, quantity) },
+                        onClick = { onBuyNow(selectedVariant, quantity, activeUnitPrice) },
                         enabled = product.stock > 0,
                         modifier = Modifier
                             .weight(1f)
@@ -206,7 +226,7 @@ fun ProductDetailScreen(
                             contentDescription = product.name,
                             modifier = Modifier.fillMaxSize()
                         )
-                        if (product.discountPercent > 0) {
+                        if (activeDiscount > 0) {
                             Surface(
                                 color = DiscountRed,
                                 shape = RoundedCornerShape(10.dp),
@@ -215,11 +235,41 @@ fun ProductDetailScreen(
                                     .padding(16.dp)
                             ) {
                                 Text(
-                                    text = "SAVE ${product.discountPercent}%",
+                                    text = "SAVE $activeDiscount%",
                                     style = MaterialTheme.typography.labelLarge,
                                     color = Color.White,
                                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
                                 )
+                            }
+                        }
+                        if (product.freeDeliveryMinQty > 0) {
+                            Surface(
+                                color = EmeraldPrimary,
+                                shape = RoundedCornerShape(10.dp),
+                                modifier = Modifier
+                                    .align(Alignment.BottomStart)
+                                    .padding(16.dp)
+                                    .testTag("detail_free_delivery_badge")
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Filled.LocalShipping,
+                                        contentDescription = null,
+                                        tint = Color.White,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = if (product.freeDeliveryMinQty == 1) "Free Delivery"
+                                        else "Free Delivery (${product.freeDeliveryMinQty}+ qty)",
+                                        style = MaterialTheme.typography.labelLarge,
+                                        color = Color.White,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
                             }
                         }
                     }
@@ -288,11 +338,11 @@ fun ProductDetailScreen(
 
                         Row(verticalAlignment = Alignment.Bottom) {
                             Text(
-                                text = formatBdt(product.priceBdt),
+                                text = formatBdt(activeUnitPrice),
                                 style = MaterialTheme.typography.displaySmall,
                                 color = MaterialTheme.colorScheme.primary
                             )
-                            if (product.originalPriceBdt > product.priceBdt) {
+                            if (product.originalPriceBdt > activeUnitPrice) {
                                 Spacer(modifier = Modifier.width(10.dp))
                                 Text(
                                     text = formatBdt(product.originalPriceBdt),
@@ -317,21 +367,66 @@ fun ProductDetailScreen(
                             .padding(horizontal = 16.dp)
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
-                            Text(
-                                text = "Select Option",
-                                style = MaterialTheme.typography.titleSmall
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            FlowRow(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                variants.forEach { variant ->
-                                    FilterChip(
-                                        selected = selectedVariant == variant,
-                                        onClick = { selectedVariant = variant },
-                                        label = { Text(variant) }
-                                    )
+                            if (colors.isNotEmpty()) {
+                                Text(
+                                    text = "Colour: $selectedColor",
+                                    style = MaterialTheme.typography.titleSmall
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                FlowRow(
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    colors.forEach { colorOption ->
+                                        FilterChip(
+                                            selected = selectedColor == colorOption,
+                                            onClick = { selectedColor = colorOption },
+                                            label = { Text(colorOption) },
+                                            modifier = Modifier.testTag("variant_color_$colorOption")
+                                        )
+                                    }
+                                }
+                            }
+                            if (sizes.isNotEmpty()) {
+                                if (colors.isNotEmpty()) {
+                                    Spacer(modifier = Modifier.height(12.dp))
+                                }
+                                Text(
+                                    text = "Size: $selectedSize",
+                                    style = MaterialTheme.typography.titleSmall
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                FlowRow(
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    sizes.forEach { sizeOption ->
+                                        FilterChip(
+                                            selected = selectedSize == sizeOption,
+                                            onClick = { selectedSize = sizeOption },
+                                            label = { Text(sizeOption) },
+                                            modifier = Modifier.testTag("variant_size_$sizeOption")
+                                        )
+                                    }
+                                }
+                            }
+                            if (colors.isEmpty() && sizes.isEmpty()) {
+                                Text(
+                                    text = "Select Option",
+                                    style = MaterialTheme.typography.titleSmall
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                FlowRow(
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    legacyVariants.forEach { variant ->
+                                        FilterChip(
+                                            selected = selectedLegacyVariant == variant,
+                                            onClick = { selectedLegacyVariant = variant },
+                                            label = { Text(variant) }
+                                        )
+                                    }
                                 }
                             }
 

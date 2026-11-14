@@ -62,6 +62,7 @@ import androidx.compose.ui.unit.dp
 import com.example.R
 import com.example.data.model.AddressEntity
 import com.example.data.model.CartItemEntity
+import com.example.data.model.DeliveryConfigSummary
 import com.example.data.model.MerchantPaymentSettings
 import com.example.data.model.OrderEntity
 import com.example.data.model.PaymentMethod
@@ -82,6 +83,7 @@ fun CheckoutScreen(
     cartItems: List<CartItemEntity>,
     summary: CartSummary,
     paymentSettings: MerchantPaymentSettings,
+    deliveryConfig: DeliveryConfigSummary = DeliveryConfigSummary(),
     onBack: () -> Unit,
     onSaveAddress: (
         label: String,
@@ -120,11 +122,13 @@ fun CheckoutScreen(
     }
 
     val selectedAddress = addresses.find { it.id == selectedAddressId }
+    val qtyFree = cartItems.any { it.freeDeliveryMinQty > 0 && it.quantity >= it.freeDeliveryMinQty }
+    val amtFree = deliveryConfig.freeDeliveryMinAmountBdt > 0L && summary.subtotalBdt >= deliveryConfig.freeDeliveryMinAmountBdt
     val effectiveDeliveryFee = when {
         cartItems.isEmpty() -> 0L
-        summary.subtotalBdt >= StoreConstants.FREE_DELIVERY_THRESHOLD_BDT || summary.appliedPromo?.freeShipping == true -> 0L
-        selectedAddress != null -> StoreConstants.deliveryFeeForDivision(selectedAddress.division)
-        else -> summary.deliveryFeeBdt
+        qtyFree || amtFree || summary.appliedPromo?.freeShipping == true -> 0L
+        selectedAddress != null -> deliveryConfig.feeForDivision(selectedAddress.division)
+        else -> 0L
     }
     val effectiveTotal = (summary.subtotalBdt - summary.discountBdt + effectiveDeliveryFee).coerceAtLeast(0L)
 
@@ -322,7 +326,11 @@ fun CheckoutScreen(
                             if (summary.discountBdt > 0) {
                                 SummaryRow("Promo (${summary.appliedPromo?.code})", "-${formatBdt(summary.discountBdt)}", valueColor = VerifiedGreen)
                             }
-                            SummaryRow("Delivery Fee", if (effectiveDeliveryFee == 0L) "FREE" else formatBdt(effectiveDeliveryFee))
+                            SummaryRow(
+                                label = "Delivery Fee",
+                                value = if (effectiveDeliveryFee == 0L) "FREE (৳0)" else formatBdt(effectiveDeliveryFee),
+                                valueColor = if (effectiveDeliveryFee == 0L) VerifiedGreen else MaterialTheme.colorScheme.onSurface
+                            )
                             HorizontalDivider()
                             SummaryRow("Total Amount", formatBdt(effectiveTotal), bold = true, valueColor = MaterialTheme.colorScheme.primary)
 
@@ -380,6 +388,9 @@ private fun NewAddressCard(
     var phone by remember { mutableStateOf(defaultPhone) }
     var division by remember { mutableStateOf("Dhaka") }
     var showDivisionMenu by remember { mutableStateOf(false) }
+    val divisionDistricts = remember(division) { StoreConstants.districtsForDivision(division) }
+    var district by remember(division) { mutableStateOf(divisionDistricts.firstOrNull().orEmpty()) }
+    var showDistrictMenu by remember { mutableStateOf(false) }
     var thana by remember { mutableStateOf("") }
     var street by remember { mutableStateOf("") }
 
@@ -412,7 +423,9 @@ private fun NewAddressCard(
                 Box(modifier = Modifier.weight(1f)) {
                     OutlinedButton(
                         onClick = { showDivisionMenu = true },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("checkout_division_dropdown")
                     ) {
                         Text("Division: $division")
                     }
@@ -425,6 +438,7 @@ private fun NewAddressCard(
                                 text = { Text(div) },
                                 onClick = {
                                     division = div
+                                    district = StoreConstants.districtsForDivision(div).firstOrNull().orEmpty()
                                     showDivisionMenu = false
                                 }
                             )
@@ -439,10 +453,34 @@ private fun NewAddressCard(
                     modifier = Modifier.weight(1f)
                 )
             }
+            Box(modifier = Modifier.fillMaxWidth()) {
+                OutlinedButton(
+                    onClick = { showDistrictMenu = true },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("checkout_district_dropdown")
+                ) {
+                    Text("District ($division): ${district.ifBlank { "Select District" }}")
+                }
+                DropdownMenu(
+                    expanded = showDistrictMenu,
+                    onDismissRequest = { showDistrictMenu = false }
+                ) {
+                    divisionDistricts.forEach { dist ->
+                        DropdownMenuItem(
+                            text = { Text(dist) },
+                            onClick = {
+                                district = dist
+                                showDistrictMenu = false
+                            }
+                        )
+                    }
+                }
+            }
             OutlinedTextField(
                 value = thana,
                 onValueChange = { thana = it },
-                label = { Text("District / Thana (e.g. Banani, Dhaka)") },
+                label = { Text("Thana / Area (e.g. Banani, Mirpur 10)") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -453,7 +491,10 @@ private fun NewAddressCard(
                 modifier = Modifier.fillMaxWidth()
             )
             Button(
-                onClick = { onSave(label, name, phone, division, thana, street) },
+                onClick = {
+                    val combinedDistrictThana = if (thana.isBlank()) district else "$district, ${thana.trim()}"
+                    onSave(label, name, phone, division, combinedDistrictThana, street)
+                },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Save Shipping Address")

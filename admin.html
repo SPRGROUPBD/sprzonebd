@@ -215,7 +215,18 @@ button:disabled{opacity:.5;cursor:not-allowed}
             <div class="field"><label>Free Delivery Min Qty (0 = off)</label><input id="pFreeShipMinQty" type="number" min="0" value="0" title="Set 1 for always free delivery on this product, or 2+ for qty-wise free delivery"></div>
             <div class="field"><label>Rating (1.0 - 5.0)</label><input id="pRating" type="number" min="1" max="5" step="0.1" value="4.8"></div>
           </div>
-          <div class="field"><label>Variants (comma-separated)</label><input id="pVariants" value="Standard" placeholder="Silver, Black"></div>
+          <div class="form-row">
+            <div class="field"><label>Colours (comma-separated)</label><input id="pColors" placeholder="Red, Blue, Black, White"></div>
+            <div class="field"><label>Sizes (comma-separated)</label><input id="pSizes" placeholder="S, M, L, XL, XXL"></div>
+          </div>
+          <div class="field"><label>Variants (comma-separated, auto/custom)</label><input id="pVariants" value="Standard" placeholder="Silver, Black"></div>
+          <div class="field" style="background:#f8faf9;border:1px solid var(--line);border-radius:10px;padding:10px">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+              <label style="margin:0">Variants wise Price (৳ BDT) *</label>
+              <button type="button" class="outline sm" id="applyBaseToVariantsBtn">Use Selling Price for All</button>
+            </div>
+            <div id="variantPriceRows" style="display:grid;gap:6px;max-height:220px;overflow-y:auto"></div>
+          </div>
           <div class="field"><label>Main Product Image URL *</label><input id="pImage" required placeholder="https://..."></div>
           <div class="field"><label>Gallery Image URLs (comma-separated, optional)</label><input id="pGallery" placeholder="https://img2.jpg, https://img3.jpg"></div>
           <div class="field"><label>Short Key Specs / Warranty</label><input id="pSpecs" placeholder="1 Year Brand Warranty • 14 Days Easy Return"></div>
@@ -532,6 +543,10 @@ button:disabled{opacity:.5;cursor:not-allowed}
             <div class="field"><label>Email *</label><input id="custEmail" type="email" required placeholder="customer@example.com"></div>
             <div class="field"><label>BD Mobile Phone</label><input id="custPhone" placeholder="017XXXXXXXX"></div>
           </div>
+          <div class="field" id="custPasswordWrap">
+            <label>Login Password (min 6 chars, required for new login account)</label>
+            <input id="custPassword" type="password" minlength="6" placeholder="Customer login password (min 6 chars)">
+          </div>
           <div class="field"><label>Bio / Notes</label><textarea id="custBio" rows="2" placeholder="Optional profile bio or note"></textarea></div>
           <div style="display:flex;gap:8px">
             <button type="submit" style="flex:1" id="custSaveBtn">💾 Save Customer Profile</button>
@@ -563,9 +578,13 @@ button:disabled{opacity:.5;cursor:not-allowed}
             </div>
           </div>
           <div class="form-row">
-            <div class="field"><label>District / Thana *</label><input id="admAddrThana" required></div>
-            <div class="field"><label>Street / House / Area *</label><input id="admAddrStreet" required></div>
+            <div class="field">
+              <label>District *</label>
+              <select id="admAddrDistrict" required></select>
+            </div>
+            <div class="field"><label>Thana / Area *</label><input id="admAddrThana" required placeholder="e.g. Banani, Mirpur 10"></div>
           </div>
+          <div class="field"><label>Street / House / Area *</label><input id="admAddrStreet" required></div>
           <label style="display:flex;align-items:center;gap:6px;font-weight:600;margin-bottom:10px">
             <input type="checkbox" id="admAddrDefault" style="width:auto"> Set as default address
           </label>
@@ -609,12 +628,16 @@ button:disabled{opacity:.5;cursor:not-allowed}
           </select>
         </div>
         <div class="field">
-          <label>Order Status *</label>
-          <select id="oeStatus">
-            <option>Pending</option><option>Confirmed</option><option>Packed</option>
-            <option>Out for Delivery</option><option>Delivered</option><option>Cancelled</option>
-          </select>
+          <label>District *</label>
+          <select id="oeDistrict" required></select>
         </div>
+      </div>
+      <div class="field">
+        <label>Order Status *</label>
+        <select id="oeStatus">
+          <option>Pending</option><option>Confirmed</option><option>Packed</option>
+          <option>Out for Delivery</option><option>Delivered</option><option>Cancelled</option>
+        </select>
       </div>
       <div class="field"><label>Full Delivery Address *</label><textarea id="oeAddress" rows="2" required></textarea></div>
       <div class="field"><label>Ordered Products Summary *</label><input id="oeItemsSummary" required placeholder="Product Name x1 (Standard) @৳1000"></div>
@@ -652,7 +675,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, signOut } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import { getDatabase, ref, set, push, update, remove, onValue } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js";
 
 const firebaseConfig = {
@@ -691,6 +714,17 @@ const DEFAULT_ZONES = [
   { key: "mymensingh", name: "Mymensingh", rate: 120, eta: "2-4 Days" }
 ];
 
+const BD_DISTRICTS_BY_DIVISION = {
+  Dhaka: ["Dhaka", "Faridpur", "Gazipur", "Gopalganj", "Kishoreganj", "Madaripur", "Manikganj", "Munshiganj", "Narayanganj", "Narsingdi", "Rajbari", "Shariatpur", "Tangail"],
+  Chattogram: ["Bandarban", "Brahmanbaria", "Chandpur", "Chattogram", "Cox's Bazar", "Cumilla", "Feni", "Khagrachhari", "Lakshmipur", "Noakhali", "Rangamati"],
+  Sylhet: ["Habiganj", "Moulvibazar", "Sunamganj", "Sylhet"],
+  Rajshahi: ["Bogura", "Chapainawabganj", "Joypurhat", "Naogaon", "Natore", "Pabna", "Rajshahi", "Sirajganj"],
+  Khulna: ["Bagerhat", "Chuadanga", "Jashore", "Jhenaidah", "Khulna", "Kushtia", "Magura", "Meherpur", "Narail", "Satkhira"],
+  Barishal: ["Barguna", "Barishal", "Bhola", "Jhalokati", "Patuakhali", "Pirojpur"],
+  Rangpur: ["Dinajpur", "Gaibandha", "Kurigram", "Lalmonirhat", "Nilphamari", "Panchagarh", "Rangpur", "Thakurgaon"],
+  Mymensingh: ["Jamalpur", "Mymensingh", "Netrokona", "Sherpur"]
+};
+
 const DEFAULT_STORE_SETTINGS = {
   storeName: "SPR ZONE BD",
   hotline: "09678-123456",
@@ -703,6 +737,8 @@ const DEFAULT_STORE_SETTINGS = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getDatabase(app);
+const customerCreatorApp = initializeApp(firebaseConfig, "CustomerCreator");
+const customerCreatorAuth = getAuth(customerCreatorApp);
 
 let products = {};
 let categories = {};
@@ -821,12 +857,40 @@ function getZoneCourierRate(division = "Dhaka") {
   return target === "dhaka" ? 60 : 120;
 }
 
+function getDistrictsForDivision(division = "Dhaka") {
+  const target = String(division || "Dhaka").trim().toLowerCase();
+  const key = Object.keys(BD_DISTRICTS_BY_DIVISION).find((k) => k.toLowerCase() === target);
+  if (key) return BD_DISTRICTS_BY_DIVISION[key];
+  return Object.values(BD_DISTRICTS_BY_DIVISION).flat();
+}
+
+function populateDistrictSelect(divSelectId, distSelectId, preferredDistrict = "") {
+  const divVal = $(divSelectId)?.value || "Dhaka";
+  const distEl = $(distSelectId);
+  if (!distEl) return;
+  const list = getDistrictsForDivision(divVal);
+  const current = preferredDistrict || distEl.value;
+  distEl.innerHTML = list.map((d) => `<option value="${safe(d)}">${safe(d)}</option>`).join("");
+  if (current) {
+    const match = list.find((d) => d.toLowerCase() === String(current).trim().toLowerCase());
+    if (match) distEl.value = match;
+    else if (![...distEl.options].some((o) => o.value === current)) {
+      const opt = document.createElement("option");
+      opt.value = current;
+      opt.textContent = current;
+      distEl.appendChild(opt);
+      distEl.value = current;
+    }
+  }
+}
+
 function populateOrderZoneDropdown() {
   const zones = Object.values(deliveryConfig?.zones || {});
   const list = zones.length ? zones : DEFAULT_ZONES;
   const cur = $("oeDivision").value || list[0].name;
   $("oeDivision").innerHTML = list.map((z) => `<option value="${safe(z.name)}">${safe(z.name)} (৳${parseNum(z.rate)})</option>`).join("");
   if ([...$("oeDivision").options].some((o) => o.value === cur)) $("oeDivision").value = cur;
+  populateDistrictSelect("oeDivision", "oeDistrict");
 }
 
 function computeOrderFinancials(o) {
@@ -961,6 +1025,8 @@ function renderAdminProducts() {
       $("pStock").value = p.stock ?? 0;
       $("pSoldCount").value = p.soldCount ?? 0;
       $("pRating").value = p.rating || 4.8;
+      $("pColors").value = p.variantColors || "";
+      $("pSizes").value = p.variantSizes || "";
       $("pVariants").value = p.variants || "Standard";
       $("pImage").value = p.image || "";
       $("pGallery").value = p.gallery || "";
@@ -968,6 +1034,7 @@ function renderAdminProducts() {
       $("pDesc").value = p.description || "";
       $("pFlashDeal").checked = !!p.isFlashDeal;
       $("pFeatured").checked = !!p.isFeatured;
+      renderVariantPriceInputs(p.variantPrices || {});
       updateProductDiscountPreview();
       window.scrollTo({ top: 0, behavior: "smooth" });
     };
@@ -980,6 +1047,50 @@ function renderAdminProducts() {
       toast("Product deleted");
     };
   });
+}
+
+function getStructuredVariantKeys() {
+  const cols = String($("pColors")?.value || "").split(",").map((s) => s.trim()).filter(Boolean);
+  const szs = String($("pSizes")?.value || "").split(",").map((s) => s.trim()).filter(Boolean);
+  if (cols.length && szs.length) {
+    const out = [];
+    cols.forEach((c) => szs.forEach((s) => out.push(`${c} / ${s}`)));
+    return out;
+  }
+  if (cols.length) return cols;
+  if (szs.length) return szs;
+  const rawVars = String($("pVariants")?.value || "Standard").split(",").map((s) => s.trim()).filter(Boolean);
+  return rawVars.length ? rawVars : ["Standard"];
+}
+
+function collectCurrentVariantPrices() {
+  const map = {};
+  document.querySelectorAll("[data-vp-key]").forEach((inp) => {
+    const key = inp.dataset.vpKey;
+    const val = parseNum(inp.value);
+    if (key && val > 0) map[key] = val;
+  });
+  return map;
+}
+
+function renderVariantPriceInputs(presetMap = null) {
+  const container = $("variantPriceRows");
+  if (!container) return;
+  const existingMap = presetMap || collectCurrentVariantPrices();
+  const basePrice = Math.max(1, parseNum($("pPrice")?.value || 0));
+  const keys = getStructuredVariantKeys();
+  const cols = String($("pColors")?.value || "").split(",").map((s) => s.trim()).filter(Boolean);
+  const szs = String($("pSizes")?.value || "").split(",").map((s) => s.trim()).filter(Boolean);
+  if (cols.length || szs.length) {
+    $("pVariants").value = keys.join(", ");
+  }
+  container.innerHTML = keys.map((k) => {
+    const priceVal = existingMap[k] !== undefined && parseNum(existingMap[k]) > 0 ? parseNum(existingMap[k]) : basePrice;
+    return `<div style="display:flex;align-items:center;gap:8px;background:#fff;padding:6px 8px;border:1px solid var(--line);border-radius:8px">
+      <span style="flex:1;font-size:12.5px;font-weight:700">${safe(k)}</span>
+      <input type="number" min="1" data-vp-key="${safe(k)}" value="${priceVal}" required style="width:120px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;font-size:13px">
+    </div>`;
+  }).join("");
 }
 
 function resetProductForm() {
@@ -995,8 +1106,11 @@ function resetProductForm() {
   $("pDiscountType").value = "none";
   $("pDiscountValue").value = "0";
   $("pFreeShipMinQty").value = "0";
+  $("pColors").value = "";
+  $("pSizes").value = "";
   $("pVariants").value = "Standard";
   $("pDiscountPreview").textContent = "";
+  renderVariantPriceInputs({});
 }
 
 function renderAdminCategories() {
@@ -1414,6 +1528,7 @@ function openOrderEditModal(orderId = "") {
   $("oeName").value = o?.customer?.name || "";
   $("oePhone").value = o?.customer?.phone || "";
   $("oeDivision").value = defDiv;
+  populateDistrictSelect("oeDivision", "oeDistrict", o?.customer?.district || "");
   $("oeStatus").value = o?.status || "Pending";
   $("oeAddress").value = o?.customer?.address || "";
   $("oeItemsSummary").value = o?.itemsSummary || (o ? orderProductSummaryText(o) : "");
@@ -1566,7 +1681,7 @@ function renderAdminCustomers() {
             <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin-bottom:6px;font-size:12.5px">
               <div>
                 <b>${safe(a.label || "Home")}</b> ${a.isDefault ? `<span class="badge green">Default</span>` : ""} · ${safe(a.recipientName)} (${safe(a.phone)})
-                <div class="muted">${safe(a.street)}, ${safe(a.thana)}, ${safe(a.division)}</div>
+                <div class="muted">${safe(a.street)}, ${safe(a.thana)}${a.district ? `, ${safe(a.district)}` : ""}, ${safe(a.division)}</div>
               </div>
               <div style="display:flex;gap:5px;flex-shrink:0">
                 <button type="button" class="secondary sm" data-edit-caddr="${safe(uid)}|${safe(aid)}">Edit</button>
@@ -1592,6 +1707,8 @@ function renderAdminCustomers() {
       $("custName").value = c.name || "";
       $("custEmail").value = c.email || "";
       $("custPhone").value = c.phone || "";
+      $("custPassword").value = "";
+      $("custPasswordWrap").classList.add("hidden");
       $("custBio").value = c.bio || "";
       window.scrollTo({ top: 0, behavior: "smooth" });
     };
@@ -1619,6 +1736,7 @@ function renderAdminCustomers() {
       $("admAddrRecipient").value = a.recipientName || "";
       $("admAddrPhone").value = a.phone || "";
       $("admAddrDivision").value = a.division || "Dhaka";
+      populateDistrictSelect("admAddrDivision", "admAddrDistrict", a.district || "");
       $("admAddrThana").value = a.thana || "";
       $("admAddrStreet").value = a.street || "";
       $("admAddrDefault").checked = !!a.isDefault;
@@ -1640,6 +1758,7 @@ function resetCustomerForm() {
   $("customerForm").reset();
   $("custEditUid").value = "";
   $("custUidInput").disabled = false;
+  $("custPasswordWrap").classList.remove("hidden");
   $("custFormTitle").textContent = "Add / Edit Customer Profile";
   $("custSaveBtn").textContent = "💾 Save Customer Profile";
 }
@@ -1650,6 +1769,7 @@ function resetAdmAddrForm() {
   $("admAddrTitle").textContent = "Add / Edit Customer Address";
   $("admAddrSaveBtn").textContent = "➕ Save Address";
   $("admAddrLabel").value = "Home";
+  populateDistrictSelect("admAddrDivision", "admAddrDistrict");
 }
 
 function startAdminListeners() {
@@ -1759,15 +1879,27 @@ $("oeSubtotal").oninput = () => {
 $("oeDiscount").oninput = syncOrderEditTotal;
 $("oeDeliveryFee").oninput = syncOrderEditTotal;
 $("oeDivision").onchange = () => {
+  populateDistrictSelect("oeDivision", "oeDistrict");
   const sub = parseNum($("oeSubtotal").value);
   const minAmt = parseNum(deliveryConfig?.freeDeliveryMinAmount ?? 3000);
   $("oeDeliveryFee").value = (minAmt > 0 && sub >= minAmt) ? 0 : getZoneCourierRate($("oeDivision").value);
   syncOrderEditTotal();
 };
+$("admAddrDivision").onchange = () => populateDistrictSelect("admAddrDivision", "admAddrDistrict");
+populateDistrictSelect("admAddrDivision", "admAddrDistrict");
+populateDistrictSelect("oeDivision", "oeDistrict");
 $("printInvoiceBtn").onclick = () => window.print();
 
 $("pOldPrice").oninput = updateProductDiscountPreview;
 $("pPrice").oninput = updateProductDiscountPreview;
+$("pColors").oninput = () => renderVariantPriceInputs();
+$("pSizes").oninput = () => renderVariantPriceInputs();
+$("pVariants").oninput = () => renderVariantPriceInputs();
+$("applyBaseToVariantsBtn").onclick = () => {
+  const base = Math.max(1, parseNum($("pPrice").value || 0));
+  document.querySelectorAll("[data-vp-key]").forEach((inp) => { inp.value = base; });
+};
+renderVariantPriceInputs({});
 $("pDiscountType").onchange = updateProductDiscountPreview;
 $("pDiscountValue").oninput = updateProductDiscountPreview;
 $("hsType").onchange = () => {
@@ -1784,6 +1916,12 @@ $("productForm").onsubmit = async (e) => {
   const discountType = $("pDiscountType").value;
   const discountValue = parseNum($("pDiscountValue").value || 0);
   const freeDeliveryMinQty = Math.max(0, Math.round(parseNum($("pFreeShipMinQty").value || 0)));
+  const variantColors = $("pColors").value.trim();
+  const variantSizes = $("pSizes").value.trim();
+  const variantPrices = collectCurrentVariantPrices();
+  const variantsStr = (variantColors || variantSizes)
+    ? getStructuredVariantKeys().join(", ")
+    : ($("pVariants").value.trim() || "Standard");
 
   await set(ref(db, "products/" + prodId), {
     name: $("pName").value.trim(),
@@ -1798,7 +1936,10 @@ $("productForm").onsubmit = async (e) => {
     soldCount: Number($("pSoldCount").value || 0),
     rating: Number($("pRating").value || 4.8),
     reviewCount: editId && products[editId]?.reviewCount ? products[editId].reviewCount : 0,
-    variants: $("pVariants").value.trim() || "Standard",
+    variantColors,
+    variantSizes,
+    variantPrices,
+    variants: variantsStr,
     image: $("pImage").value.trim(),
     gallery: $("pGallery").value.trim(),
     specs: $("pSpecs").value.trim(),
@@ -2095,6 +2236,7 @@ $("orderEditForm").onsubmit = async (e) => {
       name: $("oeName").value.trim(),
       phone: normalizeBdPhone($("oePhone").value),
       division: $("oeDivision").value,
+      district: $("oeDistrict").value || "",
       address: $("oeAddress").value.trim()
     },
     itemsSummary: summary,
@@ -2117,21 +2259,44 @@ $("orderEditForm").onsubmit = async (e) => {
 $("customerForm").onsubmit = async (e) => {
   e.preventDefault();
   const editUid = $("custEditUid").value;
-  const uid = editUid || $("custUidInput").value.trim() || push(ref(db, "customers")).key;
-  const payload = {
-    name: $("custName").value.trim(),
-    email: $("custEmail").value.trim(),
-    phone: normalizeBdPhone($("custPhone").value),
-    bio: $("custBio").value.trim(),
-    updatedAt: Date.now()
-  };
-  if (editUid && customers[editUid]?.addresses) {
-    payload.addresses = customers[editUid].addresses;
+  const name = $("custName").value.trim();
+  const email = $("custEmail").value.trim();
+  const phone = normalizeBdPhone($("custPhone").value);
+  const bio = $("custBio").value.trim();
+  const manualUid = $("custUidInput").value.trim();
+  const password = $("custPassword").value;
+
+  let uid = editUid || manualUid;
+  try {
+    if (!editUid && !manualUid) {
+      if (!password || password.length < 6) {
+        return toast("Enter a login password (min 6 characters) so customer can sign in.");
+      }
+      const cred = await createUserWithEmailAndPassword(customerCreatorAuth, email, password);
+      try { await updateProfile(cred.user, { displayName: name }); } catch (_) {}
+      uid = cred.user.uid;
+      try { await signOut(customerCreatorAuth); } catch (_) {}
+    } else if (!uid) {
+      uid = push(ref(db, "customers")).key;
+    }
+
+    const payload = {
+      name,
+      email,
+      phone,
+      bio,
+      updatedAt: Date.now()
+    };
+    if (editUid && customers[editUid]?.addresses) {
+      payload.addresses = customers[editUid].addresses;
+    }
+    if (!editUid) payload.createdAt = Date.now();
+    await update(ref(db, "customers/" + uid), payload);
+    resetCustomerForm();
+    toast(editUid ? "Customer profile updated!" : "Customer account created & saved to database!");
+  } catch (err) {
+    toast(err.message || "Failed to save customer");
   }
-  if (!editUid) payload.createdAt = Date.now();
-  await update(ref(db, "customers/" + uid), payload);
-  resetCustomerForm();
-  toast(editUid ? "Customer profile updated!" : "Customer profile added!");
 };
 $("custResetBtn").onclick = resetCustomerForm;
 
@@ -2154,13 +2319,18 @@ $("admAddressForm").onsubmit = async (e) => {
     recipientName: $("admAddrRecipient").value.trim(),
     phone: normalizeBdPhone($("admAddrPhone").value),
     division: $("admAddrDivision").value,
+    district: $("admAddrDistrict").value || "",
     thana: $("admAddrThana").value.trim(),
     street: $("admAddrStreet").value.trim(),
     isDefault: makeDefault
   };
-  await update(ref(db), updates);
-  resetAdmAddrForm();
-  toast(existingAid ? "Customer address updated!" : "Customer address added!");
+  try {
+    await update(ref(db), updates);
+    resetAdmAddrForm();
+    toast(existingAid ? "Customer address updated!" : "Customer address added!");
+  } catch (err) {
+    toast(err.message || "Failed to save address");
+  }
 };
 $("admAddrResetBtn").onclick = resetAdmAddrForm;
 </script>

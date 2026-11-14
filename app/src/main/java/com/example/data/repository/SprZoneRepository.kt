@@ -1,8 +1,10 @@
 package com.example.data.repository
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.util.Base64
 import com.example.data.local.AddressDao
 import com.example.data.local.CartDao
-import com.example.data.local.CatalogSeeder
 import com.example.data.local.OrderDao
 import com.example.data.local.ProductDao
 import com.example.data.local.ReviewDao
@@ -13,6 +15,7 @@ import com.example.data.local.WishlistDao
 import com.example.data.model.AddressEntity
 import com.example.data.model.AppNotificationItem
 import com.example.data.model.CartItemEntity
+import com.example.data.model.DeliveryConfigSummary
 import com.example.data.model.DeliveryZone
 import com.example.data.model.MerchantPaymentSettings
 import com.example.data.model.OrderEntity
@@ -22,16 +25,19 @@ import com.example.data.model.ReviewEntity
 import com.example.data.model.StoreConstants
 import com.example.data.model.UserAccountEntity
 import com.example.data.model.WishlistEntity
+import com.example.data.remote.FirebaseAuthRequest
+import com.example.data.remote.FirebaseAuthRestService
+import com.example.data.remote.FirebaseDeleteAccountRequest
+import com.example.data.remote.FirebaseTokenRefreshService
 import com.example.data.remote.RemoteCouponDto
+import com.example.data.remote.RemoteCustomerAddressDto
 import com.example.data.remote.RemoteCustomerDto
+import com.example.data.remote.RemoteCustomerProfileDto
 import com.example.data.remote.RemoteOrderDto
 import com.example.data.remote.RemoteOrderItemDto
 import com.example.data.remote.SprZoneNetworkClient
 import com.example.data.remote.SprZoneNetworkClient.toDomain
 import com.example.data.remote.SprZoneRtdbService
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.util.Base64
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -40,6 +46,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
+import org.json.JSONObject
 import java.io.File
 import java.io.FileOutputStream
 import java.security.MessageDigest
@@ -60,6 +67,8 @@ class SprZoneRepository(
     private val db: SprZoneDatabase,
     private val prefs: SessionPreferences,
     private val rtdb: SprZoneRtdbService = SprZoneNetworkClient.rtdbService,
+    private val authApi: FirebaseAuthRestService = SprZoneNetworkClient.authService,
+    private val tokenApi: FirebaseTokenRefreshService = SprZoneNetworkClient.tokenService,
     private val filesDir: File? = null
 ) {
     private val productDao: ProductDao = db.productDao()
@@ -72,6 +81,9 @@ class SprZoneRepository(
 
     private val _paymentSettings = MutableStateFlow(MerchantPaymentSettings())
     val paymentSettings: StateFlow<MerchantPaymentSettings> = _paymentSettings.asStateFlow()
+
+    private val _deliveryConfig = MutableStateFlow(DeliveryConfigSummary())
+    val deliveryConfig: StateFlow<DeliveryConfigSummary> = _deliveryConfig.asStateFlow()
 
     private val _coupons = MutableStateFlow<Map<String, RemoteCouponDto>>(emptyMap())
     val coupons: StateFlow<Map<String, RemoteCouponDto>> = _coupons.asStateFlow()
@@ -90,6 +102,27 @@ class SprZoneRepository(
 
     suspend fun syncRemoteCatalogAndSettings() = withContext(Dispatchers.IO) {
         try {
+            val delResp = rtdb.getDeliveryConfig()
+            if (delResp.isSuccessful) {
+                delResp.body()?.let { dto ->
+                    val minAmt = (dto.freeDeliveryMinAmount ?: StoreConstants.FREE_DELIVERY_THRESHOLD_BDT.toDouble())
+                        .roundToInt().toLong().coerceAtLeast(0L)
+                    val rates = dto.zones.orEmpty().values
+                        .mapNotNull { z ->
+                            val zName = z.name?.trim()?.takeIf { it.isNotBlank() } ?: return@mapNotNull null
+                            zName to (z.rate ?: 120.0).roundToInt().toLong().coerceAtLeast(0L)
+                        }.toMap()
+                    _deliveryConfig.value = DeliveryConfigSummary(
+                        freeDeliveryMinAmountBdt = minAmt,
+                        divisionRates = rates
+                    )
+                }
+            }
+        } catch (t: Throwable) {
+            if (t is CancellationException) throw t
+        }
+
+        try {
             val settingsResp = rtdb.getPaymentSettings()
             if (settingsResp.isSuccessful) {
                 settingsResp.body()?.let { dto ->
@@ -98,7 +131,6 @@ class SprZoneRepository(
             }
         } catch (t: Throwable) {
             if (t is CancellationException) throw t
-            // Keep previously synced settings when offline
         }
 
         try {
@@ -138,6 +170,7 @@ class SprZoneRepository(
                             else -> "electronics"
                         }
                         val safeImageUrl = persistOrSanitizeImageUrl(safeId, dto.image)
+                        val variantPricesStr = serializeVariantPrices(dto.variantPrices)
                         ProductEntity(
                             id = safeId,
                             name = name,
@@ -160,6 +193,10 @@ class SprZoneRepository(
                                 ?: "100% Original • Nationwide BD Delivery",
                             variantsCsv = dto.variants?.trim()?.takeIf { it.isNotBlank() }?.take(500)
                                 ?: "Standard",
+                            variantColorsCsv = dto.variantColors?.trim()?.take(400).orEmpty(),
+                            variantSizesCsv = dto.variantSizes?.trim()?.take(400).orEmpty(),
+                            variantPricesJson = variantPricesStr,
+                            freeDeliveryMinQty = (dto.freeDeliveryMinQty ?: 0).coerceAtLeast(0),
                             createdAt = dto.updatedAt ?: System.currentTimeMillis()
                         )
                     }
@@ -171,8 +208,10 @@ class SprZoneRepository(
             }
         } catch (t: Throwable) {
             if (t is CancellationException) throw t
-            // Retain Room offline catalog
         }
+
+        // Sync currently signed-in customer profile & addresses from Firebase RTDB
+        syncActiveCustomerSessionFromRemote()
     }
 
     suspend fun syncAppNotifications(): List<AppNotificationItem> = withContext(Dispatchers.IO) {
@@ -263,7 +302,7 @@ class SprZoneRepository(
                                     paymentMethod = (dto.paymentMethod ?: "Cash on Delivery").take(60),
                                     senderNumber = dto.senderNumber.orEmpty().take(40),
                                     trxId = dto.trxId.orEmpty().take(120),
-                                    paymentAccountMasked = dto.senderNumber?.takeLast(4)?.let { "•••• $it" } ?: "Verified",
+                                    paymentAccountMasked = dto.senderNumber?.takeLast(4)?.let { "•••• $it" } ?: "Cash on Delivery",
                                     transactionId = dto.trxId?.takeIf { it.isNotBlank() }?.take(120) ?: orderId,
                                     paymentStatus = newPayStatus,
                                     orderStatus = newStatus,
@@ -277,7 +316,6 @@ class SprZoneRepository(
             }
         } catch (t: Throwable) {
             if (t is CancellationException) throw t
-            // Keep local Room orders on offline error
         }
     }
 
@@ -309,9 +347,9 @@ class SprZoneRepository(
                     paymentMethod = (dto.paymentMethod ?: local?.paymentMethod ?: "Cash on Delivery").take(60),
                     senderNumber = (dto.senderNumber ?: local?.senderNumber ?: "").take(40),
                     trxId = (dto.trxId ?: local?.trxId ?: "").take(120),
-                    paymentAccountMasked = local?.paymentAccountMasked ?: "Verified",
+                    paymentAccountMasked = local?.paymentAccountMasked ?: "Cash on Delivery",
                     transactionId = dto.trxId?.takeIf { it.isNotBlank() }?.take(120) ?: local?.transactionId ?: cleanId.take(120),
-                    paymentStatus = (dto.paymentStatus ?: local?.paymentStatus ?: "Pending").take(80),
+                    paymentStatus = (dto.paymentStatus ?: local?.paymentStatus ?: "Pay on Delivery").take(80),
                     orderStatus = (dto.status ?: local?.orderStatus ?: "Pending").take(60),
                     createdAt = dto.createdAt ?: local?.createdAt ?: System.currentTimeMillis(),
                     updatedAt = dto.updatedAt ?: System.currentTimeMillis()
@@ -321,7 +359,6 @@ class SprZoneRepository(
             }
         } catch (t: Throwable) {
             if (t is CancellationException) throw t
-            // Fall back to local cache
         }
         return@withContext if (local != null) {
             Result.success(local)
@@ -342,53 +379,291 @@ class SprZoneRepository(
     suspend fun setDeliveryZone(zone: DeliveryZone) = prefs.setDeliveryZone(zone)
     suspend fun setDarkMode(enabled: Boolean) = prefs.setDarkMode(enabled)
 
-    // --- Customer Authentication (No Admin role on Mobile) ---
+    // --- Customer Authentication & Firebase RTDB Synchronization ---
 
     suspend fun registerUser(
         fullName: String,
         email: String,
         phone: String,
         password: String
-    ): Result<UserAccountEntity> {
+    ): Result<UserAccountEntity> = withContext(Dispatchers.IO) {
         val normalizedEmail = email.trim().lowercase()
-        if (fullName.isBlank()) return Result.failure(IllegalArgumentException("Full name is required"))
+        val trimmedName = fullName.trim()
+        if (trimmedName.isBlank()) return@withContext Result.failure(IllegalArgumentException("Full name is required"))
         if (!normalizedEmail.contains("@") || !normalizedEmail.contains(".")) {
-            return Result.failure(IllegalArgumentException("Enter a valid email address"))
+            return@withContext Result.failure(IllegalArgumentException("Enter a valid email address"))
         }
         if (password.length < 6) {
-            return Result.failure(IllegalArgumentException("Password must be at least 6 characters"))
+            return@withContext Result.failure(IllegalArgumentException("Password must be at least 6 characters"))
         }
-        val existing = userDao.getUserByEmail(normalizedEmail)
-        if (existing != null) {
-            return Result.failure(IllegalStateException("An account already exists with this email. Please sign in."))
+        val cleanPhone = phone.trim()
+        if (cleanPhone.isNotBlank() && !StoreConstants.isValidBdPhone(cleanPhone)) {
+            return@withContext Result.failure(IllegalArgumentException("Enter a valid 11-digit BD mobile number (01XXXXXXXXX)."))
         }
+        val normPhone = if (cleanPhone.isNotBlank()) StoreConstants.normalizeBdPhone(cleanPhone) else ""
+
+        val authResp = try {
+            authApi.signUp(body = FirebaseAuthRequest(email = normalizedEmail, password = password))
+        } catch (t: Throwable) {
+            if (t is CancellationException) throw t
+            return@withContext Result.failure(IllegalStateException("Network error while creating account: ${t.message ?: "Check internet connection"}"))
+        }
+
+        if (!authResp.isSuccessful || authResp.body()?.localId.isNullOrBlank() || authResp.body()?.idToken.isNullOrBlank()) {
+            val rawErr = authResp.errorBody()?.string().orEmpty()
+            return@withContext Result.failure(IllegalStateException(parseFirebaseAuthError(rawErr, "Could not create account")))
+        }
+
+        val authBody = authResp.body()!!
+        val uid = authBody.localId!!
+        val idToken = authBody.idToken!!
+        val refreshToken = authBody.refreshToken.orEmpty()
+        val now = System.currentTimeMillis()
+
+        val remoteProfile = RemoteCustomerProfileDto(
+            name = trimmedName.take(120),
+            email = normalizedEmail.take(160),
+            phone = normPhone,
+            bio = "",
+            createdAt = now,
+            updatedAt = now
+        )
+        val saveProfileResp = try {
+            rtdb.putCustomerProfile(uid, idToken, remoteProfile)
+        } catch (t: Throwable) {
+            if (t is CancellationException) throw t
+            null
+        }
+        if (saveProfileResp == null || !saveProfileResp.isSuccessful) {
+            return@withContext Result.failure(IllegalStateException("Account created in Auth, but database sync failed. Please try signing in."))
+        }
+
         val salt = generateSalt()
         val hash = hashPassword(password, salt)
         val user = UserAccountEntity(
             email = normalizedEmail,
-            fullName = fullName.trim(),
-            phone = phone.trim(),
+            fullName = trimmedName.take(120),
+            phone = normPhone,
             passwordHash = hash,
-            salt = salt
+            salt = salt,
+            createdAt = now
         )
         userDao.upsertUser(user)
+        prefs.setFirebaseSession(uid, idToken, refreshToken)
         migrateGuestCart(normalizedEmail)
         prefs.setLoggedInEmail(normalizedEmail)
-        return Result.success(user)
+        Result.success(user)
     }
 
-    suspend fun loginUser(email: String, password: String): Result<UserAccountEntity> {
+    suspend fun loginUser(email: String, password: String): Result<UserAccountEntity> = withContext(Dispatchers.IO) {
         val normalizedEmail = email.trim().lowercase()
-        val user = userDao.getUserByEmail(normalizedEmail)
-            ?: return Result.failure(IllegalArgumentException("No account found for $normalizedEmail. Please register first."))
-        val expectedHash = hashPassword(password, user.salt)
-        if (expectedHash != user.passwordHash) {
-            return Result.failure(IllegalArgumentException("Incorrect password. Please try again."))
+        if (!normalizedEmail.contains("@") || !normalizedEmail.contains(".")) {
+            return@withContext Result.failure(IllegalArgumentException("Enter a valid email address"))
         }
+        if (password.isBlank()) {
+            return@withContext Result.failure(IllegalArgumentException("Enter your password"))
+        }
+
+        val authResp = try {
+            authApi.signInWithPassword(body = FirebaseAuthRequest(email = normalizedEmail, password = password))
+        } catch (t: Throwable) {
+            if (t is CancellationException) throw t
+            return@withContext Result.failure(IllegalStateException("Network error during sign in: ${t.message ?: "Check internet connection"}"))
+        }
+
+        if (!authResp.isSuccessful || authResp.body()?.localId.isNullOrBlank() || authResp.body()?.idToken.isNullOrBlank()) {
+            val rawErr = authResp.errorBody()?.string().orEmpty()
+            return@withContext Result.failure(IllegalArgumentException(parseFirebaseAuthError(rawErr, "Invalid email or password")))
+        }
+
+        val authBody = authResp.body()!!
+        val uid = authBody.localId!!
+        val idToken = authBody.idToken!!
+        val refreshToken = authBody.refreshToken.orEmpty()
+
+        prefs.setFirebaseSession(uid, idToken, refreshToken)
+        val user = pullAndCacheRemoteCustomer(
+            uid = uid,
+            idToken = idToken,
+            email = normalizedEmail,
+            fallbackName = authBody.displayName?.takeIf { it.isNotBlank() }
+                ?: normalizedEmail.substringBefore("@"),
+            passwordForLocalCache = password
+        )
+
         migrateGuestCart(normalizedEmail)
         prefs.setLoggedInEmail(normalizedEmail)
         syncUserOrdersFromRemote(normalizedEmail)
-        return Result.success(user)
+        Result.success(user)
+    }
+
+    private suspend fun syncActiveCustomerSessionFromRemote() {
+        val email = prefs.loggedInEmail.first()?.trim()?.lowercase() ?: return
+        val uid = prefs.firebaseUid.first() ?: return
+        val token = resolveValidIdToken(forceRefresh = false) ?: return
+        try {
+            val resp = rtdb.getCustomerProfile(uid, token)
+            if (resp.code() == 401) {
+                val refreshed = resolveValidIdToken(forceRefresh = true) ?: return
+                val retry = rtdb.getCustomerProfile(uid, refreshed)
+                if (retry.isSuccessful) {
+                    applyRemoteProfileSnapshot(email, uid, refreshed, retry.body())
+                }
+            } else if (resp.isSuccessful) {
+                applyRemoteProfileSnapshot(email, uid, token, resp.body())
+            }
+        } catch (t: Throwable) {
+            if (t is CancellationException) throw t
+        }
+    }
+
+    private suspend fun pullAndCacheRemoteCustomer(
+        uid: String,
+        idToken: String,
+        email: String,
+        fallbackName: String,
+        passwordForLocalCache: String
+    ): UserAccountEntity {
+        val remote = try {
+            val resp = rtdb.getCustomerProfile(uid, idToken)
+            if (resp.isSuccessful) resp.body() else null
+        } catch (_: Throwable) {
+            null
+        }
+
+        val now = System.currentTimeMillis()
+        val finalProfile = if (remote == null) {
+            val created = RemoteCustomerProfileDto(
+                name = fallbackName.take(120),
+                email = email.take(160),
+                phone = "",
+                bio = "",
+                createdAt = now,
+                updatedAt = now
+            )
+            try { rtdb.putCustomerProfile(uid, idToken, created) } catch (_: Throwable) {}
+            created
+        } else {
+            remote
+        }
+
+        val existingLocal = userDao.getUserByEmail(email)
+        val salt = existingLocal?.salt ?: generateSalt()
+        val hash = hashPassword(passwordForLocalCache, salt)
+        val user = UserAccountEntity(
+            email = email,
+            fullName = (finalProfile.name?.takeIf { it.isNotBlank() } ?: fallbackName).take(120),
+            phone = finalProfile.phone.orEmpty(),
+            passwordHash = hash,
+            salt = salt,
+            bio = finalProfile.bio.orEmpty(),
+            createdAt = finalProfile.createdAt ?: existingLocal?.createdAt ?: now
+        )
+        userDao.upsertUser(user)
+        syncRemoteAddressesToLocal(email, finalProfile.addresses)
+        return user
+    }
+
+    private suspend fun applyRemoteProfileSnapshot(
+        email: String,
+        uid: String,
+        idToken: String,
+        remote: RemoteCustomerProfileDto?
+    ) {
+        val existingLocal = userDao.getUserByEmail(email)
+        if (remote == null) {
+            if (existingLocal != null) {
+                try {
+                    rtdb.putCustomerProfile(
+                        uid,
+                        idToken,
+                        RemoteCustomerProfileDto(
+                            name = existingLocal.fullName,
+                            email = existingLocal.email,
+                            phone = existingLocal.phone,
+                            bio = existingLocal.bio,
+                            createdAt = existingLocal.createdAt,
+                            updatedAt = System.currentTimeMillis()
+                        )
+                    )
+                } catch (_: Throwable) {}
+            }
+            return
+        }
+
+        if (existingLocal != null) {
+            val updated = existingLocal.copy(
+                fullName = remote.name?.takeIf { it.isNotBlank() } ?: existingLocal.fullName,
+                phone = remote.phone ?: existingLocal.phone,
+                bio = remote.bio ?: existingLocal.bio
+            )
+            userDao.upsertUser(updated)
+        }
+        syncRemoteAddressesToLocal(email, remote.addresses)
+    }
+
+    private suspend fun syncRemoteAddressesToLocal(
+        email: String,
+        remoteMap: Map<String, RemoteCustomerAddressDto>?
+    ) {
+        if (remoteMap == null) return
+        val localList = addressDao.getAddressesForUser(email)
+        val localByRemote = localList.associateBy { it.remoteKey }
+        val remoteKeys = remoteMap.keys
+
+        // Remove locally cached remote addresses that were deleted on server
+        for (local in localList) {
+            if (local.remoteKey.isNotBlank() && local.remoteKey !in remoteKeys) {
+                addressDao.deleteAddress(local.id)
+            }
+        }
+
+        // Upsert server addresses
+        remoteMap.forEach { (rKey, dto) ->
+            val districtPart = dto.district?.trim().orEmpty()
+            val thanaPart = dto.thana?.trim().orEmpty()
+            val combinedDistThana = listOf(districtPart, thanaPart).filter { it.isNotBlank() }.distinct().joinToString(", ")
+                .ifBlank { "Dhaka" }
+            val existing = localByRemote[rKey]
+            val entity = AddressEntity(
+                id = existing?.id ?: 0L,
+                userEmail = email,
+                label = dto.label?.takeIf { it.isNotBlank() } ?: "Home",
+                recipientName = dto.recipientName.orEmpty(),
+                phone = dto.phone.orEmpty(),
+                division = dto.division?.takeIf { it.isNotBlank() } ?: "Dhaka",
+                districtThana = combinedDistThana,
+                streetAddress = dto.street.orEmpty(),
+                isDefault = dto.isDefault == true,
+                remoteKey = rKey
+            )
+            if (existing != null) {
+                addressDao.updateAddress(entity)
+            } else {
+                addressDao.insertAddress(entity)
+            }
+        }
+    }
+
+    private suspend fun resolveValidIdToken(forceRefresh: Boolean): String? {
+        val currentToken = prefs.firebaseIdToken.first()
+        if (!forceRefresh && !currentToken.isNullOrBlank()) return currentToken
+        val refreshTok = prefs.firebaseRefreshToken.first()?.takeIf { it.isNotBlank() } ?: return currentToken
+        return try {
+            val resp = tokenApi.refreshToken(refreshToken = refreshTok)
+            val body = resp.body()
+            if (resp.isSuccessful && !body?.id_token.isNullOrBlank()) {
+                val newIdToken = body!!.id_token!!
+                val newRefresh = body.refresh_token?.takeIf { it.isNotBlank() } ?: refreshTok
+                val uid = body.user_id?.takeIf { it.isNotBlank() } ?: prefs.firebaseUid.first()
+                prefs.setFirebaseSession(uid, newIdToken, newRefresh)
+                newIdToken
+            } else {
+                currentToken
+            }
+        } catch (_: Throwable) {
+            currentToken
+        }
     }
 
     suspend fun updateProfile(
@@ -396,39 +671,74 @@ class SprZoneRepository(
         fullName: String,
         phone: String,
         bio: String
-    ): Result<UserAccountEntity> {
+    ): Result<UserAccountEntity> = withContext(Dispatchers.IO) {
         val normalizedEmail = email.trim().lowercase()
         val existing = userDao.getUserByEmail(normalizedEmail)
-            ?: return Result.failure(IllegalStateException("Account not found."))
+            ?: return@withContext Result.failure(IllegalStateException("Account not found."))
         val trimmedName = fullName.trim()
         if (trimmedName.isBlank()) {
-            return Result.failure(IllegalArgumentException("Full name is required."))
+            return@withContext Result.failure(IllegalArgumentException("Full name is required."))
         }
         val cleanPhone = phone.trim()
         if (cleanPhone.isNotBlank() && !StoreConstants.isValidBdPhone(cleanPhone)) {
-            return Result.failure(IllegalArgumentException("Enter a valid 11-digit BD mobile number (01XXXXXXXXX)."))
+            return@withContext Result.failure(IllegalArgumentException("Enter a valid 11-digit BD mobile number (01XXXXXXXXX)."))
         }
         val normalizedPhone = if (cleanPhone.isNotBlank()) StoreConstants.normalizeBdPhone(cleanPhone) else ""
+        val cleanBio = bio.trim().take(240)
         val updated = existing.copy(
             fullName = trimmedName.take(120),
             phone = normalizedPhone,
-            bio = bio.trim().take(240)
+            bio = cleanBio
         )
         userDao.upsertUser(updated)
-        return Result.success(updated)
+
+        val uid = prefs.firebaseUid.first()
+        val token = resolveValidIdToken(forceRefresh = false)
+        if (!uid.isNullOrBlank() && !token.isNullOrBlank()) {
+            val patch = mapOf<String, Any>(
+                "name" to updated.fullName,
+                "email" to normalizedEmail,
+                "phone" to normalizedPhone,
+                "bio" to cleanBio,
+                "updatedAt" to System.currentTimeMillis()
+            )
+            try {
+                val resp = rtdb.patchCustomerProfile(uid, token, patch)
+                if (resp.code() == 401) {
+                    resolveValidIdToken(forceRefresh = true)?.let { fresh ->
+                        rtdb.patchCustomerProfile(uid, fresh, patch)
+                    }
+                }
+            } catch (t: Throwable) {
+                if (t is CancellationException) throw t
+            }
+        }
+        Result.success(updated)
     }
 
-    suspend fun deleteProfile(email: String): Result<Unit> {
+    suspend fun deleteProfile(email: String): Result<Unit> = withContext(Dispatchers.IO) {
         val normalizedEmail = email.trim().lowercase()
+        val uid = prefs.firebaseUid.first()
+        val token = resolveValidIdToken(forceRefresh = false)
+        if (!uid.isNullOrBlank() && !token.isNullOrBlank()) {
+            try {
+                rtdb.deleteCustomerProfile(uid, token)
+                authApi.deleteAccount(body = FirebaseDeleteAccountRequest(token))
+            } catch (t: Throwable) {
+                if (t is CancellationException) throw t
+            }
+        }
         addressDao.deleteAllForUser(normalizedEmail)
         cartDao.clearCart(normalizedEmail)
         wishlistDao.clearWishlist(normalizedEmail)
         userDao.deleteUserByEmail(normalizedEmail)
+        prefs.setFirebaseSession(null, null, null)
         prefs.setLoggedInEmail(null)
-        return Result.success(Unit)
+        Result.success(Unit)
     }
 
     suspend fun signOut() {
+        prefs.setFirebaseSession(null, null, null)
         prefs.setLoggedInEmail(null)
     }
 
@@ -453,28 +763,37 @@ class SprZoneRepository(
         userEmail: String,
         product: ProductEntity,
         variant: String,
-        quantity: Int = 1
+        quantity: Int = 1,
+        unitPriceOverride: Long? = null
     ): Result<Unit> {
         if (product.stock <= 0) {
             return Result.failure(IllegalStateException("Sorry, ${product.name} is currently out of stock."))
         }
-        val chosenVariant = variant.ifBlank { product.variants.firstOrNull() ?: "Standard" }
+        val chosenVariant = variant.ifBlank { product.defaultVariantLabel() }
+        val unitPrice = unitPriceOverride ?: product.priceForVariant(chosenVariant)
         val existing = cartDao.findCartItem(userEmail, product.id, chosenVariant)
         if (existing != null) {
             val nextQty = (existing.quantity + quantity).coerceAtMost(product.stock)
-            cartDao.updateCartItem(existing.copy(quantity = nextQty))
+            cartDao.updateCartItem(
+                existing.copy(
+                    unitPriceBdt = unitPrice,
+                    freeDeliveryMinQty = product.freeDeliveryMinQty,
+                    quantity = nextQty
+                )
+            )
         } else {
             cartDao.insertCartItem(
                 CartItemEntity(
                     userEmail = userEmail,
                     productId = product.id,
                     productName = product.name,
-                    unitPriceBdt = product.priceBdt,
+                    unitPriceBdt = unitPrice,
                     originalPriceBdt = product.originalPriceBdt,
                     imageKey = product.imageKey,
                     imageUrl = product.imageUrl,
                     selectedVariant = chosenVariant,
-                    quantity = quantity.coerceAtMost(product.stock)
+                    quantity = quantity.coerceAtMost(product.stock),
+                    freeDeliveryMinQty = product.freeDeliveryMinQty
                 )
             )
         }
@@ -504,7 +823,7 @@ class SprZoneRepository(
         }
     }
 
-    // --- Addresses ---
+    // --- Addresses (Local Room + Remote Firebase RTDB) ---
 
     suspend fun saveAddress(
         userEmail: String,
@@ -515,27 +834,41 @@ class SprZoneRepository(
         districtThana: String,
         streetAddress: String,
         makeDefault: Boolean
-    ): Result<Long> {
+    ): Result<Long> = withContext(Dispatchers.IO) {
+        val normalizedEmail = userEmail.trim().lowercase()
         if (recipientName.isBlank() || phone.isBlank() || districtThana.isBlank() || streetAddress.isBlank()) {
-            return Result.failure(IllegalArgumentException("Please fill in all shipping address fields."))
+            return@withContext Result.failure(IllegalArgumentException("Please fill in all shipping address fields."))
         }
-        val shouldDefault = makeDefault || addressDao.countAddresses(userEmail) == 0
+        val shouldDefault = makeDefault || addressDao.countAddresses(normalizedEmail) == 0
         if (shouldDefault) {
-            addressDao.clearDefaultAddresses(userEmail)
+            addressDao.clearDefaultAddresses(normalizedEmail)
         }
+        val remoteKey = "addr_${System.currentTimeMillis()}_${(100..999).random()}"
         val id = addressDao.insertAddress(
             AddressEntity(
-                userEmail = userEmail,
+                userEmail = normalizedEmail,
                 label = label.ifBlank { "Home" },
                 recipientName = recipientName.trim(),
                 phone = phone.trim(),
                 division = division,
                 districtThana = districtThana.trim(),
                 streetAddress = streetAddress.trim(),
-                isDefault = shouldDefault
+                isDefault = shouldDefault,
+                remoteKey = remoteKey
             )
         )
-        return Result.success(id)
+        pushAddressToRemote(
+            userEmail = normalizedEmail,
+            remoteKey = remoteKey,
+            label = label.ifBlank { "Home" },
+            recipientName = recipientName.trim(),
+            phone = phone.trim(),
+            division = division,
+            districtThana = districtThana.trim(),
+            streetAddress = streetAddress.trim(),
+            isDefault = shouldDefault
+        )
+        Result.success(id)
     }
 
     suspend fun updateAddress(
@@ -548,15 +881,18 @@ class SprZoneRepository(
         districtThana: String,
         streetAddress: String,
         makeDefault: Boolean
-    ): Result<Unit> {
+    ): Result<Unit> = withContext(Dispatchers.IO) {
+        val normalizedEmail = userEmail.trim().lowercase()
         if (recipientName.isBlank() || phone.isBlank() || districtThana.isBlank() || streetAddress.isBlank()) {
-            return Result.failure(IllegalArgumentException("Please fill in all shipping address fields."))
+            return@withContext Result.failure(IllegalArgumentException("Please fill in all shipping address fields."))
         }
-        val existing = addressDao.getAddressById(addressId, userEmail)
-            ?: return Result.failure(IllegalArgumentException("Address not found."))
+        val existing = addressDao.getAddressById(addressId, normalizedEmail)
+            ?: return@withContext Result.failure(IllegalArgumentException("Address not found."))
         if (makeDefault) {
-            addressDao.clearDefaultAddresses(userEmail)
+            addressDao.clearDefaultAddresses(normalizedEmail)
         }
+        val finalKey = existing.remoteKey.ifBlank { "addr_${System.currentTimeMillis()}_${(100..999).random()}" }
+        val finalDefault = makeDefault || existing.isDefault
         addressDao.updateAddress(
             existing.copy(
                 label = label.ifBlank { "Home" }.trim(),
@@ -565,20 +901,112 @@ class SprZoneRepository(
                 division = division,
                 districtThana = districtThana.trim(),
                 streetAddress = streetAddress.trim(),
-                isDefault = makeDefault || existing.isDefault
+                isDefault = finalDefault,
+                remoteKey = finalKey
             )
         )
-        return Result.success(Unit)
+        pushAddressToRemote(
+            userEmail = normalizedEmail,
+            remoteKey = finalKey,
+            label = label.ifBlank { "Home" }.trim(),
+            recipientName = recipientName.trim(),
+            phone = phone.trim(),
+            division = division,
+            districtThana = districtThana.trim(),
+            streetAddress = streetAddress.trim(),
+            isDefault = finalDefault
+        )
+        Result.success(Unit)
     }
 
-    suspend fun setDefaultAddress(userEmail: String, addressId: Long) {
-        addressDao.clearDefaultAddresses(userEmail)
-        addressDao.setDefaultAddress(addressId, userEmail)
+    suspend fun setDefaultAddress(userEmail: String, addressId: Long) = withContext(Dispatchers.IO) {
+        val normalizedEmail = userEmail.trim().lowercase()
+        addressDao.clearDefaultAddresses(normalizedEmail)
+        addressDao.setDefaultAddress(addressId, normalizedEmail)
+        val all = addressDao.getAddressesForUser(normalizedEmail)
+        val uid = prefs.firebaseUid.first() ?: return@withContext
+        val token = resolveValidIdToken(forceRefresh = false) ?: return@withContext
+        val patch = buildMap<String, Any> {
+            all.forEach { a ->
+                if (a.remoteKey.isNotBlank()) {
+                    put("${a.remoteKey}/isDefault", a.id == addressId)
+                }
+            }
+        }
+        if (patch.isNotEmpty()) {
+            try {
+                rtdb.patchCustomerAddresses(uid, token, patch)
+            } catch (_: Throwable) {}
+        }
     }
 
-    suspend fun deleteAddress(id: Long) = addressDao.deleteAddress(id)
+    suspend fun deleteAddress(id: Long) = withContext(Dispatchers.IO) {
+        val email = prefs.loggedInEmail.first()?.trim()?.lowercase()
+        val target = if (!email.isNullOrBlank()) addressDao.getAddressById(id, email) else null
+        addressDao.deleteAddress(id)
+        val uid = prefs.firebaseUid.first()
+        val token = resolveValidIdToken(forceRefresh = false)
+        if (!uid.isNullOrBlank() && !token.isNullOrBlank() && target != null && target.remoteKey.isNotBlank()) {
+            try {
+                rtdb.deleteCustomerAddress(uid, target.remoteKey, token)
+            } catch (_: Throwable) {}
+        }
+    }
 
-    // --- Promo & Checkout with Auto TrxID Verification ---
+    private suspend fun pushAddressToRemote(
+        userEmail: String,
+        remoteKey: String,
+        label: String,
+        recipientName: String,
+        phone: String,
+        division: String,
+        districtThana: String,
+        streetAddress: String,
+        isDefault: Boolean
+    ) {
+        val uid = prefs.firebaseUid.first() ?: return
+        var token = resolveValidIdToken(forceRefresh = false) ?: return
+
+        val parts = districtThana.split(",").map { it.trim() }.filter { it.isNotBlank() }
+        val district = parts.firstOrNull().orEmpty()
+        val thana = if (parts.size > 1) parts.drop(1).joinToString(", ") else districtThana
+
+        if (isDefault) {
+            val others = addressDao.getAddressesForUser(userEmail)
+                .filter { it.remoteKey.isNotBlank() && it.remoteKey != remoteKey }
+            if (others.isNotEmpty()) {
+                val clearPatch = others.associate { "${it.remoteKey}/isDefault" to (false as Any) }
+                try {
+                    val patchResp = rtdb.patchCustomerAddresses(uid, token, clearPatch)
+                    if (patchResp.code() == 401) {
+                        token = resolveValidIdToken(forceRefresh = true) ?: token
+                        rtdb.patchCustomerAddresses(uid, token, clearPatch)
+                    }
+                } catch (_: Throwable) {}
+            }
+        }
+
+        val dto = RemoteCustomerAddressDto(
+            label = label,
+            recipientName = recipientName,
+            phone = phone,
+            division = division,
+            district = district,
+            thana = thana,
+            street = streetAddress,
+            isDefault = isDefault
+        )
+        try {
+            val resp = rtdb.putCustomerAddress(uid, remoteKey, token, dto)
+            if (resp.code() == 401) {
+                resolveValidIdToken(forceRefresh = true)?.let { fresh ->
+                    rtdb.putCustomerAddress(uid, remoteKey, fresh, dto)
+                }
+            }
+        } catch (_: Throwable) {}
+    }
+
+    // --- Promo & Checkout ---
 
     fun evaluatePromo(codeRaw: String, subtotalBdt: Long): PromoResult? {
         val cleanCode = codeRaw.trim().uppercase()
@@ -619,6 +1047,20 @@ class SprZoneRepository(
         }
     }
 
+    fun computeEffectiveDeliveryFee(
+        cartItems: List<CartItemEntity>,
+        subtotalBdt: Long,
+        division: String,
+        promo: PromoResult?
+    ): Long {
+        if (cartItems.isEmpty() || subtotalBdt <= 0L) return 0L
+        val config = _deliveryConfig.value
+        val qtyFree = cartItems.any { it.freeDeliveryMinQty > 0 && it.quantity >= it.freeDeliveryMinQty }
+        val amtFree = config.freeDeliveryMinAmountBdt > 0L && subtotalBdt >= config.freeDeliveryMinAmountBdt
+        if (qtyFree || amtFree || promo?.freeShipping == true) return 0L
+        return config.feeForDivision(division)
+    }
+
     suspend fun placeOrder(
         userEmail: String,
         address: AddressEntity,
@@ -635,11 +1077,7 @@ class SprZoneRepository(
         val subtotal = cartItems.sumOf { it.unitPriceBdt * it.quantity }
         val promo = evaluatePromo(promoCode, subtotal)
         val discount = promo?.discountBdt ?: 0L
-        val rawDeliveryFee = if (subtotal >= StoreConstants.FREE_DELIVERY_THRESHOLD_BDT || promo?.freeShipping == true) {
-            0L
-        } else {
-            StoreConstants.deliveryFeeForDivision(address.division)
-        }
+        val rawDeliveryFee = computeEffectiveDeliveryFee(cartItems, subtotal, address.division, promo)
         val total = (subtotal - discount + rawDeliveryFee).coerceAtLeast(0L)
 
         val normalizedSender = ""
@@ -686,16 +1124,18 @@ class SprZoneRepository(
         }
         cartDao.clearCart(userEmail)
 
-        // Push order to shared e-commarcebd RTDB so Website Admin sees it immediately
         try {
+            val uid = prefs.firebaseUid.first() ?: userEmail.replace(".", "_")
+            val district = address.districtThana.split(",").firstOrNull()?.trim().orEmpty()
             val remoteDto = RemoteOrderDto(
                 orderId = orderId,
-                uid = userEmail.replace(".", "_"),
+                uid = uid,
                 customerEmail = userEmail,
                 customer = RemoteCustomerDto(
                     name = address.recipientName,
                     phone = address.phone,
                     address = address.formattedAddress,
+                    district = district,
                     division = address.division
                 ),
                 items = cartItems.map {
@@ -723,61 +1163,11 @@ class SprZoneRepository(
                 updatedAt = order.updatedAt
             )
             rtdb.putOrder(orderId, remoteDto)
-            if (paymentStatus == "Verified (Auto SMS)" && normalizedTrx.isNotBlank()) {
-                rtdb.markSmsRecordMatched(normalizedTrx, mapOf("matchedOrderId" to orderId))
-            }
         } catch (_: Exception) {
             // Order remains safely stored locally in Room if offline
         }
 
         Result.success(order)
-    }
-
-    private suspend fun attemptAutoVerifyTrx(
-        provider: String,
-        senderNumber: String,
-        trxId: String,
-        amountBdt: Long
-    ): Boolean {
-        val settings = _paymentSettings.value
-
-        // 1. Check merchant's configured SMS/Message API URL if present
-        if (settings.smsApiUrl.isNotBlank()) {
-            try {
-                val resp = rtdb.verifyViaExternalSmsApi(
-                    url = settings.smsApiUrl,
-                    sender = senderNumber,
-                    trxId = trxId,
-                    amount = amountBdt,
-                    provider = provider,
-                    apiKey = settings.smsApiKey
-                )
-                if (resp.isSuccessful) {
-                    val body = resp.body()
-                    if (body?.verified == true || body?.status.equals("verified", ignoreCase = true)) {
-                        return true
-                    }
-                }
-            } catch (_: Exception) {
-                // Fall through to RTDB sms_inbox check
-            }
-        }
-
-        // 2. Check RTDB /sms_inbox/{trxId} (populated by merchant's SMS forwarder or Website Admin)
-        return try {
-            val smsResp = rtdb.getSmsInboxRecord(trxId)
-            val record = smsResp.body()
-            if (smsResp.isSuccessful && record != null) {
-                val recSender = StoreConstants.normalizeBdPhone(record.senderNumber.orEmpty())
-                val recAmount = (record.amount ?: 0.0).toLong()
-                val unmatched = record.matchedOrderId.isNullOrBlank()
-                unmatched && recSender == senderNumber && recAmount >= amountBdt
-            } else {
-                false
-            }
-        } catch (_: Exception) {
-            false
-        }
     }
 
     /**
@@ -796,7 +1186,6 @@ class SprZoneRepository(
         try {
             rtdb.patchOrderStatus(orderId, mapOf("status" to "Cancelled", "updatedAt" to now))
         } catch (_: Exception) {
-            // Local status updated
         }
         Result.success(Unit)
     }
@@ -831,7 +1220,44 @@ class SprZoneRepository(
         return Result.success(Unit)
     }
 
-    // --- Hashing Helpers ---
+    // --- Helpers ---
+
+    private fun serializeVariantPrices(map: Map<String, Double>?): String {
+        if (map.isNullOrEmpty()) return "{}"
+        return try {
+            val obj = JSONObject()
+            map.forEach { (k, v) ->
+                if (k.isNotBlank() && v > 0.0) obj.put(k, v)
+            }
+            obj.toString()
+        } catch (_: Throwable) {
+            "{}"
+        }
+    }
+
+    private fun parseFirebaseAuthError(rawJson: String, fallback: String): String {
+        return try {
+            val msg = JSONObject(rawJson).optJSONObject("error")?.optString("message").orEmpty()
+            when {
+                msg.contains("EMAIL_EXISTS", ignoreCase = true) ->
+                    "An account already exists with this email. Please sign in."
+                msg.contains("INVALID_LOGIN_CREDENTIALS", ignoreCase = true) ||
+                    msg.contains("INVALID_PASSWORD", ignoreCase = true) ||
+                    msg.contains("EMAIL_NOT_FOUND", ignoreCase = true) ->
+                    "Invalid email or password. Please check your credentials."
+                msg.contains("USER_DISABLED", ignoreCase = true) ->
+                    "This customer account has been disabled."
+                msg.contains("TOO_MANY_ATTEMPTS", ignoreCase = true) ->
+                    "Too many attempts. Please wait a moment and try again."
+                msg.contains("WEAK_PASSWORD", ignoreCase = true) ->
+                    "Password must be at least 6 characters."
+                msg.isNotBlank() -> msg
+                else -> fallback
+            }
+        } catch (_: Throwable) {
+            fallback
+        }
+    }
 
     private fun generateSalt(): String {
         val bytes = ByteArray(16)

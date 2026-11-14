@@ -588,12 +588,43 @@ private fun AddressFormDialog(
     onDismiss: () -> Unit,
     onSave: (String, String, String, String, String, String, Boolean, (String) -> Unit) -> Unit
 ) {
+    val initialDivision = existing?.division?.takeIf { it.isNotBlank() } ?: "Dhaka"
+    val initialDivisionDistricts = StoreConstants.districtsForDivision(initialDivision)
+    val parsedDistrictAndThana = remember(existing) {
+        val raw = existing?.districtThana.orEmpty().trim()
+        if (raw.isBlank()) {
+            initialDivisionDistricts.firstOrNull().orEmpty() to ""
+        } else {
+            val parts = raw.split(",").map { it.trim() }.filter { it.isNotBlank() }
+            val firstPart = parts.firstOrNull().orEmpty()
+            val matchedDistrict = initialDivisionDistricts.firstOrNull {
+                it.equals(firstPart, ignoreCase = true)
+            }
+            if (matchedDistrict != null) {
+                matchedDistrict to parts.drop(1).joinToString(", ")
+            } else {
+                initialDivisionDistricts.firstOrNull().orEmpty() to raw
+            }
+        }
+    }
+
     var label by remember(existing) { mutableStateOf(existing?.label ?: "Home") }
     var recipientName by remember(existing) { mutableStateOf(existing?.recipientName ?: defaultName) }
     var phone by remember(existing) { mutableStateOf(existing?.phone ?: defaultPhone) }
-    var division by remember(existing) { mutableStateOf(existing?.division ?: "Dhaka") }
+    var division by remember(existing) { mutableStateOf(initialDivision) }
     var showDivisionMenu by remember { mutableStateOf(false) }
-    var thana by remember(existing) { mutableStateOf(existing?.districtThana.orEmpty()) }
+    val divisionDistricts = remember(division) { StoreConstants.districtsForDivision(division) }
+    var district by remember(existing, division) {
+        mutableStateOf(
+            if (division == initialDivision && parsedDistrictAndThana.first in divisionDistricts) {
+                parsedDistrictAndThana.first
+            } else {
+                divisionDistricts.firstOrNull().orEmpty()
+            }
+        )
+    }
+    var showDistrictMenu by remember { mutableStateOf(false) }
+    var thana by remember(existing) { mutableStateOf(parsedDistrictAndThana.second) }
     var street by remember(existing) { mutableStateOf(existing?.streetAddress.orEmpty()) }
     var makeDefault by remember(existing) { mutableStateOf(existing?.isDefault ?: false) }
     var errorMsg by remember { mutableStateOf<String?>(null) }
@@ -634,7 +665,9 @@ private fun AddressFormDialog(
                 Box {
                     OutlinedButton(
                         onClick = { showDivisionMenu = true },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("address_division_dropdown")
                     ) {
                         Text("Division: $division")
                     }
@@ -647,7 +680,32 @@ private fun AddressFormDialog(
                                 text = { Text(div) },
                                 onClick = {
                                     division = div
+                                    district = StoreConstants.districtsForDivision(div).firstOrNull().orEmpty()
                                     showDivisionMenu = false
+                                }
+                            )
+                        }
+                    }
+                }
+                Box {
+                    OutlinedButton(
+                        onClick = { showDistrictMenu = true },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("address_district_dropdown")
+                    ) {
+                        Text("District: ${district.ifBlank { "Select District" }}")
+                    }
+                    DropdownMenu(
+                        expanded = showDistrictMenu,
+                        onDismissRequest = { showDistrictMenu = false }
+                    ) {
+                        divisionDistricts.forEach { dist ->
+                            DropdownMenuItem(
+                                text = { Text(dist) },
+                                onClick = {
+                                    district = dist
+                                    showDistrictMenu = false
                                 }
                             )
                         }
@@ -656,7 +714,7 @@ private fun AddressFormDialog(
                 OutlinedTextField(
                     value = thana,
                     onValueChange = { thana = it; errorMsg = null },
-                    label = { Text("District / Thana *") },
+                    label = { Text("Thana / Area (e.g. Banani, Mirpur 10)") },
                     singleLine = true,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -682,7 +740,8 @@ private fun AddressFormDialog(
         confirmButton = {
             Button(
                 onClick = {
-                    onSave(label, recipientName, phone, division, thana, street, makeDefault) { msg ->
+                    val combinedDistThana = if (thana.isBlank()) district else "$district, ${thana.trim()}"
+                    onSave(label, recipientName, phone, division, combinedDistThana, street, makeDefault) { msg ->
                         errorMsg = msg
                     }
                 },
@@ -847,6 +906,7 @@ private fun AuthCardView(
     var phone by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var errorMsg by remember { mutableStateOf<String?>(null) }
+    var isSubmitting by remember { mutableStateOf(false) }
 
     LazyColumn(
         contentPadding = PaddingValues(20.dp),
@@ -936,13 +996,17 @@ private fun AuthCardView(
                     }
 
                     Button(
+                        enabled = !isSubmitting,
                         onClick = {
+                            isSubmitting = true
                             if (isRegisterMode) {
                                 onRegister(fullName, email, phone, password) { res ->
+                                    isSubmitting = false
                                     if (res.isFailure) errorMsg = res.exceptionOrNull()?.message
                                 }
                             } else {
                                 onLogin(email, password) { res ->
+                                    isSubmitting = false
                                     if (res.isFailure) errorMsg = res.exceptionOrNull()?.message
                                 }
                             }
@@ -952,7 +1016,14 @@ private fun AuthCardView(
                             .height(50.dp)
                             .testTag("auth_submit_button")
                     ) {
-                        Text(if (isRegisterMode) "Create Account" else "Sign In")
+                        Text(
+                            when {
+                                isSubmitting && isRegisterMode -> "Creating Account..."
+                                isSubmitting -> "Signing In..."
+                                isRegisterMode -> "Create Account"
+                                else -> "Sign In"
+                            }
+                        )
                     }
 
                     OutlinedButton(

@@ -2,6 +2,8 @@ package com.example.data.model
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import org.json.JSONObject
+import kotlin.math.roundToInt
 
 @Entity(tableName = "products")
 data class ProductEntity(
@@ -23,10 +25,71 @@ data class ProductEntity(
     val description: String,
     val specsSummary: String,
     val variantsCsv: String,
+    val variantColorsCsv: String = "",
+    val variantSizesCsv: String = "",
+    val variantPricesJson: String = "{}",
+    val freeDeliveryMinQty: Int = 0,
     val createdAt: Long = System.currentTimeMillis()
 ) {
     val variants: List<String>
         get() = variantsCsv.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+
+    val colors: List<String>
+        get() = variantColorsCsv.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+
+    val sizes: List<String>
+        get() = variantSizesCsv.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+
+    val variantPricesMap: Map<String, Long>
+        get() {
+            if (variantPricesJson.isBlank() || variantPricesJson == "{}") return emptyMap()
+            return try {
+                val obj = JSONObject(variantPricesJson)
+                buildMap {
+                    val keys = obj.keys()
+                    while (keys.hasNext()) {
+                        val k = keys.next()
+                        val v = obj.optDouble(k, 0.0).roundToInt().toLong()
+                        if (v > 0L) put(k, v)
+                    }
+                }
+            } catch (_: Throwable) {
+                emptyMap()
+            }
+        }
+
+    fun defaultVariantLabel(): String {
+        val c = colors.firstOrNull()
+        val s = sizes.firstOrNull()
+        return when {
+            c != null && s != null -> "$c / $s"
+            c != null -> c
+            s != null -> s
+            else -> variants.firstOrNull() ?: "Standard"
+        }
+    }
+
+    fun priceForVariant(variant: String): Long {
+        val map = variantPricesMap
+        if (map.isEmpty()) return priceBdt
+        val clean = variant.trim()
+        if (clean.isNotEmpty()) {
+            map[clean]?.let { return it }
+            map.entries.firstOrNull { it.key.equals(clean, ignoreCase = true) }?.let { return it.value }
+            val parts = clean.split("/").map { it.trim() }.filter { it.isNotEmpty() }
+            for (part in parts) {
+                map[part]?.let { return it }
+                map.entries.firstOrNull { it.key.equals(part, ignoreCase = true) }?.let { return it.value }
+            }
+        }
+        return priceBdt
+    }
+
+    fun discountPercentForPrice(unitPrice: Long): Int {
+        return if (originalPriceBdt > unitPrice && unitPrice > 0L) {
+            (((originalPriceBdt - unitPrice) * 100.0) / originalPriceBdt).roundToInt().coerceIn(0, 95)
+        } else 0
+    }
 }
 
 @Entity(tableName = "cart_items")
@@ -41,6 +104,7 @@ data class CartItemEntity(
     val imageUrl: String = "",
     val selectedVariant: String,
     val quantity: Int,
+    val freeDeliveryMinQty: Int = 0,
     val addedAt: Long = System.currentTimeMillis()
 )
 
@@ -73,7 +137,8 @@ data class AddressEntity(
     val division: String,
     val districtThana: String,
     val streetAddress: String,
-    val isDefault: Boolean = false
+    val isDefault: Boolean = false,
+    val remoteKey: String = ""
 ) {
     val formattedAddress: String
         get() = "$streetAddress, $districtThana, $division"
@@ -126,6 +191,17 @@ data class MerchantPaymentSettings(
     val autoVerifyEnabled: Boolean = true
 )
 
+data class DeliveryConfigSummary(
+    val freeDeliveryMinAmountBdt: Long = StoreConstants.FREE_DELIVERY_THRESHOLD_BDT,
+    val divisionRates: Map<String, Long> = emptyMap()
+) {
+    fun feeForDivision(division: String): Long {
+        val norm = division.trim().lowercase()
+        divisionRates.entries.firstOrNull { it.key.equals(norm, ignoreCase = true) }?.let { return it.value }
+        return StoreConstants.deliveryFeeForDivision(division)
+    }
+}
+
 data class AppNotificationItem(
     val id: String,
     val title: String,
@@ -155,6 +231,9 @@ object StoreConstants {
     const val GUEST_EMAIL = "guest@sprzonebd.local"
     const val FREE_DELIVERY_THRESHOLD_BDT = 3000L
     const val RTDB_BASE_URL = "https://e-commarcebd-default-rtdb.europe-west1.firebasedatabase.app/"
+    const val FIREBASE_AUTH_BASE_URL = "https://identitytoolkit.googleapis.com/"
+    const val FIREBASE_TOKEN_BASE_URL = "https://securetoken.googleapis.com/"
+    const val FIREBASE_WEB_API_KEY = "AIzaSyBmogqpXzirZC-aUHZrFMwutSJ5fmbyDXk"
 
     fun deliveryFeeForDivision(division: String): Long {
         return if (division.trim().equals("Dhaka", ignoreCase = true)) 60L else 120L
@@ -184,6 +263,47 @@ object StoreConstants {
         "Rangpur",
         "Mymensingh"
     )
+
+    val BD_DISTRICTS_BY_DIVISION: Map<String, List<String>> = mapOf(
+        "Dhaka" to listOf(
+            "Dhaka", "Faridpur", "Gazipur", "Gopalganj", "Kishoreganj", "Madaripur",
+            "Manikganj", "Munshiganj", "Narayanganj", "Narsingdi", "Rajbari", "Shariatpur", "Tangail"
+        ),
+        "Chattogram" to listOf(
+            "Bandarban", "Brahmanbaria", "Chandpur", "Chattogram", "Cox's Bazar", "Cumilla",
+            "Feni", "Khagrachhari", "Lakshmipur", "Noakhali", "Rangamati"
+        ),
+        "Sylhet" to listOf(
+            "Habiganj", "Moulvibazar", "Sunamganj", "Sylhet"
+        ),
+        "Rajshahi" to listOf(
+            "Bogura", "Chapainawabganj", "Joypurhat", "Naogaon", "Natore", "Pabna", "Rajshahi", "Sirajganj"
+        ),
+        "Khulna" to listOf(
+            "Bagerhat", "Chuadanga", "Jashore", "Jhenaidah", "Khulna",
+            "Kushtia", "Magura", "Meherpur", "Narail", "Satkhira"
+        ),
+        "Barishal" to listOf(
+            "Barguna", "Barishal", "Bhola", "Jhalokati", "Patuakhali", "Pirojpur"
+        ),
+        "Rangpur" to listOf(
+            "Dinajpur", "Gaibandha", "Kurigram", "Lalmonirhat", "Nilphamari", "Panchagarh", "Rangpur", "Thakurgaon"
+        ),
+        "Mymensingh" to listOf(
+            "Jamalpur", "Mymensingh", "Netrokona", "Sherpur"
+        )
+    )
+
+    fun districtsForDivision(division: String): List<String> {
+        val matchKey = BD_DISTRICTS_BY_DIVISION.keys.firstOrNull {
+            it.equals(division.trim(), ignoreCase = true)
+        }
+        return if (matchKey != null) {
+            BD_DISTRICTS_BY_DIVISION[matchKey].orEmpty()
+        } else {
+            BD_DISTRICTS_BY_DIVISION.values.flatten()
+        }
+    }
 
     /**
      * Order cancellation is strictly locked once an order reaches Confirmed or any later stage.

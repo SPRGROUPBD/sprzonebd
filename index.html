@@ -651,6 +651,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
                 </div>
               </div>
               <span class="p-badge hidden" id="ppDiscBadge" style="left:auto;right:8px"></span>
+              <span class="p-badge hidden" id="ppFreeShipBadge" style="left:8px;top:auto;bottom:10px;background:var(--emerald)">Free Delivery</span>
               <img id="ppMainImg" alt="Product Preview" onerror="this.src='assets/favicon.svg'">
             </div>
             <div class="pp-thumb-bar">
@@ -703,7 +704,23 @@ button:disabled{opacity:.5;cursor:not-allowed}
               </div>
             </div>
 
-            <div class="pp-prop-row">
+            <div class="pp-prop-row hidden" id="ppColorRow">
+              <span class="pp-prop-label">Colour</span>
+              <div style="flex:1;min-width:0">
+                <div id="ppColorLabel" style="font-size:12.5px;color:#212121;font-weight:500"></div>
+                <div class="pd-var-row" id="ppColorChips"></div>
+              </div>
+            </div>
+
+            <div class="pp-prop-row hidden" id="ppSizeRow">
+              <span class="pp-prop-label">Size</span>
+              <div style="flex:1;min-width:0">
+                <div id="ppSizeLabel" style="font-size:12.5px;color:#212121;font-weight:500"></div>
+                <div class="pd-var-row" id="ppSizeChips"></div>
+              </div>
+            </div>
+
+            <div class="pp-prop-row" id="ppVariantRow">
               <span class="pp-prop-label">Option</span>
               <div style="flex:1;min-width:0">
                 <div id="ppVariantLabel" style="font-size:12.5px;color:#212121;font-weight:500">Standard</div>
@@ -920,9 +937,13 @@ button:disabled{opacity:.5;cursor:not-allowed}
           </div>
         </div>
         <div class="form-row">
-          <div class="field"><label>District / Thana *</label><input id="addrThana" required placeholder="e.g. Banani, Dhaka"></div>
-          <div class="field"><label>Street / House / Area *</label><input id="addrStreet" required placeholder="House, Road, Block"></div>
+          <div class="field">
+            <label>District *</label>
+            <select id="addrDistrict" required></select>
+          </div>
+          <div class="field"><label>Thana / Area *</label><input id="addrThana" required placeholder="e.g. Banani, Mirpur 10"></div>
         </div>
+        <div class="field"><label>Street / House / Area *</label><input id="addrStreet" required placeholder="House, Road, Block"></div>
         <label style="display:flex;align-items:center;gap:6px;font-weight:600;margin-bottom:10px">
           <input type="checkbox" id="addrDefault" style="width:auto"> Set as default shipping address
         </label>
@@ -971,14 +992,20 @@ button:disabled{opacity:.5;cursor:not-allowed}
         <div class="field"><label>Full Name *</label><input id="cName" required></div>
         <div class="field"><label>Receiver Phone (01XXXXXXXXX) *</label><input id="cPhone" required pattern="01[3-9][0-9]{8}" placeholder="017XXXXXXXX"></div>
       </div>
-      <div class="field">
-        <label>Division *</label>
-        <select id="cDivision">
-          <option>Dhaka</option><option>Chattogram</option><option>Sylhet</option><option>Rajshahi</option>
-          <option>Khulna</option><option>Barishal</option><option>Rangpur</option><option>Mymensingh</option>
-        </select>
+      <div class="form-row">
+        <div class="field">
+          <label>Division *</label>
+          <select id="cDivision">
+            <option>Dhaka</option><option>Chattogram</option><option>Sylhet</option><option>Rajshahi</option>
+            <option>Khulna</option><option>Barishal</option><option>Rangpur</option><option>Mymensingh</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>District *</label>
+          <select id="cDistrict" required></select>
+        </div>
       </div>
-      <div class="field"><label>Full Delivery Address *</label><textarea id="cAddress" required rows="2" placeholder="House, Road, Block, Thana, District"></textarea></div>
+      <div class="field"><label>Full Delivery Address *</label><textarea id="cAddress" required rows="2" placeholder="House, Road, Block, Thana"></textarea></div>
 
       <div class="cod-box">
         <div style="font-weight:800;color:var(--emerald-dark)">💵 Payment Method: Cash on Delivery (COD)</div>
@@ -1031,8 +1058,12 @@ button:disabled{opacity:.5;cursor:not-allowed}
         </select>
       </div>
       <div class="field">
+        <label>District *</label>
+        <select id="dzDistrict" required></select>
+      </div>
+      <div class="field">
         <label>Area / Road / Thana (Optional)</label>
-        <input id="dzArea" placeholder="e.g. Mirpur 10, Dhaka or Agrabad, Chattogram">
+        <input id="dzArea" placeholder="e.g. Mirpur 10, Banani, Agrabad">
       </div>
       <button type="submit" style="width:100%">Update Delivery Location</button>
     </form>
@@ -1072,6 +1103,16 @@ const DEFAULT_ZONES = [
   { key: "rangpur", name: "Rangpur", rate: 120, eta: "2-4 Days" },
   { key: "mymensingh", name: "Mymensingh", rate: 120, eta: "2-4 Days" }
 ];
+const BD_DISTRICTS_BY_DIVISION = {
+  Dhaka: ["Dhaka", "Faridpur", "Gazipur", "Gopalganj", "Kishoreganj", "Madaripur", "Manikganj", "Munshiganj", "Narayanganj", "Narsingdi", "Rajbari", "Shariatpur", "Tangail"],
+  Chattogram: ["Bandarban", "Brahmanbaria", "Chandpur", "Chattogram", "Cox's Bazar", "Cumilla", "Feni", "Khagrachhari", "Lakshmipur", "Noakhali", "Rangamati"],
+  Sylhet: ["Habiganj", "Moulvibazar", "Sunamganj", "Sylhet"],
+  Rajshahi: ["Bogura", "Chapainawabganj", "Joypurhat", "Naogaon", "Natore", "Pabna", "Rajshahi", "Sirajganj"],
+  Khulna: ["Bagerhat", "Chuadanga", "Jashore", "Jhenaidah", "Khulna", "Kushtia", "Magura", "Meherpur", "Narail", "Satkhira"],
+  Barishal: ["Barguna", "Barishal", "Bhola", "Jhalokati", "Patuakhali", "Pirojpur"],
+  Rangpur: ["Dinajpur", "Gaibandha", "Kurigram", "Lalmonirhat", "Nilphamari", "Panchagarh", "Rangpur", "Thakurgaon"],
+  Mymensingh: ["Jamalpur", "Mymensingh", "Netrokona", "Sherpur"]
+};
 const DEFAULT_STORE_SETTINGS = {
   storeName: "SPR ZONE BD",
   hotline: "09678-123456",
@@ -1113,6 +1154,7 @@ let appliedPromoCode = "";
 let registerMode = false;
 let unsubscribeCustomer = null;
 let previewDeliveryDivision = "";
+let previewDeliveryDistrict = "";
 let previewDeliveryArea = "";
 let previewSelectedQty = 1;
 
@@ -1126,11 +1168,26 @@ const parseNum = (v) => {
 const money = (n) => "৳" + parseNum(n).toLocaleString("en-BD");
 const safe = (s = "") => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
+function resolveProductVariantPrice(p, variant = "") {
+  if (!p) return 0;
+  const base = parseNum(p.price);
+  const vp = p.variantPrices;
+  if (vp && typeof vp === "object") {
+    const clean = String(variant || "").trim();
+    if (clean && parseNum(vp[clean]) > 0) return parseNum(vp[clean]);
+    const parts = clean.split("/").map((s) => s.trim()).filter(Boolean);
+    for (const part of parts) {
+      if (parseNum(vp[part]) > 0) return parseNum(vp[part]);
+    }
+  }
+  return base;
+}
+
 function healCartWithProducts() {
   let changed = false;
   cart = (Array.isArray(cart) ? cart : []).map((x) => {
     const live = products[x.id];
-    const pPrice = live ? parseNum(live.price) : 0;
+    const pPrice = live ? resolveProductVariantPrice(live, x.variant) : 0;
     const curPrice = parseNum(x.price);
     const fixedPrice = live && pPrice > 0 ? pPrice : curPrice;
     const fixedQty = Math.max(1, Math.round(parseNum(x.qty) || 1));
@@ -1208,6 +1265,33 @@ function setSelectValueSafely(selectEl, desired) {
   return selectEl.value;
 }
 
+function getDistrictsForDivision(division = "Dhaka") {
+  const target = String(division || "Dhaka").trim().toLowerCase();
+  const key = Object.keys(BD_DISTRICTS_BY_DIVISION).find((k) => k.toLowerCase() === target);
+  if (key) return BD_DISTRICTS_BY_DIVISION[key];
+  return Object.values(BD_DISTRICTS_BY_DIVISION).flat();
+}
+
+function populateDistrictSelect(divSelectId, distSelectId, preferredDistrict = "") {
+  const divVal = $(divSelectId)?.value || "Dhaka";
+  const distEl = $(distSelectId);
+  if (!distEl) return;
+  const list = getDistrictsForDivision(divVal);
+  const current = preferredDistrict || distEl.value;
+  distEl.innerHTML = list.map((d) => `<option value="${safe(d)}">${safe(d)}</option>`).join("");
+  if (current) {
+    const match = list.find((d) => d.toLowerCase() === String(current).trim().toLowerCase());
+    if (match) distEl.value = match;
+    else if (![...distEl.options].some((o) => o.value === current)) {
+      const opt = document.createElement("option");
+      opt.value = current;
+      opt.textContent = current;
+      distEl.appendChild(opt);
+      distEl.value = current;
+    }
+  }
+}
+
 function populateZoneSelectors() {
   const zones = getZonesList();
   const buildOpts = (selectedVal, withRate = true) => zones.map((z) =>
@@ -1216,14 +1300,17 @@ function populateZoneSelectors() {
   if ($("dzDivision")) {
     const curDz = $("dzDivision").value || previewDeliveryDivision || zones[0].name;
     $("dzDivision").innerHTML = buildOpts(curDz, true);
+    populateDistrictSelect("dzDivision", "dzDistrict");
   }
   if ($("cDivision")) {
     const curC = $("cDivision").value || zones[0].name;
     $("cDivision").innerHTML = buildOpts(curC, true);
+    populateDistrictSelect("cDivision", "cDistrict");
   }
   if ($("addrDivision")) {
     const curA = $("addrDivision").value || zones[0].name;
     $("addrDivision").innerHTML = buildOpts(curA, false);
+    populateDistrictSelect("addrDivision", "addrDistrict");
   }
 }
 
@@ -1557,7 +1644,7 @@ function productCardHtml(p) {
   return `<article class="product-card">
     <div class="p-img-wrap" data-open="${safe(p.id)}">
       ${disc > 0 ? `<span class="p-badge">-${disc}%</span>` : ""}
-      ${freeMinQ > 0 ? `<span class="p-badge" style="left:auto;right:8px;background:var(--emerald)">${freeMinQ === 1 ? "Free Delivery" : `Free (${freeMinQ}+ qty)`}</span>` : ""}
+      ${freeMinQ > 0 ? `<span class="p-badge" style="left:auto;right:8px;background:var(--emerald)">${freeMinQ === 1 ? "Free Delivery" : `Free Delivery (${freeMinQ}+)`}</span>` : ""}
       <img src="${safe(imgSrc)}" alt="${safe(p.name)}" onerror="this.src='assets/favicon.svg'">
     </div>
     <div class="p-body">
@@ -1662,15 +1749,16 @@ window.resetStoreFilters = () => {
   renderProducts();
 };
 
-function refreshPreviewDeliveryUI(p) {
+function refreshPreviewDeliveryUI(p, unitPriceOverride = null) {
   const savedList = Object.values(userAddresses || {});
   const savedDef = savedList.find((a) => a && a.isDefault) || savedList[0];
   const activeDiv = previewDeliveryDivision || (savedDef ? savedDef.division : "");
-  const activeArea = previewDeliveryArea || (savedDef ? `${savedDef.street}, ${savedDef.thana}, ${savedDef.division}` : "");
+  const activeDist = previewDeliveryDistrict || (savedDef ? (savedDef.district || "") : "");
+  const activeArea = previewDeliveryArea || (savedDef ? `${savedDef.street}, ${savedDef.thana}${savedDef.district ? `, ${savedDef.district}` : ""}, ${savedDef.division}` : "");
 
-  $("ppDeliveryAddrText").textContent = activeArea || (activeDiv ? `${activeDiv}, Bangladesh` : "Select your delivery district");
+  $("ppDeliveryAddrText").textContent = activeArea || ([activeDist, activeDiv, "Bangladesh"].filter(Boolean).join(", ")) || "Select your delivery district";
 
-  const unitPrice = parseNum(p?.price || 0);
+  const unitPrice = unitPriceOverride !== null ? parseNum(unitPriceOverride) : parseNum(p?.price || 0);
   const qty = Math.max(1, previewSelectedQty);
   const lineTotal = unitPrice * qty;
   const freeQtyReq = Math.max(0, parseNum(p?.freeDeliveryMinQty || 0));
@@ -1746,6 +1834,10 @@ function openProductPreview(id, pushUrl = true) {
   $("ppDiscInline").textContent = `-${disc}%`;
   $("ppDiscInline").classList.toggle("hidden", disc <= 0);
 
+  const freeMinQ = Math.max(0, parseNum(p.freeDeliveryMinQty || 0));
+  $("ppFreeShipBadge").textContent = freeMinQ === 1 ? "Free Delivery" : `Free Delivery (${freeMinQ}+ qty)`;
+  $("ppFreeShipBadge").classList.toggle("hidden", freeMinQ <= 0);
+
   $("ppSpecs").textContent = p.specs || "100% Original & Quality Checked";
   $("ppDesc").textContent = p.description || "Order online from SPR ZONE BD with fast Cash on Delivery anywhere in Bangladesh.";
   $("ppWarrantyNote").textContent = p.specs || "100% Authentic Product Warranty";
@@ -1777,24 +1869,87 @@ function openProductPreview(id, pushUrl = true) {
   };
   showGalleryIndex(0);
 
-  // Variant selector with product thumbnail + corner checkmark
+  // Structured Colour + Size selectors with variant-wise BDT pricing
+  const colors = String(p.variantColors || "").split(",").map((s) => s.trim()).filter(Boolean);
+  const sizes = String(p.variantSizes || "").split(",").map((s) => s.trim()).filter(Boolean);
   const vars = String(p.variants || "Standard").split(",").map((s) => s.trim()).filter(Boolean);
-  let selectedVar = vars[0] || "Standard";
+  let selectedColor = colors[0] || "";
+  let selectedSize = sizes[0] || "";
+  let selectedVar = (colors.length || sizes.length)
+    ? [selectedColor, selectedSize].filter(Boolean).join(" / ")
+    : (vars[0] || "Standard");
+  let activeUnitPrice = resolveProductVariantPrice(p, selectedVar);
   const thumbPreviewUrl = uniqImgs[0] || "assets/favicon.svg";
+
+  const syncVariantPriceUI = () => {
+    if (colors.length || sizes.length) {
+      selectedVar = [selectedColor, selectedSize].filter(Boolean).join(" / ") || "Standard";
+    }
+    activeUnitPrice = resolveProductVariantPrice(p, selectedVar);
+    const oldP = parseNum(p.oldPrice || 0);
+    const vDisc = oldP > activeUnitPrice ? Math.round(((oldP - activeUnitPrice) / oldP) * 100) : 0;
+    $("ppPrice").textContent = `৳ ${parseNum(activeUnitPrice).toLocaleString("en-BD")}`;
+    $("ppOldPrice").textContent = oldP > activeUnitPrice ? `৳ ${oldP.toLocaleString("en-BD")}` : "";
+    $("ppPriceSubRow").classList.toggle("hidden", !(oldP > activeUnitPrice));
+    $("ppDiscBadge").textContent = `-${vDisc}%`;
+    $("ppDiscBadge").classList.toggle("hidden", vDisc <= 0);
+    $("ppDiscInline").textContent = `-${vDisc}%`;
+    $("ppDiscInline").classList.toggle("hidden", vDisc <= 0);
+    refreshPreviewDeliveryUI(p, activeUnitPrice);
+  };
+
   const renderVarChips = () => {
-    $("ppVariantLabel").textContent = selectedVar;
-    $("ppVariantChips").innerHTML = vars.map((v, idx) => {
-      const chipImg = uniqImgs[idx] || thumbPreviewUrl;
-      const isAct = v === selectedVar;
-      return `<button type="button" class="pd-var-chip ${isAct ? "active" : ""}" data-var="${safe(v)}">
-        <img class="pd-var-thumb" src="${safe(chipImg)}" alt="" onerror="this.src='assets/favicon.svg'">
-        <span>${safe(v)}</span>
-        ${isAct ? `<span class="pd-var-check">✓</span>` : ""}
-      </button>`;
-    }).join("");
-    $("ppVariantChips").querySelectorAll("[data-var]").forEach((b) => {
-      b.onclick = () => { selectedVar = b.dataset.var; renderVarChips(); };
-    });
+    if (colors.length || sizes.length) {
+      $("ppVariantRow").classList.add("hidden");
+      $("ppColorRow").classList.toggle("hidden", !colors.length);
+      $("ppSizeRow").classList.toggle("hidden", !sizes.length);
+      if (colors.length) {
+        $("ppColorLabel").textContent = selectedColor;
+        $("ppColorChips").innerHTML = colors.map((c, idx) => {
+          const chipImg = uniqImgs[idx] || thumbPreviewUrl;
+          const isAct = c === selectedColor;
+          return `<button type="button" class="pd-var-chip ${isAct ? "active" : ""}" data-color="${safe(c)}">
+            <img class="pd-var-thumb" src="${safe(chipImg)}" alt="" onerror="this.src='assets/favicon.svg'">
+            <span>${safe(c)}</span>
+            ${isAct ? `<span class="pd-var-check">✓</span>` : ""}
+          </button>`;
+        }).join("");
+        $("ppColorChips").querySelectorAll("[data-color]").forEach((b) => {
+          b.onclick = () => { selectedColor = b.dataset.color; renderVarChips(); };
+        });
+      }
+      if (sizes.length) {
+        $("ppSizeLabel").textContent = selectedSize;
+        $("ppSizeChips").innerHTML = sizes.map((sz) => {
+          const isAct = sz === selectedSize;
+          return `<button type="button" class="pd-var-chip ${isAct ? "active" : ""}" data-size="${safe(sz)}">
+            <span>${safe(sz)}</span>
+            ${isAct ? `<span class="pd-var-check">✓</span>` : ""}
+          </button>`;
+        }).join("");
+        $("ppSizeChips").querySelectorAll("[data-size]").forEach((b) => {
+          b.onclick = () => { selectedSize = b.dataset.size; renderVarChips(); };
+        });
+      }
+    } else {
+      $("ppColorRow").classList.add("hidden");
+      $("ppSizeRow").classList.add("hidden");
+      $("ppVariantRow").classList.remove("hidden");
+      $("ppVariantLabel").textContent = selectedVar;
+      $("ppVariantChips").innerHTML = vars.map((v, idx) => {
+        const chipImg = uniqImgs[idx] || thumbPreviewUrl;
+        const isAct = v === selectedVar;
+        return `<button type="button" class="pd-var-chip ${isAct ? "active" : ""}" data-var="${safe(v)}">
+          <img class="pd-var-thumb" src="${safe(chipImg)}" alt="" onerror="this.src='assets/favicon.svg'">
+          <span>${safe(v)}</span>
+          ${isAct ? `<span class="pd-var-check">✓</span>` : ""}
+        </button>`;
+      }).join("");
+      $("ppVariantChips").querySelectorAll("[data-var]").forEach((b) => {
+        b.onclick = () => { selectedVar = b.dataset.var; renderVarChips(); };
+      });
+    }
+    syncVariantPriceUI();
   };
   renderVarChips();
 
@@ -1808,14 +1963,14 @@ function openProductPreview(id, pushUrl = true) {
     if (previewSelectedQty > 1) {
       previewSelectedQty--;
       $("ppQtyVal").textContent = previewSelectedQty;
-      refreshPreviewDeliveryUI(p);
+      refreshPreviewDeliveryUI(p, activeUnitPrice);
     }
   };
   $("ppQtyPlus").onclick = () => {
     if (previewSelectedQty < maxQty) {
       previewSelectedQty++;
       $("ppQtyVal").textContent = previewSelectedQty;
-      refreshPreviewDeliveryUI(p);
+      refreshPreviewDeliveryUI(p, activeUnitPrice);
     } else {
       toast(`Maximum available stock reached (${maxQty} units).`);
     }
@@ -1848,16 +2003,17 @@ function openProductPreview(id, pushUrl = true) {
 
   $("ppChangeZoneBtn").onclick = () => {
     setSelectValueSafely($("dzDivision"), previewDeliveryDivision || getZonesList()[0]?.name || "Dhaka");
+    populateDistrictSelect("dzDivision", "dzDistrict", previewDeliveryDistrict || "");
     $("dzArea").value = previewDeliveryArea || "";
     openModal("deliveryZoneModal");
   };
-  refreshPreviewDeliveryUI(p);
+  refreshPreviewDeliveryUI(p, activeUnitPrice);
 
   $("ppAddBtn").disabled = stock <= 0;
   $("ppBuyBtn").disabled = stock <= 0;
-  $("ppAddBtn").onclick = () => addToCart(id, selectedVar, previewSelectedQty);
+  $("ppAddBtn").onclick = () => addToCart(id, selectedVar, previewSelectedQty, activeUnitPrice);
   $("ppBuyBtn").onclick = () => {
-    addToCart(id, selectedVar, previewSelectedQty);
+    addToCart(id, selectedVar, previewSelectedQty, activeUnitPrice);
     openCheckout();
   };
 
@@ -1874,13 +2030,16 @@ function openProductPreview(id, pushUrl = true) {
   }
 }
 
-function addToCart(id, variant = "", qty = 1) {
+function addToCart(id, variant = "", qty = 1, unitPriceOverride = null) {
   const p = products[id];
   const stock = parseNum(p?.stock);
   if (!p || stock <= 0) return toast("Product is out of stock");
-  const unitPrice = parseNum(p.price);
+  const cols = String(p.variantColors || "").split(",").map((s) => s.trim()).filter(Boolean);
+  const szs = String(p.variantSizes || "").split(",").map((s) => s.trim()).filter(Boolean);
+  const defaultStructured = [cols[0], szs[0]].filter(Boolean).join(" / ");
+  const chosen = variant || defaultStructured || String(p.variants || "Standard").split(",")[0].trim() || "Standard";
+  const unitPrice = unitPriceOverride !== null ? parseNum(unitPriceOverride) : resolveProductVariantPrice(p, chosen);
   const freeDeliveryMinQty = Math.max(0, parseNum(p.freeDeliveryMinQty || 0));
-  const chosen = variant || String(p.variants || "Standard").split(",")[0].trim() || "Standard";
   const addQty = Math.max(1, Math.round(parseNum(qty) || 1));
   const found = cart.find((x) => x.id === id && x.variant === chosen);
   if (found) {
@@ -1930,14 +2089,15 @@ function renderCartDrawer() {
   }
 
   const t = computeTotals();
+  const cartSubtotalAfterPromo = Math.max(0, t.subtotal - t.discount);
   $("cartSummaryBox").innerHTML = `
     <div style="display:flex;justify-content:space-between"><span>Subtotal</span><b>${money(t.subtotal)}</b></div>
     ${t.discount > 0 ? `<div style="display:flex;justify-content:space-between;color:var(--emerald)"><span>Promo (${safe(t.promo.code)})</span><b>-${money(t.discount)}</b></div>` : ""}
-    <div style="display:flex;justify-content:space-between">
-      <span>Courier / Delivery ${t.freeReason ? `(${safe(t.freeReason)})` : "(Est.)"}</span>
-      <b style="color:${t.deliveryFee === 0 ? "var(--emerald-dark)" : "inherit"}">${t.deliveryFee === 0 ? "FREE (৳0)" : money(t.deliveryFee)}</b>
+    <div style="display:flex;justify-content:space-between;color:var(--muted);font-size:12.5px">
+      <span>Delivery Fee</span>
+      <span>${t.isFreeDelivery && cart.length ? "FREE (৳0)" : "Calculated at Checkout"}</span>
     </div>
-    <div style="display:flex;justify-content:space-between;font-size:16px;padding-top:4px;border-top:1px solid var(--line)"><b>Grand Total (COD)</b><b style="color:var(--crimson)">${money(t.total)}</b></div>
+    <div style="display:flex;justify-content:space-between;font-size:16px;padding-top:4px;border-top:1px solid var(--line)"><b>Estimated Total</b><b style="color:var(--crimson)">${money(cartSubtotalAfterPromo)}</b></div>
   `;
 }
 
@@ -1956,7 +2116,7 @@ function renderAccountModalData() {
         <div>
           <div style="font-weight:700">${safe(a.recipientName)} <span class="badge ${a.isDefault ? "green" : "blue"}">${safe(a.label || "Home")}${a.isDefault ? " • Default" : ""}</span></div>
           <div style="font-size:12.5px;color:var(--muted)">${safe(a.phone)}</div>
-          <div style="font-size:13px">${safe(a.street)}, ${safe(a.thana)}, ${safe(a.division)}</div>
+          <div style="font-size:13px">${safe(a.street)}, ${safe(a.thana)}${a.district ? `, ${safe(a.district)}` : ""}, ${safe(a.division)}</div>
         </div>
         <div style="display:flex;gap:6px;flex-wrap:wrap">
           ${!a.isDefault ? `<button type="button" class="outline sm" data-def-addr="${safe(id)}">Default</button>` : ""}
@@ -1979,6 +2139,7 @@ function renderAccountModalData() {
       $("addrRecipient").value = a.recipientName || "";
       $("addrPhone").value = a.phone || "";
       setSelectValueSafely($("addrDivision"), a.division || "Dhaka");
+      populateDistrictSelect("addrDivision", "addrDistrict", a.district || "");
       $("addrThana").value = a.thana || "";
       $("addrStreet").value = a.street || "";
       $("addrDefault").checked = !!a.isDefault;
@@ -2012,18 +2173,21 @@ function resetAddressForm() {
   $("addrFormHeading").textContent = "Add New Address";
   $("addrSaveBtn").textContent = "➕ Save Address";
   $("addrLabel").value = "Home";
+  populateDistrictSelect("addrDivision", "addrDistrict");
 }
 
 /* ---------- Cash on Delivery Checkout ---------- */
 function syncCheckoutTotalsUI() {
   healCartWithProducts();
   const division = $("cDivision").value || getZonesList()[0]?.name || "Dhaka";
+  const district = $("cDistrict")?.value || "";
   const t = computeTotals(division);
+  const placeLabel = district && district !== division ? `${district}, ${division}` : division;
   $("checkoutTotals").innerHTML = `
     <div style="display:flex;justify-content:space-between"><span>Subtotal (${cart.reduce((s, x) => s + Math.max(1, parseNum(x.qty) || 1), 0)} items)</span><b>${money(t.subtotal)}</b></div>
     ${t.discount > 0 ? `<div style="display:flex;justify-content:space-between;color:var(--emerald)"><span>Discount</span><b>-${money(t.discount)}</b></div>` : ""}
     <div style="display:flex;justify-content:space-between">
-      <span>Courier Rate (${safe(division)}${t.freeReason ? ` · ${safe(t.freeReason)}` : ""})</span>
+      <span>Delivery Fee (${safe(placeLabel)}${t.freeReason ? ` · ${safe(t.freeReason)}` : ""})</span>
       <b style="color:${t.deliveryFee === 0 ? "var(--emerald-dark)" : "inherit"}">${t.deliveryFee === 0 ? "FREE (৳0)" : money(t.deliveryFee)}</b>
     </div>
     <div style="display:flex;justify-content:space-between;font-size:16px;margin-top:4px;padding-top:4px;border-top:1px solid var(--line)"><b>Grand Total (Cash on Delivery)</b><b style="color:var(--crimson)">${money(t.total)}</b></div>
@@ -2038,13 +2202,14 @@ function openCheckout() {
   if (addrEntries.length) {
     wrap.classList.remove("hidden");
     $("checkoutSavedAddr").innerHTML = `<option value="">-- Enter custom address --</option>` +
-      addrEntries.map(([id, a]) => `<option value="${safe(id)}" ${a.isDefault ? "selected" : ""}>${safe(a.label || "Address")}: ${safe(a.recipientName)} (${safe(a.division)})</option>`).join("");
+      addrEntries.map(([id, a]) => `<option value="${safe(id)}" ${a.isDefault ? "selected" : ""}>${safe(a.label || "Address")}: ${safe(a.recipientName)} (${safe(a.district || a.division)})</option>`).join("");
     const def = addrEntries.find(([_, a]) => a.isDefault) || addrEntries[0];
     if (def) {
       $("cName").value = def[1].recipientName || "";
       $("cPhone").value = def[1].phone || "";
       setSelectValueSafely($("cDivision"), def[1].division || "Dhaka");
-      $("cAddress").value = `${def[1].street}, ${def[1].thana}, ${def[1].division}`;
+      populateDistrictSelect("cDivision", "cDistrict", def[1].district || "");
+      $("cAddress").value = `${def[1].street}, ${def[1].thana}`;
     }
   } else {
     wrap.classList.add("hidden");
@@ -2052,7 +2217,10 @@ function openCheckout() {
       $("cName").value = $("cName").value || userProfile?.name || currentUser.displayName || "";
       $("cPhone").value = $("cPhone").value || userProfile?.phone || "";
     }
-    if (previewDeliveryDivision) setSelectValueSafely($("cDivision"), previewDeliveryDivision);
+    if (previewDeliveryDivision) {
+      setSelectValueSafely($("cDivision"), previewDeliveryDivision);
+    }
+    populateDistrictSelect("cDivision", "cDistrict", previewDeliveryDistrict || "");
     if (previewDeliveryArea && !$("cAddress").value.trim()) $("cAddress").value = previewDeliveryArea;
   }
   syncCheckoutTotalsUI();
@@ -2227,7 +2395,23 @@ onAuthStateChanged(auth, async (user) => {
     $("accountBtn").textContent = `👤 ${user.displayName || user.email.split("@")[0]}`;
     $("adminPortalLink").classList.toggle("hidden", !isAdmin);
 
-    unsubscribeCustomer = onValue(ref(db, "customers/" + user.uid), (snap) => {
+    unsubscribeCustomer = onValue(ref(db, "customers/" + user.uid), async (snap) => {
+      if (!snap.exists()) {
+        try {
+          const seed = {
+            name: user.displayName || (user.email ? user.email.split("@")[0] : "Customer"),
+            email: user.email || "",
+            phone: "",
+            createdAt: Date.now(),
+            updatedAt: Date.now()
+          };
+          await set(ref(db, "customers/" + user.uid), seed);
+          userProfile = seed;
+          userAddresses = {};
+          renderAccountModalData();
+          return;
+        } catch (_) {}
+      }
       const val = snap.val() || {};
       userProfile = val;
       userAddresses = val.addresses || {};
@@ -2246,6 +2430,7 @@ onAuthStateChanged(auth, async (user) => {
 /* ---------- Event Listeners ---------- */
 $("year").textContent = new Date().getFullYear();
 saveCart();
+populateZoneSelectors();
 renderCategories();
 renderProducts();
 subscribeStoreData();
@@ -2257,9 +2442,12 @@ window.addEventListener("popstate", () => {
   else closeProductPreview(false);
 });
 
+$("dzDivision").onchange = () => populateDistrictSelect("dzDivision", "dzDistrict");
+$("addrDivision").onchange = () => populateDistrictSelect("addrDivision", "addrDistrict");
 $("deliveryZoneForm").onsubmit = (e) => {
   e.preventDefault();
   previewDeliveryDivision = $("dzDivision").value;
+  previewDeliveryDistrict = $("dzDistrict").value || "";
   previewDeliveryArea = $("dzArea").value.trim();
   closeModal("deliveryZoneModal");
   if (activePreviewId && products[activePreviewId]) {
@@ -2312,7 +2500,11 @@ $("applyPromoBtn").onclick = () => {
   renderCartDrawer();
 };
 $("proceedCheckoutBtn").onclick = () => { $("cartDrawer").classList.remove("show"); openCheckout(); };
-$("cDivision").onchange = syncCheckoutTotalsUI;
+$("cDivision").onchange = () => {
+  populateDistrictSelect("cDivision", "cDistrict");
+  syncCheckoutTotalsUI();
+};
+$("cDistrict").onchange = syncCheckoutTotalsUI;
 $("checkoutSavedAddr").onchange = () => {
   const id = $("checkoutSavedAddr").value;
   const a = userAddresses[id];
@@ -2320,7 +2512,8 @@ $("checkoutSavedAddr").onchange = () => {
     $("cName").value = a.recipientName || "";
     $("cPhone").value = a.phone || "";
     setSelectValueSafely($("cDivision"), a.division || "Dhaka");
-    $("cAddress").value = `${a.street}, ${a.thana}, ${a.division}`;
+    populateDistrictSelect("cDivision", "cDistrict", a.district || "");
+    $("cAddress").value = `${a.street}, ${a.thana}`;
     syncCheckoutTotalsUI();
   }
 };
@@ -2331,7 +2524,10 @@ $("checkoutForm").onsubmit = async (e) => {
   const phoneNorm = normalizeBdPhone($("cPhone").value);
   if (!isValidBdPhone(phoneNorm)) return toast("Enter valid 11-digit BD mobile phone (01XXXXXXXXX)");
   const division = $("cDivision").value;
+  const district = $("cDistrict").value || "";
   const totals = computeTotals(division);
+  const rawAddr = $("cAddress").value.trim();
+  const fullAddr = [rawAddr, district, division].filter(Boolean).join(", ");
 
   const d = new Date();
   const datePart = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`;
@@ -2344,7 +2540,8 @@ $("checkoutForm").onsubmit = async (e) => {
     customer: {
       name: $("cName").value.trim(),
       phone: phoneNorm,
-      address: $("cAddress").value.trim(),
+      address: fullAddr,
+      district,
       division
     },
     items: cart.map((x) => ({ ...x })),
@@ -2427,15 +2624,19 @@ $("profileForm").onsubmit = async (e) => {
   const phone = $("profPhone").value.trim();
   if (phone && !isValidBdPhone(phone)) return toast("Enter a valid 11-digit BD number (01XXXXXXXXX)");
   const normPhone = phone ? normalizeBdPhone(phone) : "";
-  await update(ref(db, "customers/" + currentUser.uid), {
-    name,
-    email: currentUser.email,
-    phone: normPhone,
-    bio: $("profBio").value.trim(),
-    updatedAt: Date.now()
-  });
-  try { await updateProfile(currentUser, { displayName: name }); } catch (_) {}
-  toast("Profile saved!");
+  try {
+    await update(ref(db, "customers/" + currentUser.uid), {
+      name,
+      email: currentUser.email,
+      phone: normPhone,
+      bio: $("profBio").value.trim(),
+      updatedAt: Date.now()
+    });
+    try { await updateProfile(currentUser, { displayName: name }); } catch (_) {}
+    toast("Profile saved!");
+  } catch (err) {
+    toast(err.message || "Failed to save profile");
+  }
 };
 
 $("deleteProfileDataBtn").onclick = async () => {
@@ -2480,13 +2681,18 @@ $("addressForm").onsubmit = async (e) => {
     recipientName: $("addrRecipient").value.trim(),
     phone: normalizeBdPhone(phone),
     division: $("addrDivision").value,
+    district: $("addrDistrict").value || "",
     thana: $("addrThana").value.trim(),
     street: $("addrStreet").value.trim(),
     isDefault: makeDefault
   };
-  await update(ref(db), updates);
-  resetAddressForm();
-  toast(existingId ? "Address updated!" : "Address saved!");
+  try {
+    await update(ref(db), updates);
+    resetAddressForm();
+    toast(existingId ? "Address updated!" : "Address saved!");
+  } catch (err) {
+    toast(err.message || "Failed to save address");
+  }
 };
 $("addrResetBtn").onclick = resetAddressForm;
 

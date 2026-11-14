@@ -11,9 +11,13 @@ import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import retrofit2.http.Body
+import retrofit2.http.DELETE
+import retrofit2.http.Field
+import retrofit2.http.FormUrlEncoded
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.PATCH
+import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Path
 import retrofit2.http.Query
@@ -37,7 +41,24 @@ data class RemoteProductDto(
     val description: String? = null,
     val specs: String? = null,
     val variants: String? = null,
+    val variantColors: String? = null,
+    val variantSizes: String? = null,
+    val variantPrices: Map<String, Double>? = null,
+    val freeDeliveryMinQty: Int? = null,
     val updatedAt: Long? = null
+)
+
+@JsonClass(generateAdapter = true)
+data class RemoteDeliveryZoneDto(
+    val name: String? = null,
+    val rate: Double? = null,
+    val eta: String? = null
+)
+
+@JsonClass(generateAdapter = true)
+data class RemoteDeliveryConfigDto(
+    val freeDeliveryMinAmount: Double? = null,
+    val zones: Map<String, RemoteDeliveryZoneDto>? = null
 )
 
 @JsonClass(generateAdapter = true)
@@ -102,6 +123,7 @@ data class RemoteCustomerDto(
     val name: String? = null,
     val phone: String? = null,
     val address: String? = null,
+    val district: String? = null,
     val division: String? = null
 )
 
@@ -128,9 +150,93 @@ data class RemoteOrderDto(
     val updatedAt: Long? = null
 )
 
+@JsonClass(generateAdapter = true)
+data class RemoteCustomerAddressDto(
+    val label: String? = null,
+    val recipientName: String? = null,
+    val phone: String? = null,
+    val division: String? = null,
+    val district: String? = null,
+    val thana: String? = null,
+    val street: String? = null,
+    val isDefault: Boolean? = null
+)
+
+@JsonClass(generateAdapter = true)
+data class RemoteCustomerProfileDto(
+    val name: String? = null,
+    val email: String? = null,
+    val phone: String? = null,
+    val bio: String? = null,
+    val createdAt: Long? = null,
+    val updatedAt: Long? = null,
+    val addresses: Map<String, RemoteCustomerAddressDto>? = null
+)
+
+@JsonClass(generateAdapter = true)
+data class FirebaseAuthRequest(
+    val email: String,
+    val password: String,
+    val returnSecureToken: Boolean = true
+)
+
+@JsonClass(generateAdapter = true)
+data class FirebaseAuthResponse(
+    val idToken: String? = null,
+    val email: String? = null,
+    val refreshToken: String? = null,
+    val localId: String? = null,
+    val displayName: String? = null
+)
+
+@JsonClass(generateAdapter = true)
+data class FirebaseDeleteAccountRequest(
+    val idToken: String
+)
+
+@JsonClass(generateAdapter = true)
+data class FirebaseTokenRefreshResponse(
+    val id_token: String? = null,
+    val refresh_token: String? = null,
+    val user_id: String? = null
+)
+
+interface FirebaseAuthRestService {
+    @POST("v1/accounts:signUp")
+    suspend fun signUp(
+        @Query("key") apiKey: String = StoreConstants.FIREBASE_WEB_API_KEY,
+        @Body body: FirebaseAuthRequest
+    ): Response<FirebaseAuthResponse?>
+
+    @POST("v1/accounts:signInWithPassword")
+    suspend fun signInWithPassword(
+        @Query("key") apiKey: String = StoreConstants.FIREBASE_WEB_API_KEY,
+        @Body body: FirebaseAuthRequest
+    ): Response<FirebaseAuthResponse?>
+
+    @POST("v1/accounts:delete")
+    suspend fun deleteAccount(
+        @Query("key") apiKey: String = StoreConstants.FIREBASE_WEB_API_KEY,
+        @Body body: FirebaseDeleteAccountRequest
+    ): Response<Unit>
+}
+
+interface FirebaseTokenRefreshService {
+    @FormUrlEncoded
+    @POST("v1/token")
+    suspend fun refreshToken(
+        @Query("key") apiKey: String = StoreConstants.FIREBASE_WEB_API_KEY,
+        @Field("grant_type") grantType: String = "refresh_token",
+        @Field("refresh_token") refreshToken: String
+    ): Response<FirebaseTokenRefreshResponse?>
+}
+
 interface SprZoneRtdbService {
     @GET("products.json")
     suspend fun getProducts(): Response<Map<String, RemoteProductDto>?>
+
+    @GET("deals/deliveryConfig.json")
+    suspend fun getDeliveryConfig(): Response<RemoteDeliveryConfigDto?>
 
     @GET("settings/payment.json")
     suspend fun getPaymentSettings(): Response<RemotePaymentSettingsDto?>
@@ -140,6 +246,54 @@ interface SprZoneRtdbService {
 
     @GET("deals/appNotifications.json")
     suspend fun getAppNotifications(): Response<Map<String, RemoteAppNotificationDto>?>
+
+    @GET("customers/{uid}.json")
+    suspend fun getCustomerProfile(
+        @Path("uid") uid: String,
+        @Query("auth") authToken: String
+    ): Response<RemoteCustomerProfileDto?>
+
+    @PUT("customers/{uid}.json")
+    suspend fun putCustomerProfile(
+        @Path("uid") uid: String,
+        @Query("auth") authToken: String,
+        @Body profile: RemoteCustomerProfileDto
+    ): Response<RemoteCustomerProfileDto?>
+
+    @PATCH("customers/{uid}.json")
+    suspend fun patchCustomerProfile(
+        @Path("uid") uid: String,
+        @Query("auth") authToken: String,
+        @Body patch: Map<String, @JvmSuppressWildcards Any>
+    ): Response<Map<String, Any>?>
+
+    @DELETE("customers/{uid}.json")
+    suspend fun deleteCustomerProfile(
+        @Path("uid") uid: String,
+        @Query("auth") authToken: String
+    ): Response<Unit>
+
+    @PUT("customers/{uid}/addresses/{addrId}.json")
+    suspend fun putCustomerAddress(
+        @Path("uid") uid: String,
+        @Path("addrId") addrId: String,
+        @Query("auth") authToken: String,
+        @Body address: RemoteCustomerAddressDto
+    ): Response<RemoteCustomerAddressDto?>
+
+    @PATCH("customers/{uid}/addresses.json")
+    suspend fun patchCustomerAddresses(
+        @Path("uid") uid: String,
+        @Query("auth") authToken: String,
+        @Body addressesPatch: Map<String, @JvmSuppressWildcards Any>
+    ): Response<Map<String, Any>?>
+
+    @DELETE("customers/{uid}/addresses/{addrId}.json")
+    suspend fun deleteCustomerAddress(
+        @Path("uid") uid: String,
+        @Path("addrId") addrId: String,
+        @Query("auth") authToken: String
+    ): Response<Unit>
 
     @GET("sms_inbox/{trxId}.json")
     suspend fun getSmsInboxRecord(@Path("trxId") trxId: String): Response<RemoteSmsRecordDto?>
@@ -205,6 +359,24 @@ object SprZoneNetworkClient {
             .addConverterFactory(MoshiConverterFactory.create(moshi))
             .build()
             .create(SprZoneRtdbService::class.java)
+    }
+
+    val authService: FirebaseAuthRestService by lazy {
+        Retrofit.Builder()
+            .baseUrl(StoreConstants.FIREBASE_AUTH_BASE_URL)
+            .client(okHttp)
+            .addConverterFactory(MoshiConverterFactory.create(moshi))
+            .build()
+            .create(FirebaseAuthRestService::class.java)
+    }
+
+    val tokenService: FirebaseTokenRefreshService by lazy {
+        Retrofit.Builder()
+            .baseUrl(StoreConstants.FIREBASE_TOKEN_BASE_URL)
+            .client(okHttp)
+            .addConverterFactory(MoshiConverterFactory.create(moshi))
+            .build()
+            .create(FirebaseTokenRefreshService::class.java)
     }
 
     fun RemotePaymentSettingsDto.toDomain(): MerchantPaymentSettings {

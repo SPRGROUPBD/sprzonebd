@@ -108,6 +108,9 @@ interface AddressDao {
     @Query("SELECT * FROM addresses WHERE userEmail = :userEmail ORDER BY isDefault DESC, id DESC")
     fun observeAddresses(userEmail: String): Flow<List<AddressEntity>>
 
+    @Query("SELECT * FROM addresses WHERE userEmail = :userEmail")
+    suspend fun getAddressesForUser(userEmail: String): List<AddressEntity>
+
     @Query("SELECT * FROM addresses WHERE id = :id AND userEmail = :userEmail LIMIT 1")
     suspend fun getAddressById(id: Long, userEmail: String): AddressEntity?
 

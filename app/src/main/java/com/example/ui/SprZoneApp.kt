@@ -164,6 +164,7 @@ fun SprZoneApp(
         val addresses by viewModel.addresses.collectAsStateWithLifecycle()
         val userOrders by viewModel.userOrders.collectAsStateWithLifecycle()
         val paymentSettings by viewModel.paymentSettings.collectAsStateWithLifecycle()
+        val deliveryConfig by viewModel.deliveryConfig.collectAsStateWithLifecycle()
         val notifications by viewModel.notifications.collectAsStateWithLifecycle()
         val readNotificationIds by viewModel.readNotificationIds.collectAsStateWithLifecycle()
         val unreadNotificationCount by viewModel.unreadNotificationCount.collectAsStateWithLifecycle()
@@ -486,12 +487,12 @@ fun SprZoneApp(
                                     isSignedIn = currentUser != null,
                                     onBack = { navController.popBackStack() },
                                     onToggleWishlist = { viewModel.toggleWishlist(productId) },
-                                    onAddToCart = { variant, qty ->
-                                        product?.let { viewModel.addToCart(it, variant, qty) }
+                                    onAddToCart = { variant, qty, unitPrice ->
+                                        product?.let { viewModel.addToCart(it, variant, qty, unitPrice) }
                                     },
-                                    onBuyNow = { variant, qty ->
+                                    onBuyNow = { variant, qty, unitPrice ->
                                         product?.let { prod ->
-                                            viewModel.addToCart(prod, variant, qty) {
+                                            viewModel.addToCart(prod, variant, qty, unitPrice) {
                                                 if (currentUser == null) {
                                                     navigateTopTab(SprRoutes.ACCOUNT)
                                                 } else {
@@ -514,6 +515,7 @@ fun SprZoneApp(
                                     cartItems = cartItems,
                                     summary = cartSummary,
                                     paymentSettings = paymentSettings,
+                                    deliveryConfig = deliveryConfig,
                                     onBack = { navController.popBackStack() },
                                     onSaveAddress = viewModel::saveAddress,
                                     onPlaceOrder = viewModel::placeOrder,

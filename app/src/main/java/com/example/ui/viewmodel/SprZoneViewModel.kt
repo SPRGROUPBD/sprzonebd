@@ -11,6 +11,7 @@ import com.example.data.local.SprZoneDatabase
 import com.example.data.model.AddressEntity
 import com.example.data.model.AppNotificationItem
 import com.example.data.model.CartItemEntity
+import com.example.data.model.DeliveryConfigSummary
 import com.example.data.model.MerchantPaymentSettings
 import com.example.data.model.OrderEntity
 import com.example.data.model.PaymentMethod
@@ -52,7 +53,9 @@ data class CartSummary(
     val deliveryFeeBdt: Long = 0L,
     val totalBdt: Long = 0L,
     val appliedPromo: PromoResult? = null,
-    val freeDeliveryRemainingBdt: Long = StoreConstants.FREE_DELIVERY_THRESHOLD_BDT
+    val freeDeliveryRemainingBdt: Long = StoreConstants.FREE_DELIVERY_THRESHOLD_BDT,
+    val hasQtyFreeDelivery: Boolean = false,
+    val freeDeliveryThresholdBdt: Long = StoreConstants.FREE_DELIVERY_THRESHOLD_BDT
 )
 
 data class CatalogFilterState(
@@ -81,6 +84,7 @@ class SprZoneViewModel(
     val flashCountdownSeconds: StateFlow<Long> = _flashCountdownSeconds.asStateFlow()
 
     val paymentSettings: StateFlow<MerchantPaymentSettings> = repository.paymentSettings
+    val deliveryConfig: StateFlow<DeliveryConfigSummary> = repository.deliveryConfig
 
     val availableCoupons: StateFlow<List<String>> = repository.coupons
         .map { map -> map.keys.toList().sorted() }
@@ -170,29 +174,27 @@ class SprZoneViewModel(
 
     val cartSummary: StateFlow<CartSummary> = combine(
         cartItems,
-        addresses,
+        repository.deliveryConfig,
         _promoCodeInput
-    ) { items, addrList, promoInput ->
+    ) { items, delConfig, promoInput ->
         val itemCount = items.sumOf { it.quantity }
         val subtotal = items.sumOf { it.unitPriceBdt * it.quantity }
         val promo = if (promoInput.isNotBlank()) repository.evaluatePromo(promoInput, subtotal) else null
         val discount = promo?.discountBdt ?: 0L
-        val defaultDivision = addrList.firstOrNull { it.isDefault }?.division ?: addrList.firstOrNull()?.division ?: "Dhaka"
-        val delivery = when {
-            items.isEmpty() -> 0L
-            subtotal >= StoreConstants.FREE_DELIVERY_THRESHOLD_BDT || promo?.freeShipping == true -> 0L
-            else -> StoreConstants.deliveryFeeForDivision(defaultDivision)
-        }
-        val total = (subtotal - discount + delivery).coerceAtLeast(0L)
-        val remainingForFree = (StoreConstants.FREE_DELIVERY_THRESHOLD_BDT - subtotal).coerceAtLeast(0L)
+        val hasQtyFree = items.any { it.freeDeliveryMinQty > 0 && it.quantity >= it.freeDeliveryMinQty }
+        val threshold = delConfig.freeDeliveryMinAmountBdt
+        val totalBeforeCheckout = (subtotal - discount).coerceAtLeast(0L)
+        val remainingForFree = if (hasQtyFree || threshold <= 0L) 0L else (threshold - subtotal).coerceAtLeast(0L)
         CartSummary(
             itemCount = itemCount,
             subtotalBdt = subtotal,
             discountBdt = discount,
-            deliveryFeeBdt = delivery,
-            totalBdt = total,
+            deliveryFeeBdt = 0L,
+            totalBdt = totalBeforeCheckout,
             appliedPromo = promo,
-            freeDeliveryRemainingBdt = remainingForFree
+            freeDeliveryRemainingBdt = remainingForFree,
+            hasQtyFreeDelivery = hasQtyFree,
+            freeDeliveryThresholdBdt = threshold
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), CartSummary())
 
@@ -324,10 +326,16 @@ class SprZoneViewModel(
         }
     }
 
-    fun addToCart(product: ProductEntity, variant: String = "", quantity: Int = 1, onSuccess: () -> Unit = {}) {
+    fun addToCart(
+        product: ProductEntity,
+        variant: String = "",
+        quantity: Int = 1,
+        unitPriceOverride: Long? = null,
+        onSuccess: () -> Unit = {}
+    ) {
         viewModelScope.launch {
             val owner = loggedInEmail.value ?: StoreConstants.GUEST_EMAIL
-            val result = repository.addToCart(owner, product, variant, quantity)
+            val result = repository.addToCart(owner, product, variant, quantity, unitPriceOverride)
             if (result.isSuccess) {
                 _snackbarEvents.tryEmit("Added ${product.name} to cart")
                 onSuccess()
