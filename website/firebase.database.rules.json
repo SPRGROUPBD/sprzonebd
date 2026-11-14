@@ -1,0 +1,55 @@
+{
+  "rules": {
+    "products": {
+      ".read": true,
+      ".write": "auth != null && (auth.token.email == 'mail.sajjadahmed@gmail.com' || auth.token.admin === true)"
+    },
+    "categories": {
+      ".read": true,
+      ".write": "auth != null && (auth.token.email == 'mail.sajjadahmed@gmail.com' || auth.token.admin === true)"
+    },
+    "deals": {
+      ".read": true,
+      ".write": "auth != null && (auth.token.email == 'mail.sajjadahmed@gmail.com' || auth.token.admin === true)"
+    },
+    "coupons": {
+      ".read": true,
+      ".write": "auth != null && (auth.token.email == 'mail.sajjadahmed@gmail.com' || auth.token.admin === true)"
+    },
+    "settings": {
+      "payment": {
+        ".read": true,
+        ".write": "auth != null && (auth.token.email == 'mail.sajjadahmed@gmail.com' || auth.token.admin === true)"
+      },
+      "$other": {
+        ".read": "auth != null && (auth.token.email == 'mail.sajjadahmed@gmail.com' || auth.token.admin === true)",
+        ".write": "auth != null && (auth.token.email == 'mail.sajjadahmed@gmail.com' || auth.token.admin === true)"
+      }
+    },
+    "sms_inbox": {
+      ".read": "auth != null && (auth.token.email == 'mail.sajjadahmed@gmail.com' || auth.token.admin === true)",
+      "$trxId": {
+        ".read": true,
+        ".write": "auth != null && (auth.token.email == 'mail.sajjadahmed@gmail.com' || auth.token.admin === true) || (!data.child('matchedOrderId').exists() && newData.child('matchedOrderId').exists())"
+      }
+    },
+    "customers": {
+      ".read": "auth != null && (auth.token.email == 'mail.sajjadahmed@gmail.com' || auth.token.admin === true)",
+      "$uid": {
+        ".read": "auth != null && (auth.uid == $uid || auth.token.email == 'mail.sajjadahmed@gmail.com' || auth.token.admin === true)",
+        ".write": "auth != null && (auth.uid == $uid || auth.token.email == 'mail.sajjadahmed@gmail.com' || auth.token.admin === true)"
+      }
+    },
+    "newsletter": {
+      ".read": "auth != null && (auth.token.email == 'mail.sajjadahmed@gmail.com' || auth.token.admin === true)",
+      ".write": true
+    },
+    "orders": {
+      ".read": true,
+      "$orderId": {
+        ".read": true,
+        ".write": "(auth != null && (auth.token.email == 'mail.sajjadahmed@gmail.com' || auth.token.admin === true)) || (!data.exists() && newData.exists()) || (data.exists() && (data.child('status').val() == 'Pending' || data.child('status').val() == 'Placed') && newData.child('status').val() == 'Cancelled')"
+      }
+    }
+  }
+}

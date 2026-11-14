@@ -1,0 +1,2028 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#007B3D">
+<meta name="description" content="SPR ZONE BD — Shop Smart • Live Better. Bangladesh online shopping with bKash, Nagad, Rocket Auto TrxID verification and nationwide delivery.">
+<title>SPR ZONE BD | Shop Smart • Live Better</title>
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --emerald:#007B3D;
+  --emerald-dark:#005C2D;
+  --emerald-soft:#E8F6EE;
+  --crimson:#E11D48;
+  --crimson-dark:#BE123C;
+  --gold:#F59E0B;
+  --gold-soft:#FEF3C7;
+  --ink:#141C18;
+  --muted:#526059;
+  --bg:#F3F6F4;
+  --surface:#FFFFFF;
+  --line:#DCE5DF;
+  --shadow:0 6px 20px rgba(0,40,20,0.06);
+  --radius:14px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 'Inter',system-ui,-apple-system,sans-serif}
+h1,h2,h3,h4{font-family:'Plus Jakarta Sans','Inter',sans-serif;margin:0}
+a{color:inherit;text-decoration:none}
+button,input,select,textarea{font:inherit}
+button{
+  cursor:pointer;border:0;border-radius:10px;padding:10px 16px;
+  background:var(--emerald);color:#fff;font-weight:700;transition:.16s ease;
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;
+}
+button:hover{background:var(--emerald-dark)}
+button.secondary{background:var(--emerald-soft);color:var(--emerald-dark)}
+button.secondary:hover{background:#d4eedf}
+button.crimson{background:var(--crimson);color:#fff}
+button.crimson:hover{background:var(--crimson-dark)}
+button.gold{background:var(--gold);color:#1A1200}
+button.gold:hover{background:#d97706;color:#fff}
+button.outline{background:#fff;color:var(--ink);border:1px solid var(--line)}
+button.outline:hover{background:#f8faf9}
+button.sm{padding:6px 11px;min-height:32px;font-size:12px;border-radius:8px}
+button:disabled{opacity:.5;cursor:not-allowed}
+
+/* Top Utility Bar */
+.topbar{background:var(--emerald-dark);color:#fff;font-size:12.5px}
+.topbar-inner{max-width:1420px;margin:auto;padding:8px 18px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.topbar-left,.topbar-right{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.topbar-sep{opacity:.4}
+.top-pill{background:rgba(255,255,255,.14);padding:4px 10px;border-radius:20px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;border:0;color:#fff;min-height:28px}
+.top-pill:hover{background:rgba(255,255,255,.24)}
+.top-pill.admin-pill{background:var(--gold);color:#1a1200}
+
+/* Sticky White Header */
+.header{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30;box-shadow:0 4px 14px rgba(0,30,15,.05)}
+.header-inner{max-width:1420px;margin:auto;padding:12px 18px;display:flex;align-items:center;gap:20px}
+.brand img{height:48px;width:auto;display:block}
+.search-box{flex:1;display:flex;align-items:center;border:1.5px solid var(--line);border-radius:30px;overflow:hidden;background:#f9fbfa;max-width:580px;margin:0 auto}
+.search-box:focus-within{border-color:var(--emerald);background:#fff}
+.search-box input{flex:1;border:0;background:transparent;padding:11px 18px;outline:none;min-width:0}
+.search-box button{border-radius:0 30px 30px 0;padding:11px 20px;min-height:44px}
+.trust-badges{display:flex;align-items:center;gap:16px}
+.trust-item{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);line-height:1.25}
+.trust-icon{width:34px;height:34px;border-radius:50%;background:var(--emerald-soft);color:var(--emerald);display:grid;place-items:center;font-weight:800;font-size:15px;flex-shrink:0}
+.mobile-menu-btn{display:none;background:var(--emerald-soft);color:var(--emerald);padding:8px 12px}
+
+/* Sub Navigation */
+.subnav{background:#fff;border-bottom:1px solid var(--line)}
+.subnav-inner{max-width:1420px;margin:auto;padding:8px 18px;display:flex;align-items:center;justify-content:space-between;gap:14px}
+.subnav-links{display:flex;align-items:center;gap:8px;overflow:auto;white-space:nowrap}
+.nav-link{padding:8px 13px;border-radius:8px;font-weight:600;color:var(--ink);display:inline-flex;align-items:center;gap:6px;cursor:pointer;background:transparent;border:0}
+.nav-link:hover,.nav-link.active{background:var(--emerald-soft);color:var(--emerald-dark)}
+.hot-tag{background:var(--crimson);color:#fff;font-size:10px;padding:2px 6px;border-radius:10px;font-weight:800}
+
+/* Main 3-Column Storefront */
+.page-wrap{max-width:1420px;margin:0 auto;padding:18px}
+.store-grid{display:grid;grid-template-columns:236px minmax(0,1fr) 256px;gap:18px;align-items:start}
+
+/* Sidebar Cards */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+.cat-card-head{background:var(--emerald);color:#fff;padding:13px 16px;font-weight:700;display:flex;align-items:center;justify-content:space-between;font-size:15px}
+.cat-list{display:flex;flex-direction:column}
+.cat-btn{
+  background:transparent;color:var(--ink);border:0;border-bottom:1px solid #eef3ef;
+  border-radius:0;padding:11px 14px;justify-content:space-between;font-weight:600;
+  font-size:13.5px;text-align:left;min-height:42px;
+}
+.cat-btn:last-child{border-bottom:0}
+.cat-btn:hover,.cat-btn.active{background:var(--emerald-soft);color:var(--emerald-dark)}
+.cat-count{font-size:11px;color:var(--muted);background:#f1f5f2;padding:2px 7px;border-radius:10px}
+
+.big-sale-card{
+  margin-top:16px;border-radius:var(--radius);padding:20px 16px;text-align:center;color:#fff;
+  background:linear-gradient(155deg,#006E37,#004622 65%,#003117);position:relative;overflow:hidden;
+  box-shadow:var(--shadow);
+}
+.big-sale-card .big-title{font-size:34px;line-height:1;font-weight:900;color:#FEF08A;text-shadow:0 3px 10px rgba(0,0,0,.3)}
+.big-sale-card .pct{font-size:40px;font-weight:900;color:#fff;margin:8px 0}
+
+/* Hero Banner */
+.hero{
+  border-radius:18px;padding:28px 30px;min-height:270px;color:#fff;
+  background:linear-gradient(115deg,#004A24 0%,#007B3D 52%,#049852 100%);
+  display:grid;grid-template-columns:1.2fr 0.85fr;gap:20px;align-items:center;
+  position:relative;overflow:hidden;box-shadow:var(--shadow);
+}
+.hero::after{
+  content:"";position:absolute;right:-60px;top:-60px;width:280px;height:280px;
+  border-radius:50%;background:radial-gradient(circle,rgba(245,158,11,.22),transparent 70%);
+}
+.hero-tag{
+  display:inline-block;background:var(--crimson);color:#fff;padding:6px 14px;
+  border-radius:8px;font-weight:800;font-size:13px;box-shadow:0 4px 12px rgba(225,29,72,.35);
+}
+.hero h1{font-size:clamp(26px,3.2vw,42px);margin:10px 0 6px;letter-spacing:-.4px;color:#fff}
+.hero h1 .red{color:#FFE4E6;background:rgba(225,29,72,.9);padding:0 8px;border-radius:8px}
+.hero-bn{font-size:clamp(16px,1.8vw,21px);font-weight:700;color:#DCFCE7;margin:4px 0 16px}
+.hero-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+
+/* 5-Card Benefit Strip */
+.benefits{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin:14px 0 18px}
+.benefit{
+  background:#fff;border:1px solid var(--line);border-radius:12px;padding:11px 10px;
+  display:flex;align-items:center;gap:9px;font-size:12px;box-shadow:0 2px 6px rgba(0,0,0,.03);
+}
+.benefit-ic{font-size:20px;width:34px;height:34px;border-radius:9px;background:var(--emerald-soft);display:grid;place-items:center;flex-shrink:0}
+.benefit b{display:block;font-size:12.5px;color:var(--ink)}
+.benefit span{color:var(--muted);font-size:11px}
+
+/* Products Header & Grid */
+.section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:8px 0 14px;flex-wrap:wrap}
+.section-head h2{font-size:20px;display:flex;align-items:center;gap:8px;color:var(--ink)}
+.filter-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.filter-tools select{padding:7px 12px;border:1px solid var(--line);border-radius:9px;background:#fff;font-size:13px}
+.products-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.product-card{
+  background:#fff;border:1px solid var(--line);border-radius:13px;overflow:hidden;
+  display:flex;flex-direction:column;transition:.16s ease;position:relative;
+}
+.product-card:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(0,60,30,.09);border-color:#b8d9c6}
+.p-img-wrap{position:relative;background:#f8faf9;height:165px;display:grid;place-items:center;padding:10px;cursor:pointer}
+.p-img-wrap img{max-width:100%;max-height:100%;object-fit:contain;border-radius:8px}
+.p-badge{position:absolute;top:8px;left:8px;background:var(--crimson);color:#fff;font-size:11px;font-weight:800;padding:3px 7px;border-radius:6px}
+.p-wish{position:absolute;top:8px;right:8px;width:30px;height:30px;min-height:30px;padding:0;border-radius:50%;background:#fff;color:var(--muted);border:1px solid var(--line)}
+.p-wish.liked{color:var(--crimson);border-color:#fecdd3;background:#fff1f2}
+.p-body{padding:11px;display:flex;flex-direction:column;gap:5px;flex:1}
+.p-cat{font-size:11px;color:var(--emerald);font-weight:700;text-transform:uppercase;letter-spacing:.3px}
+.p-title{font-size:13.5px;font-weight:700;line-height:1.35;min-height:36px;cursor:pointer;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.p-rating{font-size:12px;color:#b45309;font-weight:600}
+.p-rating span{color:var(--muted);font-weight:400}
+.p-price-row{display:flex;align-items:baseline;gap:6px;margin-top:2px}
+.p-price{font-size:16px;font-weight:800;color:var(--crimson)}
+.p-old{font-size:12px;color:#94a3b8;text-decoration:line-through}
+.p-body .add-btn{width:100%;margin-top:auto;font-size:13px;min-height:36px;padding:8px}
+
+/* Right Sidebar */
+.right-col{display:flex;flex-direction:column;gap:14px}
+.why-list{list-style:none;margin:0;padding:12px 14px;display:grid;gap:10px;font-size:13px}
+.why-list li{display:flex;align-items:center;gap:8px;font-weight:600}
+.why-check{width:20px;height:20px;border-radius:50%;background:var(--emerald);color:#fff;display:grid;place-items:center;font-size:11px;flex-shrink:0}
+.news-card{background:linear-gradient(155deg,var(--emerald),var(--emerald-dark));color:#fff;border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)}
+.news-card input{width:100%;padding:10px 12px;border-radius:8px;border:0;margin:10px 0 8px}
+.social-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:14px}
+.social-row{display:flex;gap:8px;margin-top:10px}
+.social-pill{flex:1;text-align:center;padding:8px;border-radius:9px;background:var(--emerald-soft);color:var(--emerald-dark);font-weight:700;font-size:12px}
+
+/* Admin Panel (Website Only) */
+.admin-section{display:none;max-width:1420px;margin:20px auto;padding:0 18px}
+.admin-section.show{display:block}
+.admin-shell{background:#fff;border:2px solid var(--emerald);border-radius:18px;padding:20px;box-shadow:0 12px 32px rgba(0,50,25,.09)}
+.admin-header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.admin-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
+.admin-tab{background:#f1f5f3;color:var(--ink);padding:9px 14px;border-radius:9px;font-weight:700;font-size:13px;min-height:38px}
+.admin-tab.active{background:var(--emerald);color:#fff}
+.admin-stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:16px}
+.stat-box{background:var(--emerald-soft);border:1px solid #c3e6d1;border-radius:12px;padding:12px 14px}
+.stat-box small{color:var(--emerald-dark);font-weight:700;display:block}
+.stat-box b{font-size:22px;color:var(--ink)}
+.admin-grid-2{display:grid;grid-template-columns:380px minmax(0,1fr);gap:18px;align-items:start}
+.panel-box{background:#fafcfb;border:1px solid var(--line);border-radius:12px;padding:14px}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:12px;background:#fff}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:10px 12px;border-bottom:1px solid #eef2ef;text-align:left;vertical-align:middle}
+th{background:#f5f9f6;color:var(--emerald-dark);font-weight:700;white-space:nowrap}
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11.5px;font-weight:700}
+.badge.green{background:#dcfce7;color:#166534}
+.badge.amber{background:#fef3c7;color:#92400e}
+.badge.red{background:#fee2e2;color:#991b1b}
+.badge.blue{background:#dbeafe;color:#1e40af}
+
+/* Forms, Modals & Drawers */
+.field{display:grid;gap:5px;margin-bottom:10px}
+.field label{font-size:12.5px;font-weight:700;color:var(--muted)}
+.field input,.field select,.field textarea{padding:9px 11px;border:1px solid #cbd5e1;border-radius:8px;width:100%;background:#fff}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.modal{position:fixed;inset:0;background:rgba(10,25,18,.58);display:none;align-items:center;justify-content:center;padding:16px;z-index:60}
+.modal.show{display:flex}
+.dialog{background:#fff;border-radius:16px;padding:22px;width:min(620px,100%);max-height:92vh;overflow:auto;box-shadow:0 20px 50px rgba(0,0,0,.25)}
+.dialog-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.drawer-wrap{position:fixed;inset:0;background:rgba(10,25,18,.52);display:none;justify-content:flex-end;z-index:55}
+.drawer-wrap.show{display:flex}
+.drawer{background:#fff;width:min(430px,100%);height:100%;display:flex;flex-direction:column;padding:18px;box-shadow:-12px 0 32px rgba(0,0,0,.18)}
+.drawer-body{flex:1;overflow:auto;padding:8px 0}
+.cart-row{display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid #eef2ef}
+.cart-row img{width:56px;height:56px;object-fit:contain;background:#f8faf9;border-radius:8px;border:1px solid var(--line)}
+
+.pay-box{background:#f8faf9;border:1.5px solid var(--emerald);border-radius:12px;padding:12px;margin:10px 0}
+.copy-chip{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px dashed var(--emerald);padding:6px 10px;border-radius:8px;font-weight:800;color:var(--emerald-dark);margin-top:6px}
+
+.timeline{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin:12px 0;text-align:center;font-size:11px}
+.step-dot{width:24px;height:24px;border-radius:50%;margin:0 auto 4px;display:grid;place-items:center;background:#e2e8f0;color:#64748b;font-weight:800}
+.step-dot.done{background:var(--emerald);color:#fff}
+
+.footer{background:var(--emerald-dark);color:#e2f5ea;margin-top:34px;padding:32px 18px 18px}
+.footer-inner{max-width:1420px;margin:auto;display:grid;grid-template-columns:1.8fr 1fr 1fr 1fr;gap:24px}
+.footer h4{color:#fff;margin-bottom:10px}
+.footer p,.footer li{font-size:13px;color:#cdebd9;margin:4px 0}
+.footer ul{list-style:none;padding:0;margin:0}
+.toast{position:fixed;bottom:20px;right:20px;background:#0f291c;color:#fff;padding:12px 18px;border-radius:10px;display:none;z-index:90;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.22)}
+.hidden{display:none!important}
+
+/* Responsive Breakpoints */
+@media(max-width:1200px){
+  .store-grid{grid-template-columns:220px minmax(0,1fr)}
+  .right-col{grid-column:1 / -1;display:grid;grid-template-columns:repeat(3,1fr)}
+  .products-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .admin-grid-2{grid-template-columns:1fr}
+  .admin-stats{grid-template-columns:repeat(3,1fr)}
+}
+@media(max-width:900px){
+  .trust-badges{display:none}
+  .header-inner{flex-wrap:wrap;gap:10px}
+  .search-box{order:3;flex-basis:100%;max-width:none}
+  .mobile-menu-btn{display:inline-flex}
+  .store-grid{grid-template-columns:1fr}
+  .left-col{display:none}
+  .left-col.mobile-open{display:block}
+  .hero{grid-template-columns:1fr;min-height:220px;padding:22px}
+  .benefits{grid-template-columns:repeat(2,1fr)}
+  .products-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .right-col{grid-template-columns:1fr}
+  .footer-inner{grid-template-columns:1fr 1fr}
+  .admin-stats{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:520px){
+  .topbar-inner{font-size:11.5px;justify-content:center}
+  .products-grid{gap:9px}
+  .p-img-wrap{height:132px}
+  .form-row{grid-template-columns:1fr}
+  .footer-inner{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- Top Emerald Bar -->
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="topbar-left">
+      <span>🇧🇩 Free Home Delivery all over Bangladesh</span>
+      <span class="topbar-sep">|</span>
+      <span>🛡️ Secure Payment</span>
+      <span class="topbar-sep">|</span>
+      <span>📞 24/7 Support: <b>09678-123456</b></span>
+    </div>
+    <div class="topbar-right">
+      <button class="top-pill" id="myOrdersBtn">📦 My Orders</button>
+      <button class="top-pill" id="accountBtn">👤 Login | Register</button>
+      <button class="top-pill admin-pill hidden" id="adminToggleBtn">⚙️ Admin Panel</button>
+      <button class="top-pill" id="cartBtn">🛒 <span id="cartCount">0</span> · <span id="cartTopTotal">৳0</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- Sticky White Header -->
+<header class="header">
+  <div class="header-inner">
+    <button class="mobile-menu-btn" id="mobileCatToggle" aria-label="Categories">☰ Categories</button>
+    <a class="brand" href="#top"><img src="assets/logo.svg" alt="SPR ZONE BD"></a>
+    <form class="search-box" id="searchForm">
+      <input id="searchInput" placeholder="Search for products, phones, earbuds, sarees..." aria-label="Search products">
+      <button type="submit">🔍 Search</button>
+    </form>
+    <div class="trust-badges">
+      <div class="trust-item"><div class="trust-icon">✓</div><div><b>100% Original</b><br>Products</div></div>
+      <div class="trust-item"><div class="trust-icon">↺</div><div><b>Easy Return</b><br>& Refund</div></div>
+      <div class="trust-item"><div class="trust-icon">🔒</div><div><b>Secure</b><br>Checkout</div></div>
+    </div>
+  </div>
+</header>
+
+<!-- Navigation Bar -->
+<nav class="subnav">
+  <div class="subnav-inner">
+    <div class="subnav-links">
+      <button class="nav-link active" data-nav="home">🏠 Home</button>
+      <button class="nav-link" data-nav="all">🛍️ All Products</button>
+      <button class="nav-link" data-nav="deals">🔥 Deals <span class="hot-tag">HOT</span></button>
+      <button class="nav-link" data-nav="new">✨ New Arrivals</button>
+      <a class="nav-link" href="#why-us">About Us</a>
+      <a class="nav-link" href="#footer">Contact Us</a>
+    </div>
+    <button class="crimson sm" id="trackOrderNavBtn">📍 Track Your Order</button>
+  </div>
+</nav>
+
+<!-- Storefront Main -->
+<main class="page-wrap" id="top">
+  <div class="store-grid">
+    <!-- Left Sidebar -->
+    <aside class="left-col" id="leftSidebar">
+      <div class="card">
+        <div class="cat-card-head">
+          <span>☰ All Categories</span>
+        </div>
+        <div class="cat-list" id="categoryList"></div>
+      </div>
+
+      <div class="big-sale-card">
+        <div class="big-title">BIG SALE</div>
+        <div style="font-size:13px;opacity:.9;margin-top:4px">Up to</div>
+        <div class="pct">70% OFF</div>
+        <p style="font-size:12.5px;margin:0 0 12px;color:#dcfce7">Flash Deals across Electronics, Fashion & Daily Needs</p>
+        <button class="crimson" style="width:100%" id="bigSaleBtn">Shop Now →</button>
+      </div>
+    </aside>
+
+    <!-- Center Column -->
+    <section>
+      <!-- Hero Banner -->
+      <div class="hero" id="heroBanner">
+        <div>
+          <span class="hero-tag" id="heroBadgeView">সাশ্রয়ে সেরা অনলাইন শপিং সারা বাংলাদেশে!</span>
+          <h1 id="heroTitleView">SPR <span class="red">ZONE</span> BD</h1>
+          <div class="hero-bn" id="heroSubtitleView">এখন আরও কাছে, আরও সাশ্রয়ী!</div>
+          <div class="hero-actions">
+            <button class="gold" id="heroShopBtn">Shop Now →</button>
+            <button class="secondary" id="heroTrackBtn">📍 Track Order</button>
+          </div>
+        </div>
+        <!-- Patriotic Bangladesh Memorial + Shopping SVG Artwork -->
+        <div style="display:flex;justify-content:center;align-items:center">
+          <svg viewBox="0 0 260 175" width="100%" style="max-width:260px" aria-hidden="true">
+            <rect x="0" y="148" width="260" height="27" rx="8" fill="rgba(255,255,255,.16)"/>
+            <!-- National Martyrs' Monument (Jatiyo Smriti Soudho) silhouette -->
+            <polygon points="150,148 182,24 214,148" fill="#E2EFE7" opacity=".95"/>
+            <polygon points="134,148 182,42 230,148" fill="#CBE4D5" opacity=".75"/>
+            <polygon points="118,148 182,66 246,148" fill="#B2D8C2" opacity=".55"/>
+            <!-- Bangladesh Flag -->
+            <rect x="218" y="34" width="3.5" height="114" fill="#FEF08A"/>
+            <rect x="221" y="36" width="36" height="23" rx="2" fill="#006A4E" stroke="#fff" stroke-width="1"/>
+            <circle cx="237" cy="47.5" r="6.5" fill="#F42A41"/>
+            <!-- Shopping Bags -->
+            <rect x="22" y="64" width="54" height="66" rx="10" fill="#F59E0B"/>
+            <path d="M36 64v-8a13 13 0 0 1 26 0v8" fill="none" stroke="#FEF3C7" stroke-width="4.5" stroke-linecap="round"/>
+            <rect x="64" y="78" width="50" height="58" rx="10" fill="#E11D48"/>
+            <path d="M77 78v-7a12 12 0 0 1 24 0v7" fill="none" stroke="#FFE4E6" stroke-width="4" stroke-linecap="round"/>
+            <circle cx="89" cy="108" r="10" fill="#fff"/>
+            <path d="M84 108l3.5 3.5 6.5-7" fill="none" stroke="#007B3D" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- 5 Benefit Cards -->
+      <div class="benefits">
+        <div class="benefit"><div class="benefit-ic">🚚</div><div><b>Fast Delivery</b><span>Across Bangladesh</span></div></div>
+        <div class="benefit"><div class="benefit-ic">💵</div><div><b>Cash on Delivery</b><span>All 64 Districts</span></div></div>
+        <div class="benefit"><div class="benefit-ic">🏷️</div><div><b>Big Discounts</b><span>Everyday Deals</span></div></div>
+        <div class="benefit"><div class="benefit-ic">🎧</div><div><b>24/7 Support</b><span>09678-123456</span></div></div>
+        <div class="benefit"><div class="benefit-ic">📱</div><div><b>bKash · Nagad</b><span>Rocket · Auto TrxID</span></div></div>
+      </div>
+
+      <!-- Popular Products -->
+      <div class="section-head" id="productsSection">
+        <h2 id="catalogHeading">🔥 Popular Products <span class="muted" id="productCount" style="font-size:13px;font-weight:600"></span></h2>
+        <div class="filter-tools">
+          <select id="sortSelect" aria-label="Sort products">
+            <option value="featured">Sort: Popular</option>
+            <option value="price-asc">Price: Low to High</option>
+            <option value="price-desc">Price: High to Low</option>
+            <option value="rating">Top Rated</option>
+          </select>
+        </div>
+      </div>
+      <div class="products-grid" id="productGrid"></div>
+    </section>
+
+    <!-- Right Sidebar -->
+    <aside class="right-col" id="why-us">
+      <div class="card">
+        <div class="cat-card-head">Why Choose Us?</div>
+        <ul class="why-list">
+          <li><span class="why-check">✓</span> 100% Original Products</li>
+          <li><span class="why-check">✓</span> Best Price Guarantee</li>
+          <li><span class="why-check">✓</span> Cash on Delivery Available</li>
+          <li><span class="why-check">✓</span> Auto TrxID Verification</li>
+          <li><span class="why-check">✓</span> 24/7 Customer Support</li>
+        </ul>
+      </div>
+
+      <div class="news-card">
+        <h3>✉️ Newsletter</h3>
+        <p style="font-size:12.5px;margin:4px 0 0;color:#d5f5e3">Get the latest deals, Eid offers & voucher codes.</p>
+        <form id="newsletterForm">
+          <input id="newsletterEmail" type="email" required placeholder="Enter your email address">
+          <button class="gold" style="width:100%">Subscribe</button>
+        </form>
+      </div>
+
+      <div class="social-card">
+        <h4>Follow Us</h4>
+        <div class="social-row">
+          <a class="social-pill" href="#footer">Facebook</a>
+          <a class="social-pill" href="#footer">YouTube</a>
+          <a class="social-pill" href="#footer">Instagram</a>
+        </div>
+      </div>
+    </aside>
+  </div>
+</main>
+
+<!-- Website-Only Full Admin Panel (mail.sajjadahmed@gmail.com) -->
+<section class="admin-section" id="adminSection">
+  <div class="admin-shell">
+    <div class="admin-header">
+      <div>
+        <h2 style="color:var(--emerald-dark)">⚙️ SPR ZONE BD — Website Admin Panel</h2>
+        <div style="font-size:13px;color:var(--muted)">Signed in as <b id="adminEmailLabel"></b> · Add, Edit & Delete all store data</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="gold sm" id="seedCatalogBtn">🌱 Seed BD Catalog</button>
+        <button class="secondary sm" id="refreshAdminBtn">↻ Sync Live Data</button>
+        <button class="crimson sm" id="closeAdminBtn">Hide Panel</button>
+      </div>
+    </div>
+
+    <div class="admin-stats">
+      <div class="stat-box"><small>Products</small><b id="statProducts">0</b></div>
+      <div class="stat-box"><small>Categories</small><b id="statCategories">0</b></div>
+      <div class="stat-box"><small>Total Orders</small><b id="statOrders">0</b></div>
+      <div class="stat-box"><small>Confirmed Revenue</small><b id="statRevenue">৳0</b></div>
+      <div class="stat-box"><small>Customers</small><b id="statCustomers">0</b></div>
+    </div>
+
+    <div class="admin-tabs">
+      <button class="admin-tab active" data-atab="products">📦 Products</button>
+      <button class="admin-tab" data-atab="categories">🗂️ Categories</button>
+      <button class="admin-tab" data-atab="deals">🏷️ Deals & Coupons</button>
+      <button class="admin-tab" data-atab="orders">🧾 Orders</button>
+      <button class="admin-tab" data-atab="payments">💳 Payment & SMS API</button>
+      <button class="admin-tab" data-atab="customers">👥 Customers</button>
+    </div>
+
+    <!-- Tab: Products -->
+    <div class="admin-tab-pane" id="atab-products">
+      <div class="admin-grid-2">
+        <div class="panel-box">
+          <h3 id="prodFormTitle" style="margin-bottom:10px">Add / Edit Product</h3>
+          <form id="adminProductForm">
+            <input type="hidden" id="apId">
+            <div class="field"><label>Product Name *</label><input id="apName" required placeholder="e.g. Samsung Galaxy A16"></div>
+            <div class="form-row">
+              <div class="field"><label>Category *</label><select id="apCategory"></select></div>
+              <div class="field"><label>Brand</label><input id="apBrand" placeholder="Samsung / SPR"></div>
+            </div>
+            <div class="form-row">
+              <div class="field"><label>Price (৳) *</label><input id="apPrice" type="number" min="1" required></div>
+              <div class="field"><label>Old Price (৳)</label><input id="apOldPrice" type="number" min="0"></div>
+            </div>
+            <div class="form-row">
+              <div class="field"><label>Stock Qty *</label><input id="apStock" type="number" min="0" value="20" required></div>
+              <div class="field"><label>Variants (comma)</label><input id="apVariants" placeholder="Black, White"></div>
+            </div>
+            <div class="field"><label>Image URL</label><input id="apImage" type="url" placeholder="https://..."></div>
+            <div class="field"><label>Specs Summary</label><input id="apSpecs" placeholder="1-Year Official Warranty"></div>
+            <div class="field"><label>Description</label><textarea id="apDesc" rows="2"></textarea></div>
+            <div class="form-row" style="margin-bottom:10px">
+              <label style="display:flex;align-items:center;gap:6px;font-weight:600"><input type="checkbox" id="apFlash" style="width:auto"> Flash / Hot Deal</label>
+              <label style="display:flex;align-items:center;gap:6px;font-weight:600"><input type="checkbox" id="apFeatured" checked style="width:auto"> Featured Popular</label>
+            </div>
+            <div style="display:flex;gap:8px">
+              <button type="submit" style="flex:1">💾 Save Product</button>
+              <button type="button" class="secondary" id="apResetBtn">Clear</button>
+            </div>
+          </form>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Product</th><th>Category</th><th>Price</th><th>Stock</th><th>Actions</th></tr></thead>
+            <tbody id="adminProductsTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Categories -->
+    <div class="admin-tab-pane hidden" id="atab-categories">
+      <div class="admin-grid-2">
+        <div class="panel-box">
+          <h3 style="margin-bottom:10px">Add / Edit Category</h3>
+          <form id="adminCategoryForm">
+            <input type="hidden" id="acId">
+            <div class="field"><label>Category Name *</label><input id="acName" required placeholder="e.g. Electronics & Gadgets"></div>
+            <div class="form-row">
+              <div class="field"><label>Icon Emoji</label><input id="acIcon" value="🛍️" maxlength="4"></div>
+              <div class="field"><label>Sort Order</label><input id="acOrder" type="number" value="1"></div>
+            </div>
+            <div style="display:flex;gap:8px">
+              <button type="submit" style="flex:1">💾 Save Category</button>
+              <button type="button" class="secondary" id="acResetBtn">Clear</button>
+            </div>
+          </form>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Icon</th><th>Category Name</th><th>Order</th><th>Actions</th></tr></thead>
+            <tbody id="adminCategoriesTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Deals & Coupons -->
+    <div class="admin-tab-pane hidden" id="atab-deals">
+      <div class="admin-grid-2">
+        <div class="panel-box">
+          <h3 style="margin-bottom:10px">Hero Banner Text</h3>
+          <form id="adminHeroForm">
+            <div class="field"><label>Red Promo Tag (Bangla/English)</label><input id="ahBadge" required></div>
+            <div class="field"><label>Hero Headline</label><input id="ahTitle" required></div>
+            <div class="field"><label>Hero Subtitle</label><input id="ahSub" required></div>
+            <button type="submit" style="width:100%">💾 Update Hero Banner</button>
+          </form>
+          <hr style="border:0;border-top:1px solid var(--line);margin:16px 0">
+          <h3 style="margin-bottom:10px">Add / Edit Coupon Code</h3>
+          <form id="adminCouponForm">
+            <input type="hidden" id="aqId">
+            <div class="form-row">
+              <div class="field"><label>Code *</label><input id="aqCode" required placeholder="EID20" style="text-transform:uppercase"></div>
+              <div class="field"><label>Type</label><select id="aqType"><option value="percent">% Discount</option><option value="flat">Flat ৳ Off</option><option value="freeship">Free Shipping</option></select></div>
+            </div>
+            <div class="form-row">
+              <div class="field"><label>Value (% or ৳)</label><input id="aqValue" type="number" min="0" value="10"></div>
+              <div class="field"><label>Min Order (৳)</label><input id="aqMin" type="number" min="0" value="0"></div>
+            </div>
+            <div style="display:flex;gap:8px">
+              <button type="submit" style="flex:1">💾 Save Coupon</button>
+              <button type="button" class="secondary" id="aqResetBtn">Clear</button>
+            </div>
+          </form>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Coupon Code</th><th>Discount</th><th>Min Order</th><th>Actions</th></tr></thead>
+            <tbody id="adminCouponsTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Orders -->
+    <div class="admin-tab-pane hidden" id="atab-orders">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:10px;flex-wrap:wrap">
+        <div style="font-size:13px;color:var(--muted)">Review TrxIDs, confirm pending orders, update delivery stages, or delete test orders. <b>Note:</b> Confirmed orders are locked against customer cancellation.</div>
+        <select id="adminOrderFilter" style="padding:7px 12px;border:1px solid var(--line);border-radius:8px">
+          <option value="All">All Statuses</option>
+          <option value="Pending">Pending</option>
+          <option value="Confirmed">Confirmed</option>
+          <option value="Packed">Packed</option>
+          <option value="Out for Delivery">Out for Delivery</option>
+          <option value="Delivered">Delivered</option>
+          <option value="Cancelled">Cancelled</option>
+        </select>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Order ID</th><th>Customer</th><th>Total</th><th>Payment & TrxID</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="adminOrdersTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Tab: Payment & SMS Auto-Verification -->
+    <div class="admin-tab-pane hidden" id="atab-payments">
+      <div class="admin-grid-2">
+        <div class="panel-box">
+          <h3 style="margin-bottom:10px">Merchant Numbers & SMS API</h3>
+          <form id="adminPaymentSettingsForm">
+            <div class="field"><label>bKash Merchant / Personal Number</label><input id="psBkash" placeholder="01700000000" required></div>
+            <div class="field"><label>Nagad Number</label><input id="psNagad" placeholder="01700000000" required></div>
+            <div class="field"><label>Rocket (DBBL) Number</label><input id="psRocket" placeholder="017000000009" required></div>
+            <div class="field"><label>External SMS Verification API URL (Optional)</label><input id="psSmsUrl" type="url" placeholder="https://your-sms-api.com/verify"></div>
+            <div class="field"><label>SMS API Secret Key (Header x-api-key)</label><input id="psSmsKey" placeholder="Optional API key"></div>
+            <label style="display:flex;align-items:center;gap:8px;font-weight:700;margin-bottom:12px">
+              <input type="checkbox" id="psAutoVerify" checked style="width:auto"> Enable Auto TrxID Verification
+            </label>
+            <button type="submit" style="width:100%">💾 Save Payment & SMS Settings</button>
+          </form>
+        </div>
+
+        <div>
+          <div class="panel-box" style="margin-bottom:14px">
+            <h3 style="margin-bottom:8px">Add / Record Incoming Payment SMS (RTDB /sms_inbox)</h3>
+            <p style="font-size:12.5px;color:var(--muted);margin:0 0 10px">When your Android SMS forwarder or webhook writes an incoming bKash/Nagad/Rocket SMS here, customer checkout automatically matches <b>TrxID + Sender Number + Amount</b> and marks the order <b>Confirmed</b>.</p>
+            <form id="adminAddSmsForm" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;align-items:end">
+              <div class="field" style="margin:0"><label>Provider</label><select id="smsProvider"><option>bKash</option><option>Nagad</option><option>Rocket</option></select></div>
+              <div class="field" style="margin:0"><label>Sender Number</label><input id="smsSender" required placeholder="017XXXXXXXX"></div>
+              <div class="field" style="margin:0"><label>TrxID *</label><input id="smsTrxId" required placeholder="BL74K9M2PQ" style="text-transform:uppercase"></div>
+              <div class="field" style="margin:0"><label>Amount (৳)</label><input id="smsAmount" type="number" min="1" required></div>
+              <button type="submit" style="grid-column:1 / -1">➕ Save Payment SMS to Inbox</button>
+            </form>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>TrxID</th><th>Provider</th><th>Sender</th><th>Amount</th><th>Matched Order</th><th>Action</th></tr></thead>
+              <tbody id="adminSmsTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Customers -->
+    <div class="admin-tab-pane hidden" id="atab-customers">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Joined</th><th>Action</th></tr></thead>
+          <tbody id="adminCustomersTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer" id="footer">
+  <div class="footer-inner">
+    <div>
+      <img src="assets/logo.svg" alt="SPR ZONE BD" style="height:46px;background:#fff;padding:6px 10px;border-radius:10px;margin-bottom:10px">
+      <p><b>SPR ZONE BD</b> — Bangladesh's trusted A to Z online marketplace.</p>
+      <p>Fast nationwide courier delivery, 100% authentic products, and instant bKash/Nagad/Rocket TrxID verification.</p>
+    </div>
+    <div>
+      <h4>Customer Service</h4>
+      <ul>
+        <li><a href="#" onclick="document.getElementById('trackOrderNavBtn').click();return false">Track Your Order</a></li>
+        <li>Delivery Zones & Fees</li>
+        <li>Easy Return & Refund Policy</li>
+        <li>Privacy & Security</li>
+      </ul>
+    </div>
+    <div>
+      <h4>Payment Methods</h4>
+      <ul>
+        <li>bKash (Auto TrxID Verify)</li>
+        <li>Nagad (Auto TrxID Verify)</li>
+        <li>Rocket DBBL (Auto TrxID Verify)</li>
+        <li>Visa / Mastercard & Cash on Delivery</li>
+      </ul>
+    </div>
+    <div>
+      <h4>Contact Us</h4>
+      <ul>
+        <li>Hotline: 09678-123456</li>
+        <li>Email: support@sprzonebd.com</li>
+        <li>Dhaka, Bangladesh</li>
+      </ul>
+    </div>
+  </div>
+  <p style="text-align:center;margin-top:22px;padding-top:14px;border-top:1px solid rgba(255,255,255,.15);font-size:12.5px">
+    © <span id="year"></span> SPR ZONE BD. All rights reserved.
+  </p>
+</footer>
+
+<!-- Product Detail Modal -->
+<div class="modal" id="productModal">
+  <div class="dialog" style="width:min(720px,100%)">
+    <div class="dialog-head">
+      <h2 id="pmCategory" style="font-size:16px;color:var(--emerald)">Product Details</h2>
+      <button class="outline sm" onclick="closeModal('productModal')">✕</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px">
+      <div style="background:#f8faf9;border:1px solid var(--line);border-radius:12px;padding:14px;display:grid;place-items:center">
+        <img id="pmImg" alt="Product" style="max-width:100%;max-height:260px;object-fit:contain">
+      </div>
+      <div>
+        <h2 id="pmTitle" style="font-size:21px;margin-bottom:6px"></h2>
+        <div id="pmRating" class="p-rating" style="margin-bottom:10px"></div>
+        <div class="p-price-row" style="margin-bottom:12px">
+          <span class="p-price" id="pmPrice" style="font-size:24px"></span>
+          <span class="p-old" id="pmOldPrice" style="font-size:15px"></span>
+        </div>
+        <div id="pmSpecs" style="font-size:12.5px;color:var(--emerald-dark);font-weight:700;margin-bottom:8px"></div>
+        <p id="pmDesc" style="font-size:13.5px;color:var(--muted);margin:0 0 12px"></p>
+        <div class="field"><label>Option / Variant</label><select id="pmVariant"></select></div>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button id="pmAddBtn" style="flex:1">🛒 Add to Cart</button>
+          <button class="crimson" id="pmBuyBtn" style="flex:1">⚡ Buy Now</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Auth Modal -->
+<div class="modal" id="authModal">
+  <div class="dialog" style="width:min(440px,100%)">
+    <div class="dialog-head">
+      <h2 id="authTitle">Customer Login</h2>
+      <button class="outline sm" onclick="closeModal('authModal')">✕</button>
+    </div>
+    <form id="authForm">
+      <div class="field hidden" id="authNameWrap"><label>Full Name *</label><input id="authName" placeholder="Your Full Name"></div>
+      <div class="field hidden" id="authPhoneWrap"><label>BD Mobile Number</label><input id="authPhone" placeholder="017XXXXXXXX"></div>
+      <div class="field"><label>Email Address *</label><input id="authEmail" type="email" required placeholder="you@example.com"></div>
+      <div class="field"><label>Password (min 6 chars) *</label><input id="authPassword" type="password" minlength="6" required></div>
+      <button type="submit" id="authSubmitBtn" style="width:100%;margin-top:6px">Sign In</button>
+    </form>
+    <p style="font-size:13px;color:var(--muted);text-align:center;margin:14px 0 0" id="authSwitchRow"></p>
+  </div>
+</div>
+
+<!-- Slide-Over Cart Drawer -->
+<div class="drawer-wrap" id="cartDrawer">
+  <div class="drawer">
+    <div class="dialog-head" style="margin-bottom:6px">
+      <h2>🛒 Your Cart</h2>
+      <button class="outline sm" id="closeCartBtn">✕</button>
+    </div>
+    <div class="drawer-body" id="cartItems"></div>
+    <div style="border-top:1px solid var(--line);padding-top:12px">
+      <div class="field">
+        <label>Delivery Zone (Free over ৳3,000)</label>
+        <select id="cartZoneSelect">
+          <option value="60">Dhaka Metro — ৳60 (Same-day / 24h)</option>
+          <option value="90">Dhaka Suburbs — ৳90 (1-2 days)</option>
+          <option value="120">All Bangladesh (64 Districts) — ৳120</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:6px;margin-bottom:10px">
+        <input id="promoInput" placeholder="Promo code (SPR10, DHAKA100, FREESHIP)" style="flex:1;padding:8px 10px;border:1px solid var(--line);border-radius:8px;text-transform:uppercase">
+        <button class="secondary sm" id="applyPromoBtn" type="button">Apply</button>
+      </div>
+      <div id="cartSummaryBox" style="font-size:13.5px;display:grid;gap:4px;margin-bottom:10px"></div>
+      <button id="proceedCheckoutBtn" style="width:100%;min-height:46px">Proceed to Checkout →</button>
+    </div>
+  </div>
+</div>
+
+<!-- Checkout Modal with bKash/Nagad/Rocket Auto TrxID Verification -->
+<div class="modal" id="checkoutModal">
+  <div class="dialog">
+    <div class="dialog-head">
+      <h2>🔒 Secure Bangladesh Checkout</h2>
+      <button class="outline sm" onclick="closeModal('checkoutModal')">✕</button>
+    </div>
+    <form id="checkoutForm">
+      <div class="form-row">
+        <div class="field"><label>Full Name *</label><input id="cName" required></div>
+        <div class="field"><label>Receiver Phone (01XXXXXXXXX) *</label><input id="cPhone" required pattern="01[3-9][0-9]{8}" placeholder="017XXXXXXXX"></div>
+      </div>
+      <div class="form-row">
+        <div class="field">
+          <label>Division *</label>
+          <select id="cDivision">
+            <option>Dhaka</option><option>Chattogram</option><option>Sylhet</option><option>Rajshahi</option>
+            <option>Khulna</option><option>Barishal</option><option>Rangpur</option><option>Mymensingh</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Payment Method *</label>
+          <select id="cPayment">
+            <option value="bKash">bKash (Auto TrxID Verify)</option>
+            <option value="Nagad">Nagad (Auto TrxID Verify)</option>
+            <option value="Rocket">Rocket DBBL (Auto TrxID Verify)</option>
+            <option value="Card">Debit / Credit Card</option>
+            <option value="Cash on Delivery">Cash on Delivery (COD)</option>
+          </select>
+        </div>
+      </div>
+      <div class="field"><label>Full Delivery Address *</label><textarea id="cAddress" required rows="2" placeholder="House, Road, Block, Thana, District"></textarea></div>
+
+      <!-- Mobile Banking Auto TrxID Verification Box -->
+      <div class="pay-box" id="mobilePayBox">
+        <div style="font-size:13px;font-weight:700;color:var(--emerald-dark)">
+          Step 1: Send <span id="payExactAmount" style="color:var(--crimson)">৳0</span> via <span id="payMethodLabel">bKash</span> to:
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span class="copy-chip" id="merchantPayNumber">01700-000000</span>
+          <button type="button" class="secondary sm" id="copyMerchantNumBtn">📋 Copy Number</button>
+        </div>
+        <div style="font-size:12px;color:var(--muted);margin:8px 0 6px">
+          Step 2: Enter the mobile number you paid from &amp; Transaction ID (TrxID). We verify automatically from our payment SMS API.
+        </div>
+        <div class="form-row">
+          <div class="field" style="margin:0"><label>Sender Number (01XXXXXXXXX) *</label><input id="cSenderNumber" placeholder="017XXXXXXXX"></div>
+          <div class="field" style="margin:0"><label>Transaction ID (TrxID) *</label><input id="cTrxId" placeholder="e.g. BL74K9M2PQ" style="text-transform:uppercase"></div>
+        </div>
+      </div>
+
+      <div id="checkoutTotals" style="background:#f8faf9;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:10px 0;font-size:13.5px"></div>
+      <button type="submit" id="placeOrderBtn" style="width:100%;min-height:46px">Verify & Place Order</button>
+    </form>
+  </div>
+</div>
+
+<!-- Track Order & My Orders Modal -->
+<div class="modal" id="ordersModal">
+  <div class="dialog" style="width:min(680px,100%)">
+    <div class="dialog-head">
+      <h2>📍 Track Your Order & Order History</h2>
+      <button class="outline sm" onclick="closeModal('ordersModal')">✕</button>
+    </div>
+    <form id="trackOrderForm" style="display:flex;gap:8px;margin-bottom:14px">
+      <input id="trackOrderInput" placeholder="Enter Order ID (e.g. SPR-BD-...)" style="flex:1;padding:10px 12px;border:1px solid var(--line);border-radius:9px">
+      <button type="submit">Track</button>
+    </form>
+    <div id="trackOrderResult"></div>
+    <div id="customerOrdersList"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import { getDatabase, ref, get, set, push, update, remove, onValue } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js";
+
+// User's e-commarcebd Firebase Configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyBmogqpXzirZC-aUHZrFMwutSJ5fmbyDXk",
+  authDomain: "e-commarcebd.firebaseapp.com",
+  databaseURL: "https://e-commarcebd-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "e-commarcebd",
+  storageBucket: "e-commarcebd.firebasestorage.app",
+  messagingSenderId: "799252588942",
+  appId: "1:799252588942:web:985396062c3a1823c6dcdf",
+  measurementId: "G-FM6BH07VPM"
+};
+
+const ADMIN_EMAIL = "mail.sajjadahmed@gmail.com";
+const DEFAULT_CATEGORIES = {
+  cat_electronics: { name: "Electronics & Gadgets", icon: "🔌", order: 1 },
+  cat_mobile: { name: "Mobile & Accessories", icon: "📱", order: 2 },
+  cat_computer: { name: "Computer & Accessories", icon: "💻", order: 3 },
+  cat_home: { name: "Home & Kitchen", icon: "🏠", order: 4 },
+  cat_fashion: { name: "Fashion & Apparel", icon: "👕", order: 5 },
+  cat_beauty: { name: "Health & Beauty", icon: "🌿", order: 6 },
+  cat_sports: { name: "Sports & Outdoors", icon: "⚽", order: 7 },
+  cat_toys: { name: "Toys & Baby Care", icon: "🧸", order: 8 },
+  cat_books: { name: "Books & Stationery", icon: "📚", order: 9 },
+  cat_groceries: { name: "Groceries & Daily Needs", icon: "🛒", order: 10 }
+};
+
+const DEFAULT_PRODUCTS = {
+  prod_earbuds_m10: {
+    name: "Bluetooth Earbuds TWS M10",
+    category: "Electronics & Gadgets",
+    brand: "M10 Pro",
+    price: 1250, oldPrice: 1800, stock: 45, rating: 4.6, reviewCount: 1200,
+    isFlashDeal: true, isFeatured: true, variants: "Matte Black, Midnight Blue",
+    specs: "LED Power Bank Case • Bluetooth 5.3 • IPX7 Waterproof",
+    image: "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=500&q=80",
+    description: "Crystal clear wireless stereo sound with 2000mAh charging dock that doubles as an emergency phone power bank."
+  },
+  prod_galaxy_a16: {
+    name: "Samsung Galaxy A16 (6GB + 128GB)",
+    category: "Mobile & Accessories",
+    brand: "Samsung",
+    price: 18999, oldPrice: 22999, stock: 18, rating: 4.7, reviewCount: 800,
+    isFlashDeal: true, isFeatured: true, variants: "Light Green, Black, Blue",
+    specs: "6.7\" Super AMOLED 90Hz • 50MP Triple Cam • 5000mAh",
+    image: "https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=500&q=80",
+    description: "Official Bangladesh warranty smartphone with vibrant Super AMOLED display and all-day battery life."
+  },
+  prod_hp_15s: {
+    name: "HP Laptop 15s (Core i5, 12GB, 512GB SSD)",
+    category: "Computer & Accessories",
+    brand: "HP",
+    price: 49999, oldPrice: 62000, stock: 9, rating: 4.5, reviewCount: 500,
+    isFlashDeal: false, isFeatured: true, variants: "Natural Silver",
+    specs: "Intel Core i5 12th Gen • 15.6\" FHD Anti-Glare • Backlit KB",
+    image: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=500&q=80",
+    description: "Thin & light workstation laptop built for students, freelancers, and office productivity across Bangladesh."
+  },
+  prod_watch_t900: {
+    name: "Smart Watch T900 Ultra",
+    category: "Electronics & Gadgets",
+    brand: "UltraWear",
+    price: 1950, oldPrice: 2500, stock: 50, rating: 4.5, reviewCount: 750,
+    isFlashDeal: true, isFeatured: true, variants: "Orange Strap, Black Strap, Silver",
+    specs: "2.09\" HD Display • Bluetooth Calling • Wireless Charging",
+    image: "https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=500&q=80",
+    description: "Rugged titanium-look smart watch with heart rate tracking, step counter, and Bangla/English notifications."
+  },
+  prod_airfryer_6l: {
+    name: "Air Fryer 6L Digital",
+    category: "Home & Kitchen",
+    brand: "Walton / Miyako",
+    price: 6999, oldPrice: 8500, stock: 16, rating: 4.5, reviewCount: 420,
+    isFlashDeal: false, isFeatured: true, variants: "Matte Black 6L",
+    specs: "1500W Rapid Air • Digital Touch • 85% Less Oil",
+    image: "https://images.unsplash.com/photo-1585515320310-259814833e62?w=500&q=80",
+    description: "Cook crispy chicken, fries, and healthy family snacks with zero excess oil and non-stick easy clean basket."
+  },
+  prod_handbag_ladies: {
+    name: "Ladies Hand Bag Fashion",
+    category: "Fashion & Apparel",
+    brand: "Aarong / Apex Style",
+    price: 1550, oldPrice: 2200, stock: 34, rating: 4.4, reviewCount: 620,
+    isFlashDeal: true, isFeatured: true, variants: "Dusty Rose, Classic Black, Cream",
+    specs: "Premium Vegan Leather • Detachable Strap • 3 Compartments",
+    image: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=500&q=80",
+    description: "Elegant everyday tote & crossbody handbag crafted for office, university, and festive occasions."
+  },
+  prod_jamdani_saree: {
+    name: "Authentic Dhakai Jamdani Saree",
+    category: "Fashion & Apparel",
+    brand: "Narayanganj Loom",
+    price: 4850, oldPrice: 6500, stock: 14, rating: 4.9, reviewCount: 215,
+    isFlashDeal: false, isFeatured: true, variants: "Emerald Gold, Crimson Red",
+    specs: "84 Count Half-Silk • Handwoven • 12 Haat + Blouse Piece",
+    image: "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=500&q=80",
+    description: "Genuine handloom Dhakai Jamdani woven by master weavers of Rupganj."
+  },
+  prod_sundarbans_honey: {
+    name: "Pure Sundarbans Raw Honey (1 KG)",
+    category: "Groceries & Daily Needs",
+    brand: "Sundarbans Harvest",
+    price: 920, oldPrice: 1150, stock: 65, rating: 4.9, reviewCount: 410,
+    isFlashDeal: false, isFeatured: true, variants: "500g Jar, 1 KG Jar",
+    specs: "100% Natural Khalisha Flower • Lab Tested • No Added Sugar",
+    image: "https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=500&q=80",
+    description: "Harvested sustainably from the Sundarbans mangrove forest and packed in food-grade glass jars."
+  }
+};
+
+const DEFAULT_COUPONS = {
+  SPR10: { code: "SPR10", type: "percent", value: 10, minOrder: 0 },
+  DHAKA100: { code: "DHAKA100", type: "flat", value: 100, minOrder: 1000 },
+  FREESHIP: { code: "FREESHIP", type: "freeship", value: 0, minOrder: 0 }
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getDatabase(app);
+
+let currentUser = null;
+let isAdmin = false;
+let products = { ...DEFAULT_PRODUCTS };
+let categories = { ...DEFAULT_CATEGORIES };
+let coupons = { ...DEFAULT_COUPONS };
+let heroData = {
+  badge: "সাশ্রয়ে সেরা অনলাইন শপিং সারা বাংলাদেশে!",
+  title: "SPR ZONE BD",
+  subtitle: "এখন আরও কাছে, আরও সাশ্রয়ী!"
+};
+let paymentSettings = {
+  bkashNumber: "01700-000000",
+  nagadNumber: "01700-000000",
+  rocketNumber: "01700-0000009",
+  smsApiUrl: "",
+  smsApiKey: "",
+  autoVerifyEnabled: true
+};
+let allOrders = {};
+let smsInbox = {};
+let allCustomers = {};
+
+let cart = JSON.parse(localStorage.getItem("spr_web_cart") || "[]");
+let wishlist = JSON.parse(localStorage.getItem("spr_web_wish") || "[]");
+let selectedCategory = "All";
+let navMode = "home"; // home | all | deals | new
+let searchTerm = "";
+let sortMode = "featured";
+let appliedPromoCode = "";
+let registerMode = false;
+
+const $ = (id) => document.getElementById(id);
+const money = (n) => "৳" + Number(n || 0).toLocaleString("en-BD");
+const safe = (s = "") => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+function toast(msg) {
+  const el = $("toast");
+  el.textContent = msg;
+  el.style.display = "block";
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => { el.style.display = "none"; }, 3400);
+}
+
+window.closeModal = (id) => $(id).classList.remove("show");
+function openModal(id) { $(id).classList.add("show"); }
+
+function normalizeBdPhone(raw = "") {
+  const digits = String(raw).replace(/\D/g, "");
+  if (digits.startsWith("8801") && digits.length === 13) return digits.slice(2);
+  return digits;
+}
+
+function isValidBdPhone(raw = "") {
+  return /^01[3-9][0-9]{8}$/.test(normalizeBdPhone(raw));
+}
+
+function isValidTrxId(method, trx = "") {
+  const clean = trx.trim().toUpperCase();
+  if (method === "bKash") return /^[A-Z0-9]{10}$/.test(clean);
+  if (method === "Nagad") return /^[A-Z0-9]{8,12}$/.test(clean);
+  if (method === "Rocket") return /^[A-Z0-9]{8,14}$/.test(clean);
+  return true;
+}
+
+function canCancelOrder(status = "") {
+  return status === "Pending" || status === "Placed";
+}
+
+function saveCart() {
+  localStorage.setItem("spr_web_cart", JSON.stringify(cart));
+  const count = cart.reduce((s, x) => s + x.qty, 0);
+  const sub = cart.reduce((s, x) => s + x.price * x.qty, 0);
+  $("cartCount").textContent = count;
+  $("cartTopTotal").textContent = money(sub);
+}
+
+function saveWishlist() {
+  localStorage.setItem("spr_web_wish", JSON.stringify(wishlist));
+}
+
+function evaluateCoupon(codeRaw, subtotal) {
+  const code = String(codeRaw || "").trim().toUpperCase();
+  const c = coupons[code];
+  if (!c) return null;
+  if (subtotal < Number(c.minOrder || 0)) return null;
+  if (c.type === "percent") {
+    return { code, discount: Math.round(subtotal * (Number(c.value || 0) / 100)), freeShip: false };
+  }
+  if (c.type === "flat") {
+    return { code, discount: Number(c.value || 0), freeShip: false };
+  }
+  if (c.type === "freeship") {
+    return { code, discount: 0, freeShip: true };
+  }
+  return null;
+}
+
+function computeTotals() {
+  const subtotal = cart.reduce((s, x) => s + x.price * x.qty, 0);
+  const promo = evaluateCoupon(appliedPromoCode, subtotal);
+  const discount = promo ? promo.discount : 0;
+  const zoneFee = Number($("cartZoneSelect").value || 60);
+  const deliveryFee = cart.length === 0 || subtotal >= 3000 || promo?.freeShip ? 0 : zoneFee;
+  const total = Math.max(0, subtotal - discount + deliveryFee);
+  return { subtotal, discount, deliveryFee, total, promo };
+}
+
+/* ---------- Storefront Rendering ---------- */
+function renderCategories() {
+  const catArr = Object.entries(categories)
+    .map(([id, c]) => ({ id, ...c }))
+    .sort((a, b) => (a.order || 99) - (b.order || 99));
+
+  const prodValues = Object.values(products);
+  const allBtn = `<button class="cat-btn ${selectedCategory === "All" ? "active" : ""}" data-cat="All">
+    <span>🛍️ All Categories</span><span class="cat-count">${prodValues.length}</span>
+  </button>`;
+
+  const itemsHtml = catArr.map((c) => {
+    const cnt = prodValues.filter((p) => p.category === c.name).length;
+    return `<button class="cat-btn ${selectedCategory === c.name ? "active" : ""}" data-cat="${safe(c.name)}">
+      <span>${safe(c.icon || "📦")} ${safe(c.name)}</span><span class="cat-count">${cnt}</span>
+    </button>`;
+  }).join("");
+
+  $("categoryList").innerHTML = allBtn + itemsHtml;
+  $("categoryList").querySelectorAll(".cat-btn").forEach((b) => {
+    b.onclick = () => {
+      selectedCategory = b.dataset.cat;
+      renderCategories();
+      renderProducts();
+      $("leftSidebar").classList.remove("mobile-open");
+      $("productsSection").scrollIntoView({ behavior: "smooth" });
+    };
+  });
+
+  // Also sync Admin product category dropdown
+  const apCat = $("apCategory");
+  if (apCat) {
+    const cur = apCat.value;
+    apCat.innerHTML = catArr.map((c) => `<option value="${safe(c.name)}">${safe(c.name)}</option>`).join("");
+    if (cur) apCat.value = cur;
+  }
+}
+
+function renderProducts() {
+  let list = Object.entries(products).map(([id, p]) => ({ id, ...p }));
+
+  if (selectedCategory !== "All") {
+    list = list.filter((p) => p.category === selectedCategory);
+  }
+  if (navMode === "deals") {
+    list = list.filter((p) => p.isFlashDeal || (p.oldPrice && p.oldPrice > p.price));
+  }
+  if (searchTerm) {
+    list = list.filter((p) =>
+      `${p.name} ${p.category} ${p.brand || ""} ${p.description || ""}`.toLowerCase().includes(searchTerm)
+    );
+  }
+
+  if (sortMode === "price-asc") list.sort((a, b) => a.price - b.price);
+  else if (sortMode === "price-desc") list.sort((a, b) => b.price - a.price);
+  else if (sortMode === "rating") list.sort((a, b) => (b.rating || 4.5) - (a.rating || 4.5));
+  else if (navMode === "new") list.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+  else list.sort((a, b) => Number(!!b.isFeatured) - Number(!!a.isFeatured));
+
+  const titlePrefix = navMode === "deals" ? "🔥 Big Sale Deals" : navMode === "new" ? "✨ New Arrivals" : (selectedCategory === "All" ? "🔥 Popular Products" : `📦 ${selectedCategory}`);
+  $("catalogHeading").innerHTML = `${safe(titlePrefix)} <span class="muted" style="font-size:13px;font-weight:600">(${list.length} items)</span>`;
+
+  if (!list.length) {
+    $("productGrid").innerHTML = `<div style="grid-column:1/-1;background:#fff;padding:34px;border-radius:14px;text-align:center;border:1px solid var(--line)">
+      <p style="font-weight:700;margin:0 0 8px">No matching products found</p>
+      <button class="secondary sm" onclick="resetStoreFilters()">Reset Filters</button>
+    </div>`;
+    return;
+  }
+
+  $("productGrid").innerHTML = list.map((p) => {
+    const disc = p.oldPrice > p.price ? Math.round(((p.oldPrice - p.price) / p.oldPrice) * 100) : 0;
+    const liked = wishlist.includes(p.id);
+    return `<article class="product-card">
+      <div class="p-img-wrap" data-open="${safe(p.id)}">
+        ${disc > 0 ? `<span class="p-badge">-${disc}%</span>` : ""}
+        <button class="p-wish ${liked ? "liked" : ""}" data-wish="${safe(p.id)}" title="Save to wishlist">${liked ? "♥" : "♡"}</button>
+        <img src="${safe(p.image || "https://placehold.co/400x340?text=SPR+ZONE+BD")}" alt="${safe(p.name)}" onerror="this.src='https://placehold.co/400x340?text=SPR+ZONE+BD'">
+      </div>
+      <div class="p-body">
+        <div class="p-cat">${safe(p.category || "General")}</div>
+        <div class="p-title" data-open="${safe(p.id)}">${safe(p.name)}</div>
+        <div class="p-rating">★ ${Number(p.rating || 4.6).toFixed(1)} <span>(${Number(p.reviewCount || 120)})</span></div>
+        <div class="p-price-row">
+          <span class="p-price">${money(p.price)}</span>
+          ${p.oldPrice > p.price ? `<span class="p-old">${money(p.oldPrice)}</span>` : ""}
+        </div>
+        <button class="add-btn" data-add="${safe(p.id)}" ${Number(p.stock || 0) <= 0 ? "disabled" : ""}>
+          ${Number(p.stock || 0) > 0 ? "🛒 Add to Cart" : "Out of Stock"}
+        </button>
+      </div>
+    </article>`;
+  }).join("");
+
+  $("productGrid").querySelectorAll("[data-open]").forEach((el) => el.onclick = () => openProductModal(el.dataset.open));
+  $("productGrid").querySelectorAll("[data-add]").forEach((el) => el.onclick = () => addToCart(el.dataset.add));
+  $("productGrid").querySelectorAll("[data-wish]").forEach((el) => el.onclick = (e) => {
+    e.stopPropagation();
+    const id = el.dataset.wish;
+    if (wishlist.includes(id)) wishlist = wishlist.filter((x) => x !== id);
+    else wishlist.push(id);
+    saveWishlist();
+    renderProducts();
+  });
+}
+
+window.resetStoreFilters = () => {
+  selectedCategory = "All";
+  navMode = "home";
+  searchTerm = "";
+  $("searchInput").value = "";
+  renderCategories();
+  renderProducts();
+};
+
+function openProductModal(id) {
+  const p = products[id];
+  if (!p) return;
+  $("pmCategory").textContent = p.category || "SPR Zone BD";
+  $("pmTitle").textContent = p.name;
+  $("pmImg").src = p.image || "https://placehold.co/400x340?text=SPR+ZONE+BD";
+  $("pmRating").innerHTML = `★ ${Number(p.rating || 4.7).toFixed(1)} <span>(${Number(p.reviewCount || 100)} reviews · Stock: ${Number(p.stock || 0)})</span>`;
+  $("pmPrice").textContent = money(p.price);
+  $("pmOldPrice").textContent = p.oldPrice > p.price ? money(p.oldPrice) : "";
+  $("pmSpecs").textContent = p.specs || "100% Original Product • Bangladesh Warranty";
+  $("pmDesc").textContent = p.description || "";
+  const vars = String(p.variants || "Standard").split(",").map((s) => s.trim()).filter(Boolean);
+  $("pmVariant").innerHTML = vars.map((v) => `<option value="${safe(v)}">${safe(v)}</option>`).join("");
+  $("pmAddBtn").disabled = Number(p.stock || 0) <= 0;
+  $("pmBuyBtn").disabled = Number(p.stock || 0) <= 0;
+  $("pmAddBtn").onclick = () => { addToCart(id, $("pmVariant").value); closeModal("productModal"); };
+  $("pmBuyBtn").onclick = () => {
+    addToCart(id, $("pmVariant").value);
+    closeModal("productModal");
+    openCheckout();
+  };
+  openModal("productModal");
+}
+
+function addToCart(id, variant = "") {
+  const p = products[id];
+  if (!p || Number(p.stock || 0) <= 0) return toast("Product is out of stock");
+  const chosen = variant || String(p.variants || "Standard").split(",")[0].trim() || "Standard";
+  const found = cart.find((x) => x.id === id && x.variant === chosen);
+  if (found) found.qty = Math.min(Number(p.stock || 99), found.qty + 1);
+  else cart.push({ id, name: p.name, price: Number(p.price), image: p.image || "", variant: chosen, qty: 1 });
+  saveCart();
+  toast(`Added ${p.name} to cart`);
+}
+
+function renderCartDrawer() {
+  if (!cart.length) {
+    $("cartItems").innerHTML = `<div style="text-align:center;padding:40px 10px;color:var(--muted)">
+      <div style="font-size:38px">🛒</div>
+      <p>Your SPR ZONE BD cart is empty.</p>
+    </div>`;
+  } else {
+    $("cartItems").innerHTML = cart.map((x, idx) => `
+      <div class="cart-row">
+        <img src="${safe(x.image || "https://placehold.co/100?text=Item")}" alt="${safe(x.name)}">
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;font-size:13px">${safe(x.name)}</div>
+          <div style="font-size:11.5px;color:var(--muted)">${safe(x.variant)} · ${money(x.price)}</div>
+          <div style="font-weight:800;color:var(--emerald-dark);margin-top:2px">${money(x.price * x.qty)}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:4px">
+          <button class="outline sm" data-dec="${idx}">−</button>
+          <b style="min-width:20px;text-align:center">${x.qty}</b>
+          <button class="outline sm" data-inc="${idx}">+</button>
+          <button class="crimson sm" data-del="${idx}">×</button>
+        </div>
+      </div>
+    `).join("");
+
+    $("cartItems").querySelectorAll("[data-inc]").forEach((b) => b.onclick = () => { cart[+b.dataset.inc].qty++; saveCart(); renderCartDrawer(); });
+    $("cartItems").querySelectorAll("[data-dec]").forEach((b) => b.onclick = () => {
+      const i = +b.dataset.dec;
+      cart[i].qty--;
+      if (cart[i].qty <= 0) cart.splice(i, 1);
+      saveCart(); renderCartDrawer();
+    });
+    $("cartItems").querySelectorAll("[data-del]").forEach((b) => b.onclick = () => { cart.splice(+b.dataset.del, 1); saveCart(); renderCartDrawer(); });
+  }
+
+  const t = computeTotals();
+  $("cartSummaryBox").innerHTML = `
+    <div style="display:flex;justify-content:space-between"><span>Subtotal</span><b>${money(t.subtotal)}</b></div>
+    ${t.discount > 0 ? `<div style="display:flex;justify-content:space-between;color:var(--emerald)"><span>Promo (${safe(t.promo.code)})</span><b>-${money(t.discount)}</b></div>` : ""}
+    <div style="display:flex;justify-content:space-between"><span>Delivery Fee</span><b>${t.deliveryFee === 0 ? "FREE" : money(t.deliveryFee)}</b></div>
+    <div style="display:flex;justify-content:space-between;font-size:16px;padding-top:4px;border-top:1px solid var(--line)"><b>Total Payable</b><b style="color:var(--crimson)">${money(t.total)}</b></div>
+  `;
+}
+
+/* ---------- Checkout & Auto TrxID Verification ---------- */
+function syncCheckoutPaymentUI() {
+  const method = $("cPayment").value;
+  const isMobile = method === "bKash" || method === "Nagad" || method === "Rocket";
+  $("mobilePayBox").classList.toggle("hidden", !isMobile);
+  $("cSenderNumber").required = isMobile;
+  $("cTrxId").required = isMobile;
+
+  const t = computeTotals();
+  $("payExactAmount").textContent = money(t.total);
+  $("payMethodLabel").textContent = method;
+  const num = method === "bKash" ? paymentSettings.bkashNumber : method === "Nagad" ? paymentSettings.nagadNumber : paymentSettings.rocketNumber;
+  $("merchantPayNumber").textContent = num || "01700-000000";
+
+  $("checkoutTotals").innerHTML = `
+    <div style="display:flex;justify-content:space-between"><span>Items (${cart.reduce((s, x) => s + x.qty, 0)})</span><b>${money(t.subtotal)}</b></div>
+    ${t.discount > 0 ? `<div style="display:flex;justify-content:space-between;color:var(--emerald)"><span>Discount</span><b>-${money(t.discount)}</b></div>` : ""}
+    <div style="display:flex;justify-content:space-between"><span>Delivery</span><b>${t.deliveryFee === 0 ? "FREE" : money(t.deliveryFee)}</b></div>
+    <div style="display:flex;justify-content:space-between;font-size:16px;margin-top:4px;padding-top:4px;border-top:1px solid var(--line)"><b>Payable Amount</b><b style="color:var(--crimson)">${money(t.total)}</b></div>
+  `;
+}
+
+function openCheckout() {
+  if (!cart.length) return toast("Your cart is empty");
+  if (currentUser) {
+    $("cName").value = $("cName").value || currentUser.displayName || "";
+  }
+  syncCheckoutPaymentUI();
+  openModal("checkoutModal");
+}
+
+async function autoVerifyTransaction(method, senderNorm, trxUpper, totalAmount) {
+  if (!paymentSettings.autoVerifyEnabled) return false;
+
+  // 1) Check merchant's configured external SMS API endpoint if provided
+  if (paymentSettings.smsApiUrl) {
+    try {
+      const url = new URL(paymentSettings.smsApiUrl);
+      url.searchParams.set("sender", senderNorm);
+      url.searchParams.set("trxId", trxUpper);
+      url.searchParams.set("amount", String(totalAmount));
+      url.searchParams.set("provider", method);
+      const headers = {};
+      if (paymentSettings.smsApiKey) headers["x-api-key"] = paymentSettings.smsApiKey;
+      const resp = await fetch(url.toString(), { headers });
+      if (resp.ok) {
+        const json = await resp.json();
+        if (json.verified === true || String(json.status || "").toLowerCase() === "verified") {
+          return true;
+        }
+      }
+    } catch (_) { /* Fall back to RTDB /sms_inbox */ }
+  }
+
+  // 2) Check RTDB /sms_inbox/{trxId} (senderNumber + amount >= total + unmatched)
+  try {
+    const snap = await get(ref(db, "sms_inbox/" + trxUpper));
+    if (snap.exists()) {
+      const rec = snap.val();
+      const recSender = normalizeBdPhone(rec.senderNumber || "");
+      const recAmount = Number(rec.amount || 0);
+      if (!rec.matchedOrderId && recSender === senderNorm && recAmount >= totalAmount) {
+        return true;
+      }
+    }
+  } catch (_) {}
+
+  return false;
+}
+
+/* ---------- Order Tracking & Cancel Lock ---------- */
+function renderOrderTimeline(status) {
+  const steps = ["Pending", "Confirmed", "Packed", "Out for Delivery", "Delivered"];
+  const norm = status === "Placed" ? "Pending" : status === "Processing" ? "Confirmed" : status === "Shipped" ? "Out for Delivery" : status;
+  const idx = Math.max(0, steps.indexOf(norm));
+  if (status === "Cancelled") {
+    return `<div class="badge red" style="margin:8px 0">Order Cancelled</div>`;
+  }
+  return `<div class="timeline">${steps.map((s, i) => `
+    <div>
+      <div class="step-dot ${i <= idx ? "done" : ""}">${i <= idx ? "✓" : i + 1}</div>
+      <div style="font-weight:${i <= idx ? 700 : 500};color:${i <= idx ? "var(--emerald-dark)" : "var(--muted)"}">${s.replace("Out for Delivery", "Transit")}</div>
+    </div>
+  `).join("")}</div>`;
+}
+
+function renderSingleOrderCard(id, o) {
+  const allowedCancel = canCancelOrder(o.status || "Pending");
+  const statusBadge = o.status === "Confirmed" || o.status === "Delivered" ? "green" : o.status === "Cancelled" ? "red" : "amber";
+  return `<div class="card" style="padding:14px;margin-bottom:12px">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+      <div>
+        <b style="font-size:15px">${safe(id)}</b>
+        <div style="font-size:12px;color:var(--muted)">${new Date(o.createdAt || Date.now()).toLocaleString()}</div>
+      </div>
+      <span class="badge ${statusBadge}">${safe(o.status || "Pending")}</span>
+    </div>
+    ${renderOrderTimeline(o.status || "Pending")}
+    <div style="font-size:13px;border-top:1px solid var(--line);padding-top:8px;display:grid;gap:4px">
+      <div><b>Items:</b> ${(o.items || []).map((it) => `${safe(it.name)} ×${it.qty}`).join(", ") || safe(o.itemsSummary || "")}</div>
+      <div><b>Payment:</b> ${safe(o.paymentMethod)} · <span style="color:var(--emerald-dark);font-weight:700">${safe(o.paymentStatus || "Pending")}</span></div>
+      ${o.senderNumber ? `<div><b>Sender:</b> ${safe(o.senderNumber)} · <b>TrxID:</b> ${safe(o.trxId)}</div>` : ""}
+      <div><b>Total:</b> <b style="color:var(--crimson)">${money(o.total)}</b></div>
+    </div>
+    <div style="margin-top:10px">
+      ${allowedCancel
+        ? `<button class="crimson sm" data-cancel-order="${safe(id)}">Cancel Order</button>`
+        : (o.status !== "Cancelled" ? `<div style="font-size:12px;background:#f1f5f3;padding:8px 10px;border-radius:8px;color:var(--muted);font-weight:600">🔒 Order ${safe(o.status)} — Confirmed orders cannot be cancelled.</div>` : "")
+      }
+    </div>
+  </div>`;
+}
+
+async function cancelCustomerOrder(orderId) {
+  const snap = await get(ref(db, "orders/" + orderId));
+  if (!snap.exists()) return toast("Order not found");
+  const o = snap.val();
+  if (!canCancelOrder(o.status)) {
+    return toast("Confirmed orders cannot be cancelled.");
+  }
+  await update(ref(db, "orders/" + orderId), { status: "Cancelled", updatedAt: Date.now() });
+  toast("Order cancelled");
+  openOrdersModal(orderId);
+}
+
+async function openOrdersModal(highlightId = "") {
+  openModal("ordersModal");
+  if (highlightId) {
+    $("trackOrderInput").value = highlightId;
+    const snap = await get(ref(db, "orders/" + highlightId));
+    $("trackOrderResult").innerHTML = snap.exists()
+      ? renderSingleOrderCard(highlightId, snap.val())
+      : `<p class="muted">No order found with ID ${safe(highlightId)}</p>`;
+  } else {
+    $("trackOrderResult").innerHTML = "";
+  }
+
+  if (currentUser) {
+    const snap = await get(ref(db, "orders"));
+    const data = snap.val() || {};
+    const mine = Object.entries(data)
+      .filter(([_, o]) => (o.customerEmail || "").toLowerCase() === currentUser.email.toLowerCase() || o.uid === currentUser.uid)
+      .sort((a, b) => (b[1].createdAt || 0) - (a[1].createdAt || 0));
+    $("customerOrdersList").innerHTML = `<h3 style="margin:12px 0 8px">My Order History (${mine.length})</h3>` +
+      (mine.length ? mine.map(([id, o]) => renderSingleOrderCard(id, o)).join("") : `<p style="color:var(--muted)">You haven't placed any orders yet.</p>`);
+  } else {
+    $("customerOrdersList").innerHTML = `<p style="color:var(--muted);font-size:13px">Sign in to view your full order history, or track any order above using its Order ID.</p>`;
+  }
+
+  $("ordersModal").querySelectorAll("[data-cancel-order]").forEach((b) => {
+    b.onclick = () => cancelCustomerOrder(b.dataset.cancelOrder);
+  });
+}
+
+/* ---------- Website Admin Panel (Add / Edit / Delete Everything) ---------- */
+function renderAdminDashboard() {
+  if (!isAdmin) return;
+  $("adminEmailLabel").textContent = currentUser?.email || ADMIN_EMAIL;
+  $("statProducts").textContent = Object.keys(products).length;
+  $("statCategories").textContent = Object.keys(categories).length;
+  const orderEntries = Object.entries(allOrders);
+  $("statOrders").textContent = orderEntries.length;
+  const rev = orderEntries.filter(([_, o]) => o.status !== "Cancelled").reduce((s, [_, o]) => s + Number(o.total || 0), 0);
+  $("statRevenue").textContent = money(rev);
+  $("statCustomers").textContent = Object.keys(allCustomers).length;
+
+  renderAdminProducts();
+  renderAdminCategories();
+  renderAdminCoupons();
+  renderAdminOrders();
+  renderAdminPaymentSettings();
+  renderAdminCustomers();
+}
+
+function renderAdminProducts() {
+  const rows = Object.entries(products);
+  $("adminProductsTable").innerHTML = rows.length ? rows.map(([id, p]) => `
+    <tr>
+      <td><b>${safe(p.name)}</b><br><small style="color:var(--muted)">${safe(p.brand || "")}</small></td>
+      <td>${safe(p.category)}</td>
+      <td><b style="color:var(--crimson)">${money(p.price)}</b></td>
+      <td>${Number(p.stock || 0)}</td>
+      <td>
+        <button class="secondary sm" data-edit-prod="${safe(id)}">Edit</button>
+        <button class="crimson sm" data-del-prod="${safe(id)}">Delete</button>
+      </td>
+    </tr>
+  `).join("") : `<tr><td colspan="5">No products yet. Click "Seed BD Catalog" or add one on the left.</td></tr>`;
+
+  $("adminProductsTable").querySelectorAll("[data-edit-prod]").forEach((b) => b.onclick = () => {
+    const id = b.dataset.editProd, p = products[id];
+    $("apId").value = id;
+    $("apName").value = p.name || "";
+    $("apCategory").value = p.category || "";
+    $("apBrand").value = p.brand || "";
+    $("apPrice").value = p.price || 0;
+    $("apOldPrice").value = p.oldPrice || 0;
+    $("apStock").value = p.stock ?? 10;
+    $("apVariants").value = p.variants || "Standard";
+    $("apImage").value = p.image || "";
+    $("apSpecs").value = p.specs || "";
+    $("apDesc").value = p.description || "";
+    $("apFlash").checked = !!p.isFlashDeal;
+    $("apFeatured").checked = p.isFeatured !== false;
+    $("prodFormTitle").textContent = "Edit Product";
+  });
+  $("adminProductsTable").querySelectorAll("[data-del-prod]").forEach((b) => b.onclick = async () => {
+    if (!confirm("Delete this product?")) return;
+    await remove(ref(db, "products/" + b.dataset.delProd));
+    toast("Product deleted");
+  });
+}
+
+function renderAdminCategories() {
+  const rows = Object.entries(categories).sort((a, b) => (a[1].order || 99) - (b[1].order || 99));
+  $("adminCategoriesTable").innerHTML = rows.map(([id, c]) => `
+    <tr>
+      <td style="font-size:18px">${safe(c.icon || "📦")}</td>
+      <td><b>${safe(c.name)}</b></td>
+      <td>${Number(c.order || 1)}</td>
+      <td>
+        <button class="secondary sm" data-edit-cat="${safe(id)}">Edit</button>
+        <button class="crimson sm" data-del-cat="${safe(id)}">Delete</button>
+      </td>
+    </tr>
+  `).join("");
+
+  $("adminCategoriesTable").querySelectorAll("[data-edit-cat]").forEach((b) => b.onclick = () => {
+    const id = b.dataset.editCat, c = categories[id];
+    $("acId").value = id;
+    $("acName").value = c.name || "";
+    $("acIcon").value = c.icon || "🛍️";
+    $("acOrder").value = c.order || 1;
+  });
+  $("adminCategoriesTable").querySelectorAll("[data-del-cat]").forEach((b) => b.onclick = async () => {
+    if (!confirm("Delete this category?")) return;
+    await remove(ref(db, "categories/" + b.dataset.delCat));
+    toast("Category deleted");
+  });
+}
+
+function renderAdminCoupons() {
+  $("ahBadge").value = heroData.badge || "";
+  $("ahTitle").value = heroData.title || "";
+  $("ahSub").value = heroData.subtitle || "";
+
+  const rows = Object.entries(coupons);
+  $("adminCouponsTable").innerHTML = rows.map(([id, q]) => `
+    <tr>
+      <td><b>${safe(q.code || id)}</b></td>
+      <td>${q.type === "freeship" ? "Free Shipping" : q.type === "percent" ? `${q.value}% Off` : `${money(q.value)} Off`}</td>
+      <td>${money(q.minOrder || 0)}</td>
+      <td>
+        <button class="secondary sm" data-edit-coupon="${safe(id)}">Edit</button>
+        <button class="crimson sm" data-del-coupon="${safe(id)}">Delete</button>
+      </td>
+    </tr>
+  `).join("");
+
+  $("adminCouponsTable").querySelectorAll("[data-edit-coupon]").forEach((b) => b.onclick = () => {
+    const id = b.dataset.editCoupon, q = coupons[id];
+    $("aqId").value = id;
+    $("aqCode").value = q.code || id;
+    $("aqType").value = q.type || "percent";
+    $("aqValue").value = q.value || 0;
+    $("aqMin").value = q.minOrder || 0;
+  });
+  $("adminCouponsTable").querySelectorAll("[data-del-coupon]").forEach((b) => b.onclick = async () => {
+    if (!confirm("Delete this coupon?")) return;
+    await remove(ref(db, "coupons/" + b.dataset.delCoupon));
+    toast("Coupon deleted");
+  });
+}
+
+function renderAdminOrders() {
+  const filter = $("adminOrderFilter").value;
+  const rows = Object.entries(allOrders)
+    .filter(([_, o]) => filter === "All" || o.status === filter)
+    .sort((a, b) => (b[1].createdAt || 0) - (a[1].createdAt || 0));
+
+  $("adminOrdersTable").innerHTML = rows.length ? rows.map(([id, o]) => `
+    <tr>
+      <td><b>${safe(id)}</b><br><small style="color:var(--muted)">${new Date(o.createdAt || Date.now()).toLocaleDateString()}</small></td>
+      <td><b>${safe(o.customer?.name || "Customer")}</b><br><small>${safe(o.customer?.phone || "")} · ${safe(o.customer?.division || "")}</small></td>
+      <td><b>${money(o.total)}</b></td>
+      <td>
+        <b>${safe(o.paymentMethod || "")}</b><br>
+        <small>${o.senderNumber ? `From: ${safe(o.senderNumber)}<br>TrxID: <b>${safe(o.trxId)}</b>` : safe(o.paymentStatus || "")}</small>
+      </td>
+      <td>
+        <select data-ord-status="${safe(id)}" style="padding:6px;border-radius:7px;border:1px solid var(--line)">
+          ${["Pending", "Confirmed", "Packed", "Out for Delivery", "Delivered", "Cancelled"].map((st) =>
+            `<option value="${st}" ${o.status === st ? "selected" : ""}>${st}</option>`
+          ).join("")}
+        </select>
+      </td>
+      <td style="white-space:nowrap">
+        ${o.status === "Pending" ? `<button class="sm" data-confirm-ord="${safe(id)}">✓ Confirm</button>` : ""}
+        <button class="crimson sm" data-del-ord="${safe(id)}">Delete</button>
+      </td>
+    </tr>
+  `).join("") : `<tr><td colspan="6">No orders found.</td></tr>`;
+
+  $("adminOrdersTable").querySelectorAll("[data-ord-status]").forEach((sel) => sel.onchange = async () => {
+    await update(ref(db, "orders/" + sel.dataset.ordStatus), { status: sel.value, updatedAt: Date.now() });
+    toast("Order status updated");
+  });
+  $("adminOrdersTable").querySelectorAll("[data-confirm-ord]").forEach((b) => b.onclick = async () => {
+    await update(ref(db, "orders/" + b.dataset.confirmOrd), {
+      status: "Confirmed",
+      paymentStatus: "Verified by Admin",
+      updatedAt: Date.now()
+    });
+    toast("Order Confirmed! Cancellation is now locked.");
+  });
+  $("adminOrdersTable").querySelectorAll("[data-del-ord]").forEach((b) => b.onclick = async () => {
+    if (!confirm("Delete this order permanently?")) return;
+    await remove(ref(db, "orders/" + b.dataset.delOrd));
+    toast("Order deleted");
+  });
+}
+
+function renderAdminPaymentSettings() {
+  $("psBkash").value = paymentSettings.bkashNumber || "";
+  $("psNagad").value = paymentSettings.nagadNumber || "";
+  $("psRocket").value = paymentSettings.rocketNumber || "";
+  $("psSmsUrl").value = paymentSettings.smsApiUrl || "";
+  $("psSmsKey").value = paymentSettings.smsApiKey || "";
+  $("psAutoVerify").checked = paymentSettings.autoVerifyEnabled !== false;
+
+  const smsRows = Object.entries(smsInbox).sort((a, b) => (b[1].receivedAt || 0) - (a[1].receivedAt || 0));
+  $("adminSmsTable").innerHTML = smsRows.length ? smsRows.map(([trx, s]) => `
+    <tr>
+      <td><b>${safe(trx)}</b></td>
+      <td>${safe(s.provider || "")}</td>
+      <td>${safe(s.senderNumber || "")}</td>
+      <td><b>${money(s.amount)}</b></td>
+      <td>${s.matchedOrderId ? `<span class="badge green">${safe(s.matchedOrderId)}</span>` : `<span class="badge amber">Unmatched</span>`}</td>
+      <td><button class="crimson sm" data-del-sms="${safe(trx)}">Delete</button></td>
+    </tr>
+  `).join("") : `<tr><td colspan="6">No SMS records in /sms_inbox yet.</td></tr>`;
+
+  $("adminSmsTable").querySelectorAll("[data-del-sms]").forEach((b) => b.onclick = async () => {
+    await remove(ref(db, "sms_inbox/" + b.dataset.delSms));
+    toast("SMS record deleted");
+  });
+}
+
+function renderAdminCustomers() {
+  const rows = Object.entries(allCustomers);
+  $("adminCustomersTable").innerHTML = rows.length ? rows.map(([uid, c]) => `
+    <tr>
+      <td><b>${safe(c.name || "Customer")}</b></td>
+      <td>${safe(c.email || "")}</td>
+      <td>${safe(c.phone || "—")}</td>
+      <td>${c.createdAt ? new Date(c.createdAt).toLocaleDateString() : "—"}</td>
+      <td><button class="crimson sm" data-del-cust="${safe(uid)}">Delete</button></td>
+    </tr>
+  `).join("") : `<tr><td colspan="5">No registered customers loaded yet.</td></tr>`;
+
+  $("adminCustomersTable").querySelectorAll("[data-del-cust]").forEach((b) => b.onclick = async () => {
+    if (!confirm("Remove this customer record?")) return;
+    await remove(ref(db, "customers/" + b.dataset.delCust));
+    toast("Customer record removed");
+  });
+}
+
+/* ---------- Firebase Listeners & Auth ---------- */
+function subscribeStoreData() {
+  onValue(ref(db, "products"), (snap) => {
+    const val = snap.val();
+    products = val && Object.keys(val).length ? val : { ...DEFAULT_PRODUCTS };
+    renderCategories();
+    renderProducts();
+    if (isAdmin) renderAdminDashboard();
+  });
+
+  onValue(ref(db, "categories"), (snap) => {
+    const val = snap.val();
+    categories = val && Object.keys(val).length ? val : { ...DEFAULT_CATEGORIES };
+    renderCategories();
+    if (isAdmin) renderAdminDashboard();
+  });
+
+  onValue(ref(db, "coupons"), (snap) => {
+    const val = snap.val();
+    coupons = val && Object.keys(val).length ? val : { ...DEFAULT_COUPONS };
+    if (isAdmin) renderAdminCoupons();
+  });
+
+  onValue(ref(db, "deals/hero"), (snap) => {
+    if (snap.exists()) {
+      heroData = { ...heroData, ...snap.val() };
+      $("heroBadgeView").textContent = heroData.badge;
+      $("heroTitleView").innerHTML = safe(heroData.title).replace("ZONE", `<span class="red">ZONE</span>`);
+      $("heroSubtitleView").textContent = heroData.subtitle;
+    }
+  });
+
+  onValue(ref(db, "settings/payment"), (snap) => {
+    if (snap.exists()) {
+      paymentSettings = { ...paymentSettings, ...snap.val() };
+      if (isAdmin) renderAdminPaymentSettings();
+    }
+  });
+}
+
+function subscribeAdminData() {
+  onValue(ref(db, "orders"), (snap) => {
+    allOrders = snap.val() || {};
+    if (isAdmin) renderAdminDashboard();
+  });
+  onValue(ref(db, "sms_inbox"), (snap) => {
+    smsInbox = snap.val() || {};
+    if (isAdmin) renderAdminPaymentSettings();
+  });
+  onValue(ref(db, "customers"), (snap) => {
+    allCustomers = snap.val() || {};
+    if (isAdmin) renderAdminDashboard();
+  });
+}
+
+onAuthStateChanged(auth, async (user) => {
+  currentUser = user;
+  isAdmin = false;
+  if (user) {
+    let claimAdmin = false;
+    try {
+      const token = await user.getIdTokenResult();
+      claimAdmin = token.claims.admin === true;
+    } catch (_) {}
+    isAdmin = (user.email || "").toLowerCase() === ADMIN_EMAIL || claimAdmin;
+    $("accountBtn").textContent = `👤 ${user.displayName || user.email.split("@")[0]} (Logout)`;
+    $("adminToggleBtn").classList.toggle("hidden", !isAdmin);
+    $("adminSection").classList.toggle("show", isAdmin);
+    if (isAdmin) {
+      subscribeAdminData();
+      renderAdminDashboard();
+    }
+  } else {
+    $("accountBtn").textContent = "👤 Login | Register";
+    $("adminToggleBtn").classList.add("hidden");
+    $("adminSection").classList.remove("show");
+  }
+});
+
+/* ---------- Event Listeners ---------- */
+$("year").textContent = new Date().getFullYear();
+saveCart();
+renderCategories();
+renderProducts();
+subscribeStoreData();
+
+$("mobileCatToggle").onclick = () => $("leftSidebar").classList.toggle("mobile-open");
+$("searchForm").onsubmit = (e) => { e.preventDefault(); searchTerm = $("searchInput").value.trim().toLowerCase(); renderProducts(); };
+$("searchInput").oninput = () => { searchTerm = $("searchInput").value.trim().toLowerCase(); renderProducts(); };
+$("sortSelect").onchange = () => { sortMode = $("sortSelect").value; renderProducts(); };
+
+document.querySelectorAll("[data-nav]").forEach((btn) => {
+  btn.onclick = () => {
+    document.querySelectorAll("[data-nav]").forEach((x) => x.classList.remove("active"));
+    btn.classList.add("active");
+    navMode = btn.dataset.nav;
+    if (navMode === "home" || navMode === "all") selectedCategory = "All";
+    renderCategories();
+    renderProducts();
+    if (navMode !== "home") $("productsSection").scrollIntoView({ behavior: "smooth" });
+  };
+});
+
+$("bigSaleBtn").onclick = () => { navMode = "deals"; renderProducts(); $("productsSection").scrollIntoView({ behavior: "smooth" }); };
+$("heroShopBtn").onclick = () => $("productsSection").scrollIntoView({ behavior: "smooth" });
+$("heroTrackBtn").onclick = () => openOrdersModal();
+$("trackOrderNavBtn").onclick = () => openOrdersModal();
+$("myOrdersBtn").onclick = () => openOrdersModal();
+$("trackOrderForm").onsubmit = (e) => { e.preventDefault(); openOrdersModal($("trackOrderInput").value.trim()); };
+
+$("cartBtn").onclick = () => { renderCartDrawer(); $("cartDrawer").classList.add("show"); };
+$("closeCartBtn").onclick = () => $("cartDrawer").classList.remove("show");
+$("cartZoneSelect").onchange = renderCartDrawer;
+$("applyPromoBtn").onclick = () => {
+  const code = $("promoInput").value.trim().toUpperCase();
+  const sub = cart.reduce((s, x) => s + x.price * x.qty, 0);
+  if (evaluateCoupon(code, sub)) {
+    appliedPromoCode = code;
+    toast(`Promo ${code} applied!`);
+  } else {
+    appliedPromoCode = "";
+    toast("Promo code invalid or minimum order not reached");
+  }
+  renderCartDrawer();
+};
+$("proceedCheckoutBtn").onclick = () => { $("cartDrawer").classList.remove("show"); openCheckout(); };
+$("cPayment").onchange = syncCheckoutPaymentUI;
+$("copyMerchantNumBtn").onclick = async () => {
+  try {
+    await navigator.clipboard.writeText($("merchantPayNumber").textContent);
+    toast("Merchant number copied!");
+  } catch (_) { toast("Copy: " + $("merchantPayNumber").textContent); }
+};
+
+$("checkoutForm").onsubmit = async (e) => {
+  e.preventDefault();
+  if (!cart.length) return toast("Cart is empty");
+  const method = $("cPayment").value;
+  const isMobile = method === "bKash" || method === "Nagad" || method === "Rocket";
+  const totals = computeTotals();
+  let senderNorm = "", trxUpper = "", payStatus = "Pay on Delivery", status = "Pending";
+
+  if (isMobile) {
+    senderNorm = normalizeBdPhone($("cSenderNumber").value);
+    trxUpper = $("cTrxId").value.trim().toUpperCase();
+    if (!isValidBdPhone(senderNorm)) return toast("Enter valid 11-digit BD sender number (01XXXXXXXXX)");
+    if (!isValidTrxId(method, trxUpper)) return toast(`Invalid ${method} TrxID format`);
+
+    $("placeOrderBtn").disabled = true;
+    $("placeOrderBtn").textContent = "Verifying TrxID...";
+    const verified = await autoVerifyTransaction(method, senderNorm, trxUpper, totals.total);
+    if (verified) {
+      payStatus = "Verified (Auto SMS)";
+      status = "Confirmed";
+    } else {
+      payStatus = "Pending TrxID Check";
+      status = "Pending";
+    }
+  } else if (method === "Card") {
+    trxUpper = "CARD" + Date.now().toString().slice(-6);
+    payStatus = "Verified (Card)";
+    status = "Confirmed";
+  } else {
+    trxUpper = "COD" + Date.now().toString().slice(-6);
+  }
+
+  const d = new Date();
+  const datePart = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`;
+  const orderId = `SPR-BD-${datePart}-${Math.floor(1000 + Math.random() * 9000)}`;
+
+  const orderData = {
+    orderId,
+    uid: currentUser?.uid || "guest",
+    customerEmail: currentUser?.email || "",
+    customer: {
+      name: $("cName").value.trim(),
+      phone: normalizeBdPhone($("cPhone").value),
+      address: $("cAddress").value.trim(),
+      division: $("cDivision").value
+    },
+    items: cart.map((x) => ({ ...x })),
+    itemsSummary: cart.map((x) => `${x.name} x${x.qty} (${x.variant}) @৳${x.price}`).join("||"),
+    subtotal: totals.subtotal,
+    discount: totals.discount,
+    deliveryFee: totals.deliveryFee,
+    total: totals.total,
+    promoCode: totals.promo?.code || "",
+    currency: "BDT",
+    paymentMethod: method,
+    senderNumber: senderNorm,
+    trxId: trxUpper,
+    paymentStatus: payStatus,
+    status,
+    createdAt: Date.now(),
+    updatedAt: Date.now()
+  };
+
+  try {
+    await set(ref(db, "orders/" + orderId), orderData);
+    if (payStatus === "Verified (Auto SMS)" && trxUpper) {
+      await update(ref(db, "sms_inbox/" + trxUpper), { matchedOrderId: orderId });
+    }
+    cart = [];
+    appliedPromoCode = "";
+    saveCart();
+    closeModal("checkoutModal");
+    toast(status === "Confirmed"
+      ? `Order ${orderId} Confirmed via Auto TrxID!`
+      : `Order ${orderId} placed (${payStatus})`);
+    openOrdersModal(orderId);
+  } catch (err) {
+    toast(err.message);
+  } finally {
+    $("placeOrderBtn").disabled = false;
+    $("placeOrderBtn").textContent = "Verify & Place Order";
+  }
+};
+
+/* ---------- Auth Modal ---------- */
+function renderAuthMode() {
+  $("authTitle").textContent = registerMode ? "Create Customer Account" : "Customer / Admin Login";
+  $("authSubmitBtn").textContent = registerMode ? "Create Account" : "Sign In";
+  $("authNameWrap").classList.toggle("hidden", !registerMode);
+  $("authPhoneWrap").classList.toggle("hidden", !registerMode);
+  $("authName").required = registerMode;
+  $("authSwitchRow").innerHTML = registerMode
+    ? `Already have an account? <a href="#" id="authToggleLink" style="color:var(--emerald);font-weight:700">Sign In</a>`
+    : `New to SPR ZONE BD? <a href="#" id="authToggleLink" style="color:var(--emerald);font-weight:700">Create Account</a>`;
+  $("authToggleLink").onclick = (e) => { e.preventDefault(); registerMode = !registerMode; renderAuthMode(); };
+}
+
+$("accountBtn").onclick = () => {
+  if (currentUser) {
+    if (confirm(`Sign out from ${currentUser.email}?`)) signOut(auth);
+  } else {
+    registerMode = false;
+    renderAuthMode();
+    openModal("authModal");
+  }
+};
+
+$("authForm").onsubmit = async (e) => {
+  e.preventDefault();
+  const email = $("authEmail").value.trim();
+  const password = $("authPassword").value;
+  try {
+    if (registerMode) {
+      const cred = await createUserWithEmailAndPassword(auth, email, password);
+      await set(ref(db, "customers/" + cred.user.uid), {
+        name: $("authName").value.trim(),
+        email,
+        phone: $("authPhone").value.trim(),
+        createdAt: Date.now()
+      });
+    } else {
+      await signInWithEmailAndPassword(auth, email, password);
+    }
+    closeModal("authModal");
+    toast("Signed in successfully!");
+  } catch (err) {
+    toast(err.message);
+  }
+};
+
+$("newsletterForm").onsubmit = async (e) => {
+  e.preventDefault();
+  try {
+    await push(ref(db, "newsletter"), { email: $("newsletterEmail").value.trim(), createdAt: Date.now() });
+    $("newsletterForm").reset();
+    toast("Subscribed to SPR ZONE BD deals!");
+  } catch (err) { toast(err.message); }
+};
+
+/* ---------- Admin Event Handlers ---------- */
+$("adminToggleBtn").onclick = () => {
+  $("adminSection").classList.toggle("show");
+  if ($("adminSection").classList.contains("show")) $("adminSection").scrollIntoView({ behavior: "smooth" });
+};
+$("closeAdminBtn").onclick = () => $("adminSection").classList.remove("show");
+$("refreshAdminBtn").onclick = () => { renderAdminDashboard(); toast("Synced with e-commarcebd"); };
+
+document.querySelectorAll(".admin-tab").forEach((tab) => {
+  tab.onclick = () => {
+    document.querySelectorAll(".admin-tab").forEach((t) => t.classList.remove("active"));
+    tab.classList.add("active");
+    document.querySelectorAll(".admin-tab-pane").forEach((p) => p.classList.add("hidden"));
+    $("atab-" + tab.dataset.atab).classList.remove("hidden");
+  };
+});
+
+$("seedCatalogBtn").onclick = async () => {
+  if (!isAdmin) return;
+  try {
+    await set(ref(db, "categories"), DEFAULT_CATEGORIES);
+    await set(ref(db, "products"), DEFAULT_PRODUCTS);
+    await set(ref(db, "coupons"), DEFAULT_COUPONS);
+    await update(ref(db, "settings/payment"), paymentSettings);
+    toast("Seeded BD products, categories & coupons to RTDB!");
+  } catch (err) { toast(err.message); }
+};
+
+$("adminProductForm").onsubmit = async (e) => {
+  e.preventDefault();
+  if (!isAdmin) return;
+  const id = $("apId").value || push(ref(db, "products")).key;
+  const data = {
+    name: $("apName").value.trim(),
+    category: $("apCategory").value,
+    brand: $("apBrand").value.trim() || "SPR Official",
+    price: Number($("apPrice").value),
+    oldPrice: Number($("apOldPrice").value) || 0,
+    stock: Number($("apStock").value),
+    variants: $("apVariants").value.trim() || "Standard",
+    image: $("apImage").value.trim(),
+    specs: $("apSpecs").value.trim(),
+    description: $("apDesc").value.trim(),
+    isFlashDeal: $("apFlash").checked,
+    isFeatured: $("apFeatured").checked,
+    rating: products[id]?.rating || 4.8,
+    reviewCount: products[id]?.reviewCount || 120,
+    updatedAt: Date.now()
+  };
+  await set(ref(db, "products/" + id), data);
+  $("adminProductForm").reset();
+  $("apId").value = "";
+  $("prodFormTitle").textContent = "Add / Edit Product";
+  toast("Product saved!");
+};
+$("apResetBtn").onclick = () => { $("adminProductForm").reset(); $("apId").value = ""; $("prodFormTitle").textContent = "Add / Edit Product"; };
+
+$("adminCategoryForm").onsubmit = async (e) => {
+  e.preventDefault();
+  if (!isAdmin) return;
+  const id = $("acId").value || "cat_" + Date.now();
+  await set(ref(db, "categories/" + id), {
+    name: $("acName").value.trim(),
+    icon: $("acIcon").value.trim() || "🛍️",
+    order: Number($("acOrder").value) || 1
+  });
+  $("adminCategoryForm").reset();
+  $("acId").value = "";
+  toast("Category saved!");
+};
+$("acResetBtn").onclick = () => { $("adminCategoryForm").reset(); $("acId").value = ""; };
+
+$("adminHeroForm").onsubmit = async (e) => {
+  e.preventDefault();
+  if (!isAdmin) return;
+  await set(ref(db, "deals/hero"), {
+    badge: $("ahBadge").value.trim(),
+    title: $("ahTitle").value.trim(),
+    subtitle: $("ahSub").value.trim()
+  });
+  toast("Hero banner updated!");
+};
+
+$("adminCouponForm").onsubmit = async (e) => {
+  e.preventDefault();
+  if (!isAdmin) return;
+  const code = $("aqCode").value.trim().toUpperCase();
+  await set(ref(db, "coupons/" + code), {
+    code,
+    type: $("aqType").value,
+    value: Number($("aqValue").value) || 0,
+    minOrder: Number($("aqMin").value) || 0
+  });
+  $("adminCouponForm").reset();
+  $("aqId").value = "";
+  toast(`Coupon ${code} saved!`);
+};
+$("aqResetBtn").onclick = () => { $("adminCouponForm").reset(); $("aqId").value = ""; };
+
+$("adminOrderFilter").onchange = renderAdminOrders;
+
+$("adminPaymentSettingsForm").onsubmit = async (e) => {
+  e.preventDefault();
+  if (!isAdmin) return;
+  const data = {
+    bkashNumber: $("psBkash").value.trim(),
+    nagadNumber: $("psNagad").value.trim(),
+    rocketNumber: $("psRocket").value.trim(),
+    smsApiUrl: $("psSmsUrl").value.trim(),
+    smsApiKey: $("psSmsKey").value.trim(),
+    autoVerifyEnabled: $("psAutoVerify").checked
+  };
+  await set(ref(db, "settings/payment"), data);
+  toast("Payment & SMS settings saved!");
+};
+
+$("adminAddSmsForm").onsubmit = async (e) => {
+  e.preventDefault();
+  if (!isAdmin) return;
+  const trx = $("smsTrxId").value.trim().toUpperCase();
+  await set(ref(db, "sms_inbox/" + trx), {
+    provider: $("smsProvider").value,
+    senderNumber: normalizeBdPhone($("smsSender").value),
+    amount: Number($("smsAmount").value),
+    receivedAt: Date.now()
+  });
+  $("adminAddSmsForm").reset();
+  toast(`Payment SMS ${trx} added to /sms_inbox`);
+};
+</script>
+</body>
+</html>

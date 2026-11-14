@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 72" width="340" height="72">
+  <defs>
+    <linearGradient id="bagGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#008E47"/>
+      <stop offset="100%" stop-color="#005C2D"/>
+    </linearGradient>
+  </defs>
+  <!-- Speed lines -->
+  <rect x="4" y="22" width="16" height="4" rx="2" fill="#E11D48"/>
+  <rect x="0" y="31" width="20" height="4" rx="2" fill="#007B3D"/>
+  <rect x="6" y="40" width="14" height="4" rx="2" fill="#E11D48"/>
+  <!-- Shopping bag emblem -->
+  <path d="M35 20v-4a11 11 0 0 1 22 0v4" fill="none" stroke="#006A35" stroke-width="3.6" stroke-linecap="round"/>
+  <path d="M23 20h46l-4 39a5 5 0 0 1-5 4.5H32a5 5 0 0 1-5-4.5L23 20z" fill="url(#bagGrad)"/>
+  <path d="M26 37c12-7 28-6 40 3l-2.5 18a4 4 0 0 1-4 3.5H32a4 4 0 0 1-4-3.5L26 37z" fill="#E11D48"/>
+  <!-- Brand typography -->
+  <text x="80" y="36" font-family="'Plus Jakarta Sans', 'Segoe UI', Arial, sans-serif" font-size="29" font-weight="900" letter-spacing="-0.5">
+    <tspan fill="#007B3D">SPR</tspan>
+    <tspan fill="#E11D48"> ZONE </tspan>
+    <tspan fill="#007B3D">BD</tspan>
+  </text>
+  <text x="82" y="55" font-family="'Inter', 'Segoe UI', Arial, sans-serif" font-size="13.5" font-weight="600" fill="#475569" letter-spacing="0.4">Shop Smart • Live Better</text>
+</svg>

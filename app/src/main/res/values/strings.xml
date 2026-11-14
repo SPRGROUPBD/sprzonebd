@@ -1,0 +1,19 @@
+<resources>
+    <string name="app_name">SPR Zone BD</string>
+    <string name="brand_tagline">Shop Smart • Live Better</string>
+    <string name="nav_home">Home</string>
+    <string name="nav_categories">Categories</string>
+    <string name="nav_cart">Cart</string>
+    <string name="nav_orders">Orders</string>
+    <string name="nav_account">Account</string>
+    <string name="cd_brand_logo">SPR Zone BD Logo</string>
+    <string name="cd_hero_banner">SPR Zone BD Mega Sale Banner</string>
+    <string name="cd_back">Navigate back</string>
+    <string name="cd_wishlist">Toggle wishlist</string>
+    <string name="cd_search">Search products</string>
+    <string name="cd_clear_search">Clear search</string>
+    <string name="cd_cart_remove">Remove item from cart</string>
+    <string name="track_your_order">Track Order</string>
+    <string name="support_hotline">09678-123456</string>
+    <string name="payment_trx_notice">Pay via bKash, Nagad, or Rocket and enter your Sender Number &amp; TrxID for automatic verification.</string>
+</resources>
