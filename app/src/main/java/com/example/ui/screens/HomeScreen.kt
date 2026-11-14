@@ -414,7 +414,7 @@ fun HomeScreen(
                         )
                         TrustPill(
                             icon = Icons.Filled.VerifiedUser,
-                            text = "bKash • Nagad • Rocket",
+                            text = "Cash on Delivery",
                             modifier = Modifier.weight(1f)
                         )
                     }

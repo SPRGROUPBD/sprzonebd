@@ -257,7 +257,7 @@ class SprZoneRepository(
                     deliveryFeeBdt = dto.deliveryFee ?: local?.deliveryFeeBdt ?: 0L,
                     totalBdt = dto.total ?: local?.totalBdt ?: 0L,
                     promoCode = dto.promoCode.orEmpty().take(40),
-                    paymentMethod = (dto.paymentMethod ?: local?.paymentMethod ?: "bKash").take(60),
+                    paymentMethod = (dto.paymentMethod ?: local?.paymentMethod ?: "Cash on Delivery").take(60),
                     senderNumber = (dto.senderNumber ?: local?.senderNumber ?: "").take(40),
                     trxId = (dto.trxId ?: local?.trxId ?: "").take(120),
                     paymentAccountMasked = local?.paymentAccountMasked ?: "Verified",
@@ -593,59 +593,16 @@ class SprZoneRepository(
         }
         val total = (subtotal - discount + rawDeliveryFee).coerceAtLeast(0L)
 
-        var normalizedSender = ""
-        var normalizedTrx = ""
-        var paymentStatus: String
-        var initialOrderStatus: String
-
-        if (paymentMethod.requiresMobileTrx) {
-            if (!StoreConstants.isValidBdPhone(senderNumberInput)) {
-                return@withContext Result.failure(
-                    IllegalArgumentException("Enter a valid 11-digit BD sender mobile number (01XXXXXXXXX).")
-                )
-            }
-            normalizedSender = StoreConstants.normalizeBdPhone(senderNumberInput)
-            normalizedTrx = trxIdInput.trim().uppercase()
-            if (!StoreConstants.isValidTrxId(paymentMethod, normalizedTrx)) {
-                return@withContext Result.failure(
-                    IllegalArgumentException("Invalid ${paymentMethod.displayName} Transaction ID format.")
-                )
-            }
-
-            // Auto-verify against configured Merchant SMS API or RTDB /sms_inbox/{trxId}
-            val verified = attemptAutoVerifyTrx(
-                provider = paymentMethod.displayName,
-                senderNumber = normalizedSender,
-                trxId = normalizedTrx,
-                amountBdt = total
-            )
-            if (verified) {
-                paymentStatus = "Verified (Auto SMS)"
-                initialOrderStatus = "Confirmed"
-            } else {
-                paymentStatus = "Pending TrxID Check"
-                initialOrderStatus = "Pending"
-            }
-        } else if (paymentMethod == PaymentMethod.SSLCOMMERZ) {
-            normalizedSender = senderNumberInput.filter { it.isDigit() }
-            normalizedTrx = "SSL${System.currentTimeMillis().toString().takeLast(6)}${(10..99).random()}"
-            paymentStatus = "Verified (Card)"
-            initialOrderStatus = "Confirmed"
-        } else {
-            normalizedTrx = "COD${System.currentTimeMillis().toString().takeLast(6)}"
-            paymentStatus = "Pay on Delivery"
-            initialOrderStatus = "Pending"
-        }
+        val normalizedSender = ""
+        val normalizedTrx = "COD${System.currentTimeMillis().toString().takeLast(6)}"
+        val paymentStatus = "Pay on Delivery"
+        val initialOrderStatus = "Pending"
 
         val datePart = SimpleDateFormat("yyyyMMdd", Locale.US).format(Date())
         val suffix = (1000..9999).random()
         val orderId = "SPR-BD-$datePart-$suffix"
 
-        val maskedAccount = when {
-            paymentMethod == PaymentMethod.COD -> "Cash on Delivery"
-            normalizedSender.length >= 4 -> "•••• ${normalizedSender.takeLast(4)}"
-            else -> "Verified"
-        }
+        val maskedAccount = "Cash on Delivery"
 
         val summary = cartItems.joinToString("||") { item ->
             "${item.productName} x${item.quantity} (${item.selectedVariant}) @৳${item.unitPriceBdt}"

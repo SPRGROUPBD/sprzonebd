@@ -132,10 +132,6 @@ enum class PaymentMethod(
     val requiresMobileTrx: Boolean,
     val isCardGateway: Boolean
 ) {
-    BKASH("bKash", "Send Money / Payment + Auto TrxID Verify", true, false),
-    NAGAD("Nagad", "Send Money / Payment + Auto TrxID Verify", true, false),
-    ROCKET("Rocket (DBBL)", "Mobile Banking + Auto TrxID Verify", true, false),
-    SSLCOMMERZ("Debit / Credit Card", "Visa, Mastercard & NexusPay", false, true),
     COD("Cash on Delivery", "Pay cash at doorstep (All 64 Districts)", false, false)
 }
 
@@ -203,12 +199,6 @@ object StoreConstants {
     }
 
     fun isValidTrxId(method: PaymentMethod, trxId: String): Boolean {
-        val clean = trxId.trim().uppercase()
-        return when (method) {
-            PaymentMethod.BKASH -> Regex("^[A-Z0-9]{10}$").matches(clean)
-            PaymentMethod.NAGAD -> Regex("^[A-Z0-9]{8,12}$").matches(clean)
-            PaymentMethod.ROCKET -> Regex("^[A-Z0-9]{8,14}$").matches(clean)
-            else -> true
-        }
+        return method == PaymentMethod.COD || trxId.trim().length >= 6
     }
 }

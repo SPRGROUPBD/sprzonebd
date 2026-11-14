@@ -22,15 +22,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.AddLocationAlt
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.ContentCopy
-import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.LocalShipping
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Payments
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -59,14 +54,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.example.R
 import com.example.data.model.AddressEntity
@@ -77,12 +68,8 @@ import com.example.data.model.PaymentMethod
 import com.example.data.model.StoreConstants
 import com.example.data.model.UserAccountEntity
 import com.example.ui.components.formatBdt
-import com.example.ui.theme.BkashPink
 import com.example.ui.theme.CodTeal
 import com.example.ui.theme.DiscountRed
-import com.example.ui.theme.NagadOrange
-import com.example.ui.theme.RocketPurple
-import com.example.ui.theme.SslCommerzBlue
 import com.example.ui.theme.StarAmber
 import com.example.ui.theme.VerifiedGreen
 import com.example.ui.viewmodel.CartSummary
@@ -119,8 +106,7 @@ fun CheckoutScreen(
 ) {
     var selectedAddressId by remember { mutableStateOf<Long?>(null) }
     var showAddressForm by remember { mutableStateOf(false) }
-    var selectedPayment by remember { mutableStateOf(PaymentMethod.BKASH) }
-    var showGatewayDialog by remember { mutableStateOf(false) }
+    val selectedPayment = PaymentMethod.COD
     var placedOrder by remember { mutableStateOf<OrderEntity?>(null) }
     var checkoutError by remember { mutableStateOf<String?>(null) }
     var isSubmitting by remember { mutableStateOf(false) }
@@ -260,10 +246,10 @@ fun CheckoutScreen(
                     }
                 }
 
-                // Step 2: Bangladesh Payment Gateway Selector
+                // Step 2: Cash on Delivery Payment Method
                 item {
                     Spacer(modifier = Modifier.height(4.dp))
-                    Text("2. Bangladesh Payment Method", style = MaterialTheme.typography.titleLarge)
+                    Text("2. Payment Method", style = MaterialTheme.typography.titleLarge)
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = stringResource(R.string.payment_trx_notice),
@@ -273,16 +259,14 @@ fun CheckoutScreen(
                 }
 
                 items(PaymentMethod.entries) { method ->
-                    val isSelected = selectedPayment == method
-                    val brandColor = paymentBrandColor(method)
+                    val brandColor = CodTeal
                     Card(
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                        border = if (isSelected) BorderStroke(2.dp, brandColor) else null,
+                        border = BorderStroke(2.dp, brandColor),
                         shape = MaterialTheme.shapes.medium,
                         modifier = Modifier
                             .fillMaxWidth()
                             .testTag("payment_method_${method.name}")
-                            .clickable { selectedPayment = method }
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
@@ -295,11 +279,7 @@ fun CheckoutScreen(
                             ) {
                                 Box(contentAlignment = Alignment.Center) {
                                     Icon(
-                                        imageVector = when {
-                                            method.isCardGateway -> Icons.Filled.CreditCard
-                                            method == PaymentMethod.COD -> Icons.Filled.LocalShipping
-                                            else -> Icons.Filled.AccountBalanceWallet
-                                        },
+                                        imageVector = Icons.Filled.LocalShipping,
                                         contentDescription = null,
                                         tint = brandColor
                                     )
@@ -319,8 +299,8 @@ fun CheckoutScreen(
                                 )
                             }
                             RadioButton(
-                                selected = isSelected,
-                                onClick = { selectedPayment = method }
+                                selected = true,
+                                onClick = {}
                             )
                         }
                     }
@@ -362,19 +342,16 @@ fun CheckoutScreen(
                                     if (selectedAddress == null) {
                                         checkoutError = "Please save or select a shipping address first."
                                         showAddressForm = true
-                                    } else if (selectedPayment == PaymentMethod.COD) {
+                                    } else {
                                         isSubmitting = true
                                         onPlaceOrder(selectedAddress, selectedPayment, "", "") { res ->
                                             isSubmitting = false
                                             if (res.isSuccess) placedOrder = res.getOrNull()
                                             else checkoutError = res.exceptionOrNull()?.message
                                         }
-                                    } else {
-                                        checkoutError = null
-                                        showGatewayDialog = true
                                     }
                                 },
-                                colors = ButtonDefaults.buttonColors(containerColor = paymentBrandColor(selectedPayment)),
+                                colors = ButtonDefaults.buttonColors(containerColor = CodTeal),
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(52.dp)
@@ -382,38 +359,13 @@ fun CheckoutScreen(
                             ) {
                                 Icon(Icons.Filled.Lock, contentDescription = null, modifier = Modifier.size(18.dp))
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = if (selectedPayment == PaymentMethod.COD) {
-                                        "Place COD Order (${formatBdt(effectiveTotal)})"
-                                    } else {
-                                        "Pay ${formatBdt(effectiveTotal)} via ${selectedPayment.displayName}"
-                                    }
-                                )
+                                Text("Place COD Order (${formatBdt(effectiveTotal)})")
                             }
                         }
                     }
                 }
             }
         }
-    }
-
-    if (showGatewayDialog && selectedAddress != null) {
-        PaymentGatewayVerificationDialog(
-            method = selectedPayment,
-            amountBdt = effectiveTotal,
-            defaultPhone = currentUser?.phone.orEmpty(),
-            paymentSettings = paymentSettings,
-            onDismiss = { showGatewayDialog = false },
-            onConfirmPayment = { senderInput, trxInput ->
-                showGatewayDialog = false
-                isSubmitting = true
-                onPlaceOrder(selectedAddress, selectedPayment, senderInput, trxInput) { res ->
-                    isSubmitting = false
-                    if (res.isSuccess) placedOrder = res.getOrNull()
-                    else checkoutError = res.exceptionOrNull()?.message
-                }
-            }
-        )
     }
 }
 
@@ -511,215 +463,6 @@ private fun NewAddressCard(
 }
 
 @Composable
-private fun PaymentGatewayVerificationDialog(
-    method: PaymentMethod,
-    amountBdt: Long,
-    defaultPhone: String,
-    paymentSettings: MerchantPaymentSettings,
-    onDismiss: () -> Unit,
-    onConfirmPayment: (senderNumber: String, trxId: String) -> Unit
-) {
-    val clipboard = LocalClipboardManager.current
-    var copiedNotice by remember { mutableStateOf(false) }
-
-    val merchantNumber = when (method) {
-        PaymentMethod.BKASH -> paymentSettings.bkashNumber
-        PaymentMethod.NAGAD -> paymentSettings.nagadNumber
-        PaymentMethod.ROCKET -> paymentSettings.rocketNumber
-        else -> ""
-    }
-
-    var senderOrCard by remember { mutableStateOf(if (method.isCardGateway) "" else defaultPhone) }
-    var trxOrCvv by remember { mutableStateOf("") }
-    var expiry by remember { mutableStateOf("") }
-    var errorMsg by remember { mutableStateOf<String?>(null) }
-    val brandColor = paymentBrandColor(method)
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Surface(
-                    color = brandColor,
-                    shape = RoundedCornerShape(8.dp),
-                    modifier = Modifier.size(34.dp)
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(Icons.Filled.Payments, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
-                    }
-                }
-                Spacer(modifier = Modifier.width(10.dp))
-                Column {
-                    Text("${method.displayName} Payment", style = MaterialTheme.typography.titleMedium)
-                    Text(
-                        text = "Payable: ${formatBdt(amountBdt)}",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = brandColor,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
-        },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                if (method.requiresMobileTrx) {
-                    Surface(
-                        color = brandColor.copy(alpha = 0.09f),
-                        shape = RoundedCornerShape(10.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Column(modifier = Modifier.padding(10.dp)) {
-                            Text(
-                                text = "Step 1: Send Money / Payment to SPR ZONE BD (${method.displayName})",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Text(
-                                    text = merchantNumber.ifBlank { "Set merchant number in Admin" },
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = brandColor
-                                )
-                                if (merchantNumber.isNotBlank()) {
-                                    TextButton(
-                                        onClick = {
-                                            clipboard.setText(AnnotatedString(merchantNumber))
-                                            copiedNotice = true
-                                        }
-                                    ) {
-                                        Icon(Icons.Filled.ContentCopy, contentDescription = "Copy number", modifier = Modifier.size(16.dp))
-                                        Spacer(modifier = Modifier.width(4.dp))
-                                        Text(if (copiedNotice) "Copied" else "Copy")
-                                    }
-                                }
-                            }
-                            Text(
-                                text = "Step 2: Enter the Sender Number you paid from & your TrxID below to auto-verify.",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-
-                    OutlinedTextField(
-                        value = senderOrCard,
-                        onValueChange = {
-                            if (it.length <= 14) senderOrCard = it
-                            errorMsg = null
-                        },
-                        label = { Text("Sender ${method.displayName} Number") },
-                        placeholder = { Text("017XXXXXXXX") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                        singleLine = true,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .testTag("trx_sender_input")
-                    )
-
-                    OutlinedTextField(
-                        value = trxOrCvv,
-                        onValueChange = {
-                            if (it.length <= 16) trxOrCvv = it.uppercase()
-                            errorMsg = null
-                        },
-                        label = { Text("Transaction ID (TrxID)") },
-                        placeholder = {
-                            Text(
-                                when (method) {
-                                    PaymentMethod.BKASH -> "e.g. BL74K9M2PQ (10 chars)"
-                                    PaymentMethod.NAGAD -> "e.g. 73AB92CD (8-12 chars)"
-                                    else -> "e.g. 492817364 (8-14 chars)"
-                                }
-                            )
-                        },
-                        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters),
-                        singleLine = true,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .testTag("trx_id_input")
-                    )
-                } else {
-                    Text(
-                        text = "Enter your card details to complete payment.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    OutlinedTextField(
-                        value = senderOrCard,
-                        onValueChange = { if (it.length <= 19) senderOrCard = it },
-                        label = { Text("Card Number (16 digits)") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedTextField(
-                            value = expiry,
-                            onValueChange = { if (it.length <= 5) expiry = it },
-                            label = { Text("MM/YY") },
-                            singleLine = true,
-                            modifier = Modifier.weight(1f)
-                        )
-                        OutlinedTextField(
-                            value = trxOrCvv,
-                            onValueChange = { if (it.length <= 4) trxOrCvv = it },
-                            label = { Text("CVV") },
-                            visualTransformation = PasswordVisualTransformation(),
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            singleLine = true,
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                }
-
-                if (errorMsg != null) {
-                    Text(errorMsg!!, style = MaterialTheme.typography.bodySmall, color = DiscountRed)
-                }
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = {
-                    if (method.requiresMobileTrx) {
-                        if (!StoreConstants.isValidBdPhone(senderOrCard)) {
-                            errorMsg = "Enter a valid 11-digit BD sender mobile number (01XXXXXXXXX)."
-                            return@Button
-                        }
-                        if (!StoreConstants.isValidTrxId(method, trxOrCvv)) {
-                            errorMsg = "Enter a valid ${method.displayName} TrxID (e.g. 8–14 alphanumeric characters)."
-                            return@Button
-                        }
-                        onConfirmPayment(StoreConstants.normalizeBdPhone(senderOrCard), trxOrCvv.trim().uppercase())
-                    } else {
-                        val digits = senderOrCard.filter { it.isDigit() }
-                        if (digits.length < 12 || expiry.length < 4 || trxOrCvv.length < 3) {
-                            errorMsg = "Enter a valid card number, expiry, and CVV."
-                            return@Button
-                        }
-                        onConfirmPayment(digits, "")
-                    }
-                },
-                colors = ButtonDefaults.buttonColors(containerColor = brandColor),
-                modifier = Modifier.testTag("verify_trx_submit_button")
-            ) {
-                Text("Verify & Confirm Order")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
-        }
-    )
-}
-
-@Composable
 private fun OrderSuccessReceipt(
     order: OrderEntity,
     onTrackOrder: () -> Unit,
@@ -757,9 +500,9 @@ private fun OrderSuccessReceipt(
         Spacer(modifier = Modifier.height(6.dp))
         Text(
             text = if (isConfirmed) {
-                "Payment verified automatically. Confirmed orders cannot be cancelled."
+                "Your Cash on Delivery order is confirmed and being prepared."
             } else {
-                "Your order is received and queued for merchant TrxID verification."
+                "Your Cash on Delivery order has been placed. Pay cash upon doorstep delivery."
             },
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -777,19 +520,15 @@ private fun OrderSuccessReceipt(
             ) {
                 SummaryRow("Order ID", order.orderId, bold = true)
                 SummaryRow("Order Status", order.orderStatus, valueColor = if (isConfirmed) VerifiedGreen else StarAmber)
-                SummaryRow("Payment Method", order.paymentMethod)
-                if (order.senderNumber.isNotBlank()) {
-                    SummaryRow("Sender Number", order.senderNumber)
-                }
-                SummaryRow("Transaction ID", order.transactionId)
+                SummaryRow("Payment Method", "Cash on Delivery")
                 SummaryRow(
                     "Payment Status",
                     order.paymentStatus,
-                    valueColor = if (order.paymentStatus.contains("Verified", ignoreCase = true)) VerifiedGreen else StarAmber
+                    valueColor = if (order.paymentStatus.contains("Confirmed", ignoreCase = true)) VerifiedGreen else StarAmber
                 )
                 SummaryRow("Deliver To", "${order.recipientName} (${order.division})")
                 HorizontalDivider()
-                SummaryRow("Total Amount", formatBdt(order.totalBdt), bold = true, valueColor = MaterialTheme.colorScheme.primary)
+                SummaryRow("Total Amount (COD)", formatBdt(order.totalBdt), bold = true, valueColor = MaterialTheme.colorScheme.primary)
             }
         }
 
@@ -816,9 +555,5 @@ private fun OrderSuccessReceipt(
 }
 
 private fun paymentBrandColor(method: PaymentMethod): Color = when (method) {
-    PaymentMethod.BKASH -> BkashPink
-    PaymentMethod.NAGAD -> NagadOrange
-    PaymentMethod.ROCKET -> RocketPurple
-    PaymentMethod.SSLCOMMERZ -> SslCommerzBlue
     PaymentMethod.COD -> CodTeal
 }

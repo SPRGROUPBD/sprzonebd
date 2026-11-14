@@ -698,7 +698,7 @@ private fun AuthCardView(
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "Customer account for checkout, TrxID orders, parcel tracking & wishlist",
+                text = "Customer account for Cash on Delivery orders, parcel tracking & wishlist",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

@@ -15,5 +15,5 @@
     <string name="cd_cart_remove">Remove item from cart</string>
     <string name="track_your_order">Track Order</string>
     <string name="support_hotline">09678-123456</string>
-    <string name="payment_trx_notice">Pay via bKash, Nagad, or Rocket and enter your Sender Number &amp; TrxID for automatic verification.</string>
+    <string name="payment_trx_notice">Pay with Cash on Delivery (COD) across all 64 districts of Bangladesh.</string>
 </resources>

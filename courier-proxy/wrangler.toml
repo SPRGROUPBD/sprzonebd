@@ -1,7 +1,0 @@
-name = "spr-zone-bd-courier-proxy"
-main = "worker.js"
-compatibility_date = "2026-01-01"
-
-[vars]
-FIREBASE_PROJECT_ID = "e-commarcebd"
-ADMIN_EMAIL = "mail.sajjadahmed@gmail.com"

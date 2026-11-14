@@ -23,16 +23,14 @@ class SprZoneRulesUnitTest {
     }
 
     @Test
-    fun bdMobileNumbersAndTrxIdsValidateProperly() {
+    fun bdMobileNumbersAndCodPaymentValidateProperly() {
         assertTrue(StoreConstants.isValidBdPhone("01712345678"))
         assertTrue(StoreConstants.isValidBdPhone("+8801812345678"))
         assertEquals("01812345678", StoreConstants.normalizeBdPhone("+8801812345678"))
         assertFalse(StoreConstants.isValidBdPhone("01212345678"))
         assertFalse(StoreConstants.isValidBdPhone("0171234"))
 
-        assertTrue(StoreConstants.isValidTrxId(PaymentMethod.BKASH, "BL74K9M2PQ"))
-        assertFalse(StoreConstants.isValidTrxId(PaymentMethod.BKASH, "SHORT"))
-        assertTrue(StoreConstants.isValidTrxId(PaymentMethod.NAGAD, "73AB92CD"))
-        assertTrue(StoreConstants.isValidTrxId(PaymentMethod.ROCKET, "492817364"))
+        assertEquals(listOf(PaymentMethod.COD), PaymentMethod.entries)
+        assertEquals("Cash on Delivery", PaymentMethod.COD.displayName)
     }
 }

@@ -176,7 +176,7 @@ fun OrdersScreen(
                 item {
                     EmptyStatePanel(
                         title = "Sign in to see all your orders",
-                        subtitle = "View live courier milestones, payment TrxID receipts, and order history.",
+                        subtitle = "View live delivery milestones, COD receipts, and order history.",
                         icon = Icons.AutoMirrored.Filled.ReceiptLong,
                         actionLabel = "Sign In / Register",
                         onAction = onSignInClick
@@ -273,10 +273,7 @@ private fun OrderTrackingCard(
 
             HorizontalDivider()
 
-            SummaryRow("Payment", "${order.paymentMethod} (${order.transactionId})")
-            if (order.senderNumber.isNotBlank()) {
-                SummaryRow("Sender Number", order.senderNumber)
-            }
+            SummaryRow("Payment Method", order.paymentMethod.ifBlank { "Cash on Delivery" })
             SummaryRow("Payment Status", order.paymentStatus)
             SummaryRow("Deliver To", "${order.recipientName} • ${order.fullAddress}")
             SummaryRow("Total", formatBdt(order.totalBdt), bold = true, valueColor = MaterialTheme.colorScheme.primary)

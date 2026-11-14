@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#007B3D">
-<meta name="description" content="SPR ZONE BD — Shop Smart • Live Better. Bangladesh online shopping with bKash, Nagad, Rocket Auto TrxID verification and nationwide delivery.">
+<meta name="description" content="SPR ZONE BD — Shop Smart • Live Better. Bangladesh online shopping with Cash on Delivery across all 64 districts and live Flash Sales.">
 <title>SPR ZONE BD | Shop Smart • Live Better</title>
 <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18,6 +18,8 @@
   --crimson:#E11D48;
   --crimson-dark:#BE123C;
   --gold:#F59E0B;
+  --sky:#0EA5E9;
+  --sky-dark:#0284C7;
   --ink:#141C18;
   --muted:#526059;
   --bg:#F3F6F4;
@@ -44,6 +46,8 @@ button.crimson{background:var(--crimson);color:#fff}
 button.crimson:hover{background:var(--crimson-dark)}
 button.gold{background:var(--gold);color:#1A1200}
 button.gold:hover{background:#d97706;color:#fff}
+button.sky{background:var(--sky);color:#fff}
+button.sky:hover{background:var(--sky-dark)}
 button.outline{background:#fff;color:var(--ink);border:1px solid var(--line)}
 button.outline:hover{background:#f8faf9}
 button.sm{padding:6px 11px;min-height:32px;font-size:12px;border-radius:8px}
@@ -101,12 +105,28 @@ button:disabled{opacity:.5;cursor:not-allowed}
   background:linear-gradient(155deg,#006E37,#004622 65%,#003117);position:relative;overflow:hidden;
   box-shadow:var(--shadow);
 }
-.big-sale-card .big-title{font-size:34px;line-height:1;font-weight:900;color:#FEF08A;text-shadow:0 3px 10px rgba(0,0,0,.3)}
-.big-sale-card .pct{font-size:40px;font-weight:900;color:#fff;margin:8px 0}
+.big-sale-card .big-title{font-size:28px;line-height:1.1;font-weight:900;color:#FEF08A;text-shadow:0 3px 10px rgba(0,0,0,.3)}
+.big-sale-card .pct{font-size:34px;font-weight:900;color:#fff;margin:8px 0}
+
+/* Live Admin Sale Strip */
+.sale-campaign-bar{
+  margin:14px 0 4px;border-radius:14px;padding:12px 16px;color:#fff;
+  background:linear-gradient(90deg,#9D174D,#E11D48 52%,#F97316);
+  display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;
+  box-shadow:0 6px 18px rgba(225,29,72,.22);
+}
+.sale-badge-pill{
+  background:#FEF08A;color:#1A1200;font-weight:900;font-size:12px;
+  padding:5px 11px;border-radius:20px;letter-spacing:.3px;display:inline-flex;align-items:center;gap:5px;
+}
+.sale-timer-pill{
+  background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.28);
+  padding:5px 12px;border-radius:10px;font-weight:800;font-variant-numeric:tabular-nums;
+}
 
 /* Hero Banner */
 .hero{
-  border-radius:18px;padding:28px 30px;min-height:270px;color:#fff;
+  border-radius:18px;padding:28px 30px;min-height:260px;color:#fff;
   background:linear-gradient(115deg,#004A24 0%,#007B3D 52%,#049852 100%);
   display:grid;grid-template-columns:1.2fr 0.85fr;gap:20px;align-items:center;
   position:relative;overflow:hidden;box-shadow:var(--shadow);
@@ -167,37 +187,67 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .p-old{font-size:12px;color:#94a3b8;text-decoration:line-through}
 .p-body .add-btn{width:100%;margin-top:auto;font-size:12.5px;min-height:36px;padding:8px}
 
-/* 3-Column Product Detail View */
-.pd-dialog{width:min(1080px,100%)}
-.pd-layout{display:grid;grid-template-columns:320px minmax(0,1fr) 265px;gap:20px;align-items:start}
-.pd-main-img{
-  background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;
-  height:320px;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;
+/* Full Landscape 3-Column Product Preview Page */
+.pp-topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.pp-breadcrumb{font-size:13px;color:var(--muted);font-weight:600;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.pp-shell{
+  background:#fff;border:1px solid var(--line);border-radius:16px;
+  box-shadow:var(--shadow);padding:20px;
 }
-.pd-main-img img{width:100%;height:100%;max-width:100%;max-height:100%;object-fit:contain;display:block}
-.pd-thumbs{display:flex;gap:8px;margin-top:10px;overflow-x:auto;padding-bottom:4px}
-.pd-thumb{
+.pp-layout{display:grid;grid-template-columns:360px minmax(0,1fr) 295px;gap:24px;align-items:start}
+.pp-stage{
+  position:relative;background:#fff;border:1px solid var(--line);border-radius:14px;
+  width:100%;aspect-ratio:1/1;max-height:360px;padding:16px;
+  display:flex;align-items:center;justify-content:center;overflow:hidden;
+}
+.pp-stage img{width:100%;height:100%;max-width:100%;max-height:100%;object-fit:contain;display:block}
+.pp-thumb-bar{display:flex;align-items:center;gap:6px;margin-top:10px}
+.pp-thumb-arrow{
+  width:28px;height:56px;min-height:56px;padding:0;border-radius:8px;
+  background:#f8faf9;color:var(--ink);border:1px solid var(--line);flex-shrink:0;font-size:15px;
+}
+.pp-thumb-arrow:hover{background:var(--emerald-soft);color:var(--emerald-dark)}
+.pp-thumbs{display:flex;gap:8px;overflow-x:auto;scroll-behavior:smooth;flex:1;padding:2px}
+.pp-thumb{
   width:56px;height:56px;min-height:56px;padding:4px;border-radius:8px;
   border:1.5px solid var(--line);background:#fff;flex-shrink:0;
 }
-.pd-thumb.active{border-color:var(--emerald);box-shadow:0 0 0 2px rgba(0,123,61,.16)}
-.pd-thumb img{width:100%;height:100%;object-fit:contain;display:block}
-.pd-flash-bar{
-  background:linear-gradient(90deg,var(--crimson),#f97316);color:#fff;border-radius:9px;
-  padding:7px 12px;font-size:12.5px;font-weight:800;display:flex;justify-content:space-between;
-  align-items:center;gap:8px;margin-bottom:10px;
+.pp-thumb.active{border-color:var(--crimson);box-shadow:0 0 0 2px rgba(225,29,72,.14)}
+.pp-thumb img{width:100%;height:100%;object-fit:contain;display:block}
+.pp-flash-bar{
+  background:linear-gradient(90deg,#7E22CE,#E11D48 52%,#F97316);color:#fff;
+  border-radius:999px;padding:6px 14px;font-size:12.5px;font-weight:800;
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  margin-bottom:12px;flex-wrap:wrap;
 }
-.pd-var-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.pp-flash-meter{
+  display:inline-flex;align-items:center;gap:8px;font-size:11.5px;font-weight:700;
+}
+.pp-meter-track{width:84px;height:7px;background:rgba(255,255,255,.32);border-radius:999px;overflow:hidden}
+.pp-meter-fill{height:100%;background:#FEF08A;border-radius:999px}
+.pd-var-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
 .pd-var-chip{
   background:#fff;color:var(--ink);border:1.5px solid var(--line);border-radius:8px;
-  padding:6px 12px;min-height:34px;font-size:12.5px;font-weight:700;
+  padding:6px 13px;min-height:36px;font-size:12.5px;font-weight:700;
 }
-.pd-var-chip.active{border-color:var(--emerald);background:var(--emerald-soft);color:var(--emerald-dark)}
+.pd-var-chip.active{border-color:var(--crimson);background:#FFF1F2;color:var(--crimson-dark)}
 .pd-qty-box{display:inline-flex;align-items:center;gap:8px;background:#f8faf9;border:1px solid var(--line);border-radius:9px;padding:3px}
-.pd-qty-box button{min-height:32px;width:32px;padding:0;background:#fff;color:var(--ink);border:1px solid var(--line)}
-.pd-side-card{background:#f8faf9;border:1px solid var(--line);border-radius:12px;padding:14px;display:grid;gap:12px}
-.pd-side-item{display:flex;align-items:flex-start;gap:10px;font-size:12.5px}
-.pd-side-ic{width:30px;height:30px;border-radius:8px;background:#fff;border:1px solid var(--line);display:grid;place-items:center;flex-shrink:0;font-size:14px}
+.pd-qty-box button{min-height:34px;width:34px;padding:0;background:#fff;color:var(--ink);border:1px solid var(--line)}
+.pp-side-card{
+  background:#FAFAFA;border:1px solid var(--line);border-radius:14px;
+  padding:16px;display:grid;gap:13px;
+}
+.pp-side-head{font-size:11.5px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.pp-side-item{display:flex;align-items:flex-start;gap:10px;font-size:13px}
+.pp-side-ic{
+  width:32px;height:32px;border-radius:8px;background:#fff;border:1px solid var(--line);
+  display:grid;place-items:center;flex-shrink:0;font-size:15px;
+}
+.pp-specs-card{
+  margin-top:18px;background:#f8faf9;border:1px solid var(--line);
+  border-radius:12px;padding:16px;
+}
+.pp-related-wrap{margin-top:24px}
 
 /* Right Sidebar */
 .right-col{display:flex;flex-direction:column;gap:14px}
@@ -237,8 +287,10 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .tab-btn.active{background:var(--emerald);color:#fff}
 .addr-item{background:#f8faf9;border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
 
-.pay-box{background:#f8faf9;border:1.5px solid var(--emerald);border-radius:12px;padding:12px;margin:10px 0}
-.copy-chip{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px dashed var(--emerald);padding:6px 10px;border-radius:8px;font-weight:800;color:var(--emerald-dark);margin-top:6px}
+.cod-box{
+  background:var(--emerald-soft);border:1.5px solid var(--emerald);
+  border-radius:12px;padding:12px 14px;margin:10px 0;font-size:13px;
+}
 
 .timeline{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin:12px 0;text-align:center;font-size:11px}
 .step-dot{width:24px;height:24px;border-radius:50%;margin:0 auto 4px;display:grid;place-items:center;background:#e2e8f0;color:#64748b;font-weight:800}
@@ -257,6 +309,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
   .store-grid{grid-template-columns:220px minmax(0,1fr)}
   .right-col{grid-column:1 / -1;display:grid;grid-template-columns:repeat(3,1fr)}
   .products-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .pp-layout{grid-template-columns:300px minmax(0,1fr) 250px;gap:18px}
 }
 @media(max-width:900px){
   .trust-badges{display:none}
@@ -271,7 +324,8 @@ button:disabled{opacity:.5;cursor:not-allowed}
   .products-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
   .right-col{grid-template-columns:1fr}
   .footer-inner{grid-template-columns:1fr 1fr}
-  .pd-layout{grid-template-columns:1fr}
+  .pp-layout{grid-template-columns:1fr}
+  .pp-stage{max-height:320px}
 }
 @media(max-width:520px){
   .topbar-inner{font-size:11.5px;justify-content:center}
@@ -279,6 +333,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
   .p-img-wrap{padding:8px}
   .form-row{grid-template-columns:1fr}
   .footer-inner{grid-template-columns:1fr}
+  .pp-shell{padding:14px}
 }
 </style>
 </head>
@@ -290,7 +345,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
     <div class="topbar-left">
       <span>🇧🇩 Free Home Delivery over ৳3,000</span>
       <span class="topbar-sep">|</span>
-      <span>🛡️ Secure Payment</span>
+      <span>💵 Cash on Delivery (All 64 Districts)</span>
       <span class="topbar-sep">|</span>
       <span>📞 24/7 Support: <b>09678-123456</b></span>
     </div>
@@ -307,15 +362,15 @@ button:disabled{opacity:.5;cursor:not-allowed}
 <header class="header">
   <div class="header-inner">
     <button class="mobile-menu-btn" id="mobileCatToggle" aria-label="Categories">☰ Categories</button>
-    <a class="brand" href="#top"><img src="assets/logo.svg" alt="SPR ZONE BD"></a>
+    <a class="brand" href="#top" id="brandHomeLink"><img src="assets/logo.svg" alt="SPR ZONE BD"></a>
     <form class="search-box" id="searchForm">
       <input id="searchInput" placeholder="Search for products..." aria-label="Search products">
       <button type="submit">🔍 Search</button>
     </form>
     <div class="trust-badges">
       <div class="trust-item"><div class="trust-icon">✓</div><div><b>100% Original</b><br>Products</div></div>
-      <div class="trust-item"><div class="trust-icon">↺</div><div><b>Easy Return</b><br>& Refund</div></div>
-      <div class="trust-item"><div class="trust-icon">🔒</div><div><b>Secure</b><br>Checkout</div></div>
+      <div class="trust-item"><div class="trust-icon">↺</div><div><b>14 Days Return</b><br>&amp; Warranty</div></div>
+      <div class="trust-item"><div class="trust-icon">💵</div><div><b>Cash on</b><br>Delivery</div></div>
     </div>
   </div>
 </header>
@@ -328,122 +383,277 @@ button:disabled{opacity:.5;cursor:not-allowed}
       <button class="nav-link" data-nav="all">🛍️ All Products</button>
       <button class="nav-link" data-nav="deals">🔥 Deals <span class="hot-tag">HOT</span></button>
       <button class="nav-link" data-nav="new">✨ New Arrivals</button>
-      <a class="nav-link" href="#why-us">About Us</a>
+      <a class="nav-link" href="#why-us" id="aboutNavLink">About Us</a>
       <a class="nav-link" href="#footer">Contact Us</a>
     </div>
     <button class="crimson sm" id="trackOrderNavBtn">📍 Track Your Order</button>
   </div>
 </nav>
 
-<!-- Storefront Main -->
 <main class="page-wrap" id="top">
-  <div class="store-grid">
-    <!-- Left Sidebar -->
-    <aside class="left-col" id="leftSidebar">
-      <div class="card">
-        <div class="cat-card-head">
-          <span>☰ Categories</span>
+  <!-- STOREFRONT VIEW -->
+  <div id="storefrontView">
+    <div class="store-grid">
+      <!-- Left Sidebar -->
+      <aside class="left-col" id="leftSidebar">
+        <div class="card">
+          <div class="cat-card-head"><span>☰ Categories</span></div>
+          <div class="cat-list" id="categoryList"></div>
         </div>
-        <div class="cat-list" id="categoryList"></div>
-      </div>
 
-      <div class="big-sale-card">
-        <div class="big-title">BIG SALE</div>
-        <div style="font-size:13px;opacity:.9;margin-top:4px">Up to</div>
-        <div class="pct">70% OFF</div>
-        <p style="font-size:12.5px;margin:0 0 12px;color:#dcfce7">Flash Deals across SPR ZONE BD</p>
-        <button class="crimson" style="width:100%" id="bigSaleBtn">Shop Now →</button>
-      </div>
-    </aside>
+        <div class="big-sale-card">
+          <div class="big-title" id="bigSaleBadge">BIG SALE</div>
+          <div style="font-size:13px;opacity:.9;margin-top:4px" id="bigSaleTitle">Limited Time Offer</div>
+          <div class="pct" id="bigSalePct">70% OFF</div>
+          <p style="font-size:12.5px;margin:0 0 8px;color:#dcfce7" id="bigSaleSub">Flash Deals across SPR ZONE BD</p>
+          <div id="bigSaleTimer" class="hidden" style="font-size:12px;font-weight:800;color:#FEF08A;margin-bottom:10px"></div>
+          <button class="crimson" style="width:100%" id="bigSaleBtn">Shop Now →</button>
+        </div>
+      </aside>
 
-    <!-- Center Column -->
-    <section>
-      <!-- Hero Banner -->
-      <div class="hero" id="heroBanner">
-        <div>
-          <span class="hero-tag" id="heroBadgeView">সাশ্রয়ে সেরা অনলাইন শপিং সারা বাংলাদেশে!</span>
-          <h1 id="heroTitleView">SPR <span class="red">ZONE</span> BD</h1>
-          <div class="hero-bn" id="heroSubtitleView">এখন আরও কাছে, আরও সাশ্রয়ী!</div>
-          <div class="hero-actions">
-            <button class="gold" id="heroShopBtn">Shop Now →</button>
-            <button class="secondary" id="heroTrackBtn">📍 Track Order</button>
+      <!-- Center Column -->
+      <section>
+        <!-- Hero Banner -->
+        <div class="hero" id="heroBanner">
+          <div>
+            <span class="hero-tag" id="heroBadgeView">সাশ্রয়ে সেরা অনলাইন শপিং সারা বাংলাদেশে!</span>
+            <h1 id="heroTitleView">SPR <span class="red">ZONE</span> BD</h1>
+            <div class="hero-bn" id="heroSubtitleView">এখন আরও কাছে, আরও সাশ্রয়ী!</div>
+            <div class="hero-actions">
+              <button class="gold" id="heroShopBtn">Shop Now →</button>
+              <button class="secondary" id="heroTrackBtn">📍 Track Order</button>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:center;align-items:center">
+            <svg viewBox="0 0 260 175" width="100%" style="max-width:260px" aria-hidden="true">
+              <rect x="0" y="148" width="260" height="27" rx="8" fill="rgba(255,255,255,.16)"/>
+              <polygon points="150,148 182,24 214,148" fill="#E2EFE7" opacity=".95"/>
+              <polygon points="134,148 182,42 230,148" fill="#CBE4D5" opacity=".75"/>
+              <polygon points="118,148 182,66 246,148" fill="#B2D8C2" opacity=".55"/>
+              <rect x="218" y="34" width="3.5" height="114" fill="#FEF08A"/>
+              <rect x="221" y="36" width="36" height="23" rx="2" fill="#006A4E" stroke="#fff" stroke-width="1"/>
+              <circle cx="237" cy="47.5" r="6.5" fill="#F42A41"/>
+              <rect x="22" y="64" width="54" height="66" rx="10" fill="#F59E0B"/>
+              <path d="M36 64v-8a13 13 0 0 1 26 0v8" fill="none" stroke="#FEF3C7" stroke-width="4.5" stroke-linecap="round"/>
+              <rect x="64" y="78" width="50" height="58" rx="10" fill="#E11D48"/>
+              <path d="M77 78v-7a12 12 0 0 1 24 0v7" fill="none" stroke="#FFE4E6" stroke-width="4" stroke-linecap="round"/>
+              <circle cx="89" cy="108" r="10" fill="#fff"/>
+              <path d="M84 108l3.5 3.5 6.5-7" fill="none" stroke="#007B3D" stroke-width="2.5" stroke-linecap="round"/>
+            </svg>
           </div>
         </div>
-        <div style="display:flex;justify-content:center;align-items:center">
-          <svg viewBox="0 0 260 175" width="100%" style="max-width:260px" aria-hidden="true">
-            <rect x="0" y="148" width="260" height="27" rx="8" fill="rgba(255,255,255,.16)"/>
-            <polygon points="150,148 182,24 214,148" fill="#E2EFE7" opacity=".95"/>
-            <polygon points="134,148 182,42 230,148" fill="#CBE4D5" opacity=".75"/>
-            <polygon points="118,148 182,66 246,148" fill="#B2D8C2" opacity=".55"/>
-            <rect x="218" y="34" width="3.5" height="114" fill="#FEF08A"/>
-            <rect x="221" y="36" width="36" height="23" rx="2" fill="#006A4E" stroke="#fff" stroke-width="1"/>
-            <circle cx="237" cy="47.5" r="6.5" fill="#F42A41"/>
-            <rect x="22" y="64" width="54" height="66" rx="10" fill="#F59E0B"/>
-            <path d="M36 64v-8a13 13 0 0 1 26 0v8" fill="none" stroke="#FEF3C7" stroke-width="4.5" stroke-linecap="round"/>
-            <rect x="64" y="78" width="50" height="58" rx="10" fill="#E11D48"/>
-            <path d="M77 78v-7a12 12 0 0 1 24 0v7" fill="none" stroke="#FFE4E6" stroke-width="4" stroke-linecap="round"/>
-            <circle cx="89" cy="108" r="10" fill="#fff"/>
-            <path d="M84 108l3.5 3.5 6.5-7" fill="none" stroke="#007B3D" stroke-width="2.5" stroke-linecap="round"/>
-          </svg>
+
+        <!-- Live Admin Flash Sale Bar -->
+        <div class="sale-campaign-bar hidden" id="storefrontSaleBar">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <span class="sale-badge-pill" id="sfSaleBadge">⚡ FLASH SALE</span>
+            <div>
+              <div style="font-weight:800;font-size:15px" id="sfSaleTitle">Flash Sale Live</div>
+              <div style="font-size:12px;color:#FFE4E6" id="sfSaleSub"></div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <span class="sale-timer-pill" id="sfSaleTimer">Ends soon</span>
+            <button type="button" class="gold sm" id="sfSaleShopBtn">View Deals →</button>
+          </div>
         </div>
-      </div>
 
-      <!-- 5 Benefit Cards -->
-      <div class="benefits">
-        <div class="benefit"><div class="benefit-ic">🚚</div><div><b>Fast Delivery</b><span>Across Bangladesh</span></div></div>
-        <div class="benefit"><div class="benefit-ic">💵</div><div><b>Cash on Delivery</b><span>All 64 Districts</span></div></div>
-        <div class="benefit"><div class="benefit-ic">🏷️</div><div><b>Big Discounts</b><span>Everyday Deals</span></div></div>
-        <div class="benefit"><div class="benefit-ic">🎧</div><div><b>24/7 Support</b><span>09678-123456</span></div></div>
-        <div class="benefit"><div class="benefit-ic">📱</div><div><b>bKash · Nagad</b><span>Rocket · Auto TrxID</span></div></div>
-      </div>
-
-      <!-- Products Header & Grid -->
-      <div class="section-head" id="productsSection">
-        <h2 id="catalogHeading">🔥 Products <span class="muted" id="productCount" style="font-size:13px;font-weight:600"></span></h2>
-        <div class="filter-tools">
-          <select id="sortSelect" aria-label="Sort products">
-            <option value="featured">Sort: Popular</option>
-            <option value="price-asc">Price: Low to High</option>
-            <option value="price-desc">Price: High to Low</option>
-            <option value="rating">Top Rated</option>
-          </select>
+        <!-- 5 Benefit Cards -->
+        <div class="benefits">
+          <div class="benefit"><div class="benefit-ic">🚚</div><div><b>Fast Delivery</b><span>Across Bangladesh</span></div></div>
+          <div class="benefit"><div class="benefit-ic">💵</div><div><b>Cash on Delivery</b><span>All 64 Districts</span></div></div>
+          <div class="benefit"><div class="benefit-ic">🏷️</div><div><b>Big Discounts</b><span>Everyday Deals</span></div></div>
+          <div class="benefit"><div class="benefit-ic">🎧</div><div><b>24/7 Support</b><span>09678-123456</span></div></div>
+          <div class="benefit"><div class="benefit-ic">↺</div><div><b>14 Days Return</b><span>Easy Warranty</span></div></div>
         </div>
-      </div>
-      <div class="products-grid" id="productGrid"></div>
-    </section>
 
-    <!-- Right Sidebar -->
-    <aside class="right-col" id="why-us">
-      <div class="card">
-        <div class="cat-card-head">Why Choose Us?</div>
-        <ul class="why-list">
-          <li><span class="why-check">✓</span> 100% Original Products</li>
-          <li><span class="why-check">✓</span> Best Price Guarantee</li>
-          <li><span class="why-check">✓</span> Cash on Delivery Available</li>
-          <li><span class="why-check">✓</span> Auto TrxID Verification</li>
-          <li><span class="why-check">✓</span> 24/7 Customer Support</li>
-        </ul>
-      </div>
-
-      <div class="news-card">
-        <h3>✉️ Newsletter</h3>
-        <p style="font-size:12.5px;margin:4px 0 0;color:#d5f5e3">Get the latest deals, Eid offers & voucher codes.</p>
-        <form id="newsletterForm">
-          <input id="newsletterEmail" type="email" required placeholder="Enter your email address">
-          <button class="gold" style="width:100%">Subscribe</button>
-        </form>
-      </div>
-
-      <div class="social-card">
-        <h4>Follow Us</h4>
-        <div class="social-row">
-          <a class="social-pill" href="#footer">Facebook</a>
-          <a class="social-pill" href="#footer">YouTube</a>
-          <a class="social-pill" href="#footer">Instagram</a>
+        <!-- Products Header & Grid -->
+        <div class="section-head" id="productsSection">
+          <h2 id="catalogHeading">🔥 Products <span class="muted" id="productCount" style="font-size:13px;font-weight:600"></span></h2>
+          <div class="filter-tools">
+            <select id="sortSelect" aria-label="Sort products">
+              <option value="featured">Sort: Popular</option>
+              <option value="price-asc">Price: Low to High</option>
+              <option value="price-desc">Price: High to Low</option>
+              <option value="rating">Top Rated</option>
+            </select>
+          </div>
         </div>
-      </div>
-    </aside>
+        <div class="products-grid" id="productGrid"></div>
+      </section>
+
+      <!-- Right Sidebar -->
+      <aside class="right-col" id="why-us">
+        <div class="card">
+          <div class="cat-card-head">Why Choose Us?</div>
+          <ul class="why-list">
+            <li><span class="why-check">✓</span> 100% Original Products</li>
+            <li><span class="why-check">✓</span> Best Price Guarantee</li>
+            <li><span class="why-check">✓</span> Cash on Delivery (64 Districts)</li>
+            <li><span class="why-check">✓</span> 14 Days Easy Return</li>
+            <li><span class="why-check">✓</span> 24/7 Customer Support</li>
+          </ul>
+        </div>
+
+        <div class="news-card">
+          <h3>✉️ Newsletter</h3>
+          <p style="font-size:12.5px;margin:4px 0 0;color:#d5f5e3">Get the latest deals, Eid offers &amp; voucher codes.</p>
+          <form id="newsletterForm">
+            <input id="newsletterEmail" type="email" required placeholder="Enter your email address">
+            <button class="gold" style="width:100%">Subscribe</button>
+          </form>
+        </div>
+
+        <div class="social-card">
+          <h4>Follow Us</h4>
+          <div class="social-row">
+            <a class="social-pill" href="#footer">Facebook</a>
+            <a class="social-pill" href="#footer">YouTube</a>
+            <a class="social-pill" href="#footer">Instagram</a>
+          </div>
+        </div>
+      </aside>
+    </div>
   </div>
+
+  <!-- FULL LANDSCAPE 3-COLUMN PRODUCT PREVIEW PAGE -->
+  <section id="productPreviewPage" class="hidden">
+    <div class="pp-topbar">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <button type="button" class="outline sm" id="ppBackBtn">← Back to Products</button>
+        <div class="pp-breadcrumb" id="ppBreadcrumb">Home › Category › Brand</div>
+      </div>
+    </div>
+
+    <div class="pp-shell">
+      <div class="pp-layout">
+        <!-- Left Column: Gallery Showcase + Scrollable Thumbnail Carousel -->
+        <div class="pp-gallery-col">
+          <div class="pp-stage">
+            <span class="p-badge hidden" id="ppDiscBadge"></span>
+            <img id="ppMainImg" alt="Product Preview">
+          </div>
+          <div class="pp-thumb-bar">
+            <button type="button" class="pp-thumb-arrow" id="ppThumbPrev" aria-label="Previous image">‹</button>
+            <div class="pp-thumbs" id="ppThumbs"></div>
+            <button type="button" class="pp-thumb-arrow" id="ppThumbNext" aria-label="Next image">›</button>
+          </div>
+        </div>
+
+        <!-- Center Column: Countdown Bar, Title, Ratings, Share/Wish, Price, Variant, Qty, CTAs -->
+        <div class="pp-info-col">
+          <div class="pp-flash-bar hidden" id="ppFlashBar">
+            <span id="ppFlashBadge">⚡ FLASH SALE</span>
+            <span id="ppFlashTimer" style="font-variant-numeric:tabular-nums">Ends soon</span>
+            <span class="pp-meter-meter pp-flash-meter">
+              <span id="ppFlashSoldText">0 sold</span>
+              <span class="pp-meter-track"><span class="pp-meter-fill" id="ppFlashMeterFill" style="width:65%"></span></span>
+            </span>
+          </div>
+
+          <h1 id="ppTitle" style="font-size:clamp(19px,2vw,24px);line-height:1.3;margin-bottom:8px;color:var(--ink)"></h1>
+
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap">
+            <div id="ppRating" class="p-rating" style="font-size:13px"></div>
+            <div style="display:flex;gap:6px">
+              <button type="button" class="outline sm" id="ppShareBtn" title="Share product">🔗 Share</button>
+              <button type="button" class="outline sm" id="ppWishBtn" title="Save to wishlist">♡</button>
+            </div>
+          </div>
+
+          <div style="font-size:13px;color:var(--muted);padding-bottom:12px;border-bottom:1px solid var(--line);margin-bottom:14px">
+            Brand: <b id="ppBrand" style="color:var(--ink)"></b>
+            <span style="margin:0 8px">|</span>
+            <a href="#productsSection" id="ppMoreCatLink" style="color:var(--emerald-dark);font-weight:700"></a>
+          </div>
+
+          <div class="p-price-row" style="margin-bottom:16px">
+            <span class="p-price" id="ppPrice" style="font-size:30px;color:#F97316"></span>
+            <span class="p-old" id="ppOldPrice" style="font-size:15px"></span>
+            <span class="badge red hidden" id="ppDiscInline"></span>
+          </div>
+
+          <div style="margin-bottom:16px">
+            <div style="font-size:13px;font-weight:700;color:var(--muted)">
+              Option / Variant: <b id="ppVariantLabel" style="color:var(--ink)">Standard</b>
+            </div>
+            <div class="pd-var-row" id="ppVariantChips"></div>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;flex-wrap:wrap">
+            <span style="font-size:13px;font-weight:700;color:var(--muted)">Quantity</span>
+            <div class="pd-qty-box">
+              <button type="button" id="ppQtyMinus">−</button>
+              <b id="ppQtyVal" style="min-width:28px;text-align:center">1</b>
+              <button type="button" id="ppQtyPlus">+</button>
+            </div>
+            <span id="ppStockHint" style="font-size:12.5px;font-weight:700"></span>
+          </div>
+
+          <div style="display:flex;gap:12px;flex-wrap:wrap">
+            <button type="button" class="sky" id="ppBuyBtn" style="flex:1;min-width:150px;min-height:48px;font-size:15px">⚡ Buy Now</button>
+            <button type="button" class="gold" id="ppAddBtn" style="flex:1;min-width:150px;min-height:48px;font-size:15px">🛒 Add to Cart</button>
+          </div>
+        </div>
+
+        <!-- Right Column: Delivery Options & Return / Warranty (Cash on Delivery Only) -->
+        <aside class="pp-side-card">
+          <div class="pp-side-head">Delivery Options</div>
+          <div class="pp-side-item">
+            <div class="pp-side-ic">🚚</div>
+            <div>
+              <b>Standard Delivery</b>
+              <div style="color:var(--muted);font-size:12px">
+                Dhaka ৳60 · Outside Dhaka ৳120<br>
+                <span style="color:var(--emerald-dark);font-weight:700">Free delivery over ৳3,000</span>
+              </div>
+            </div>
+          </div>
+          <div class="pp-side-item">
+            <div class="pp-side-ic">💵</div>
+            <div>
+              <b>Cash on Delivery Available</b>
+              <div style="color:var(--muted);font-size:12px">Pay cash at doorstep across all 64 districts</div>
+            </div>
+          </div>
+
+          <hr style="border:0;border-top:1px solid var(--line);margin:2px 0">
+          <div class="pp-side-head">Return &amp; Warranty</div>
+          <div class="pp-side-item">
+            <div class="pp-side-ic">↺</div>
+            <div>
+              <b>14 Days Easy Return</b>
+              <div style="color:var(--muted);font-size:12px">Change of mind / damaged product protection</div>
+            </div>
+          </div>
+          <div class="pp-side-item">
+            <div class="pp-side-ic">🛡️</div>
+            <div>
+              <b>100% Authentic Warranty</b>
+              <div id="ppWarrantyNote" style="color:var(--muted);font-size:12px">Verified Brand Warranty</div>
+            </div>
+          </div>
+        </aside>
+      </div>
+
+      <!-- Product Specifications & Full Description -->
+      <div class="pp-specs-card">
+        <div style="font-size:12px;font-weight:800;color:var(--emerald-dark);text-transform:uppercase;margin-bottom:6px">
+          Specifications &amp; Product Details
+        </div>
+        <div id="ppSpecs" style="font-size:13.5px;font-weight:700;color:var(--ink);margin-bottom:6px"></div>
+        <p id="ppDesc" style="font-size:13.5px;color:var(--muted);margin:0;white-space:pre-line"></p>
+      </div>
+    </div>
+
+    <!-- Related Products -->
+    <div class="pp-related-wrap hidden" id="ppRelatedWrap">
+      <div class="section-head">
+        <h2>✨ Related Products</h2>
+      </div>
+      <div class="products-grid" id="ppRelatedGrid"></div>
+    </div>
+  </section>
 </main>
 
 <!-- Footer -->
@@ -452,24 +662,24 @@ button:disabled{opacity:.5;cursor:not-allowed}
     <div>
       <img src="assets/logo.svg" alt="SPR ZONE BD" style="height:46px;background:#fff;padding:6px 10px;border-radius:10px;margin-bottom:10px">
       <p><b>SPR ZONE BD</b> — Bangladesh's trusted A to Z online marketplace.</p>
-      <p>Fast nationwide courier delivery, 100% authentic products, and instant bKash/Nagad/Rocket TrxID verification.</p>
+      <p>Fast nationwide delivery across all 64 districts with 100% authentic products and easy Cash on Delivery.</p>
     </div>
     <div>
       <h4>Customer Service</h4>
       <ul>
         <li><a href="#" onclick="document.getElementById('trackOrderNavBtn').click();return false">Track Your Order</a></li>
-        <li>Easy Return &amp; Refund Policy</li>
+        <li>14 Days Easy Return Policy</li>
         <li>Privacy &amp; Security</li>
         <li><a href="admin.html">Admin Portal →</a></li>
       </ul>
     </div>
     <div>
-      <h4>Payment Methods</h4>
+      <h4>Payment Method</h4>
       <ul>
-        <li>bKash (Auto TrxID Verify)</li>
-        <li>Nagad (Auto TrxID Verify)</li>
-        <li>Rocket DBBL (Auto TrxID Verify)</li>
-        <li>Visa / Mastercard &amp; Cash on Delivery</li>
+        <li>Cash on Delivery (COD)</li>
+        <li>Pay Cash on Doorstep</li>
+        <li>All 64 Districts of Bangladesh</li>
+        <li>Free Delivery over ৳3,000</li>
       </ul>
     </div>
     <div>
@@ -485,124 +695,6 @@ button:disabled{opacity:.5;cursor:not-allowed}
     © <span id="year"></span> SPR ZONE BD. All rights reserved.
   </p>
 </footer>
-
-<!-- 3-Column Product Detail Modal -->
-<div class="modal" id="productModal">
-  <div class="dialog pd-dialog">
-    <div class="dialog-head">
-      <div id="pmBreadcrumb" style="font-size:13px;color:var(--emerald-dark);font-weight:700">Product Details</div>
-      <button class="outline sm" onclick="closeModal('productModal')">✕</button>
-    </div>
-    <div class="pd-layout">
-      <!-- Left: Image Showcase + Thumbnails -->
-      <div>
-        <div class="pd-main-img">
-          <span class="p-badge hidden" id="pmDiscBadge"></span>
-          <img id="pmImg" alt="Product">
-        </div>
-        <div class="pd-thumbs" id="pmThumbs"></div>
-      </div>
-
-      <!-- Center: Title, Stars, Brand, Price, Variants, Stepper & CTAs -->
-      <div>
-        <div class="pd-flash-bar hidden" id="pmFlashBar">
-          <span>⚡ FLASH SALE DEAL</span>
-          <span id="pmFlashStock">Limited Stock</span>
-        </div>
-        <h2 id="pmTitle" style="font-size:21px;line-height:1.3;margin-bottom:8px"></h2>
-        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap">
-          <div id="pmRating" class="p-rating"></div>
-          <div style="display:flex;gap:6px">
-            <button type="button" class="outline sm" id="pmShareBtn" title="Share product">🔗 Share</button>
-            <button type="button" class="outline sm" id="pmWishBtn" title="Save to wishlist">♡</button>
-          </div>
-        </div>
-        <div style="font-size:12.5px;color:var(--muted);padding-bottom:10px;border-bottom:1px solid var(--line);margin-bottom:12px">
-          Brand: <b id="pmBrand" style="color:var(--ink)"></b>
-          <span style="margin:0 6px">|</span>
-          <a href="#productsSection" id="pmMoreCatLink" style="color:var(--emerald-dark);font-weight:700"></a>
-        </div>
-
-        <div class="p-price-row" style="margin-bottom:14px">
-          <span class="p-price" id="pmPrice" style="font-size:28px;color:var(--crimson)"></span>
-          <span class="p-old" id="pmOldPrice" style="font-size:15px"></span>
-          <span class="badge red hidden" id="pmDiscInline"></span>
-        </div>
-
-        <div style="margin-bottom:14px">
-          <div style="font-size:12.5px;font-weight:700;color:var(--muted)">
-            Option / Variant: <b id="pmVariantLabel" style="color:var(--ink)">Standard</b>
-          </div>
-          <div class="pd-var-row" id="pmVariantChips"></div>
-        </div>
-
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap">
-          <span style="font-size:12.5px;font-weight:700;color:var(--muted)">Quantity</span>
-          <div class="pd-qty-box">
-            <button type="button" id="pmQtyMinus">−</button>
-            <b id="pmQtyVal" style="min-width:26px;text-align:center">1</b>
-            <button type="button" id="pmQtyPlus">+</button>
-          </div>
-          <span id="pmStockHint" style="font-size:12.5px;font-weight:600;color:var(--emerald-dark)"></span>
-        </div>
-
-        <div style="display:flex;gap:10px;margin-bottom:16px">
-          <button type="button" class="gold" id="pmBuyBtn" style="flex:1;min-height:46px">⚡ Buy Now</button>
-          <button type="button" id="pmAddBtn" style="flex:1;min-height:46px">🛒 Add to Cart</button>
-        </div>
-
-        <div style="background:#f8faf9;border:1px solid var(--line);border-radius:11px;padding:12px">
-          <div style="font-size:12px;font-weight:800;color:var(--emerald-dark);text-transform:uppercase;margin-bottom:4px">Specifications &amp; Description</div>
-          <div id="pmSpecs" style="font-size:12.5px;font-weight:700;color:var(--ink);margin-bottom:6px"></div>
-          <p id="pmDesc" style="font-size:13px;color:var(--muted);margin:0;white-space:pre-line"></p>
-        </div>
-      </div>
-
-      <!-- Right: Delivery Options & Return/Warranty -->
-      <aside class="pd-side-card">
-        <div style="font-size:11.5px;font-weight:800;color:var(--muted);text-transform:uppercase">Delivery Options</div>
-        <div class="pd-side-item">
-          <div class="pd-side-ic">🚚</div>
-          <div>
-            <b>Standard Delivery</b>
-            <div style="color:var(--muted);font-size:12px">Dhaka ৳60 · Outside Dhaka ৳120<br><span style="color:var(--emerald-dark);font-weight:700">Free delivery over ৳3,000</span></div>
-          </div>
-        </div>
-        <div class="pd-side-item">
-          <div class="pd-side-ic">💵</div>
-          <div>
-            <b>Cash on Delivery</b>
-            <div style="color:var(--muted);font-size:12px">Available across all 64 districts</div>
-          </div>
-        </div>
-        <div class="pd-side-item">
-          <div class="pd-side-ic">📱</div>
-          <div>
-            <b>bKash · Nagad · Rocket</b>
-            <div style="color:var(--muted);font-size:12px">Instant Auto TrxID Verification</div>
-          </div>
-        </div>
-
-        <hr style="border:0;border-top:1px solid var(--line);margin:2px 0">
-        <div style="font-size:11.5px;font-weight:800;color:var(--muted);text-transform:uppercase">Return &amp; Warranty</div>
-        <div class="pd-side-item">
-          <div class="pd-side-ic">↺</div>
-          <div>
-            <b>14 Days Easy Return</b>
-            <div style="color:var(--muted);font-size:12px">Hassle-free return &amp; refund</div>
-          </div>
-        </div>
-        <div class="pd-side-item">
-          <div class="pd-side-ic">🛡️</div>
-          <div>
-            <b>100% Authentic Guarantee</b>
-            <div id="pmWarrantyNote" style="color:var(--muted);font-size:12px">Verified Brand Warranty</div>
-          </div>
-        </div>
-      </aside>
-    </div>
-  </div>
-</div>
 
 <!-- Auth Modal (Login / Register) -->
 <div class="modal" id="authModal">
@@ -641,7 +733,6 @@ button:disabled{opacity:.5;cursor:not-allowed}
       <button type="button" class="tab-btn" data-ac-tab="addresses">📍 Addresses</button>
     </div>
 
-    <!-- Tab: Profile Add / Edit / Delete -->
     <div id="acTab-profile">
       <form id="profileForm">
         <div class="form-row">
@@ -657,7 +748,6 @@ button:disabled{opacity:.5;cursor:not-allowed}
       </form>
     </div>
 
-    <!-- Tab: Addresses Add / Edit / Delete -->
     <div id="acTab-addresses" class="hidden">
       <form id="addressForm" style="background:#f8faf9;border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:14px">
         <input type="hidden" id="addrEditId">
@@ -693,7 +783,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
   </div>
 </div>
 
-<!-- Slide-Over Cart Drawer (NO Default Delivery Zone selector) -->
+<!-- Slide-Over Cart Drawer -->
 <div class="drawer-wrap" id="cartDrawer">
   <div class="drawer">
     <div class="dialog-head" style="margin-bottom:6px">
@@ -707,16 +797,16 @@ button:disabled{opacity:.5;cursor:not-allowed}
         <button class="secondary sm" id="applyPromoBtn" type="button">Apply</button>
       </div>
       <div id="cartSummaryBox" style="font-size:13.5px;display:grid;gap:4px;margin-bottom:10px"></div>
-      <button id="proceedCheckoutBtn" style="width:100%;min-height:46px">Proceed to Checkout →</button>
+      <button id="proceedCheckoutBtn" style="width:100%;min-height:46px">Proceed to Cash on Delivery Checkout →</button>
     </div>
   </div>
 </div>
 
-<!-- Checkout Modal with Saved Address Picker + bKash/Nagad/Rocket Auto TrxID Verification -->
+<!-- Cash on Delivery Checkout Modal -->
 <div class="modal" id="checkoutModal">
   <div class="dialog">
     <div class="dialog-head">
-      <h2>🔒 Secure Bangladesh Checkout</h2>
+      <h2>💵 Cash on Delivery Checkout</h2>
       <button class="outline sm" onclick="closeModal('checkoutModal')">✕</button>
     </div>
     <form id="checkoutForm">
@@ -728,47 +818,24 @@ button:disabled{opacity:.5;cursor:not-allowed}
         <div class="field"><label>Full Name *</label><input id="cName" required></div>
         <div class="field"><label>Receiver Phone (01XXXXXXXXX) *</label><input id="cPhone" required pattern="01[3-9][0-9]{8}" placeholder="017XXXXXXXX"></div>
       </div>
-      <div class="form-row">
-        <div class="field">
-          <label>Division *</label>
-          <select id="cDivision">
-            <option>Dhaka</option><option>Chattogram</option><option>Sylhet</option><option>Rajshahi</option>
-            <option>Khulna</option><option>Barishal</option><option>Rangpur</option><option>Mymensingh</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Payment Method *</label>
-          <select id="cPayment">
-            <option value="bKash">bKash (Auto TrxID Verify)</option>
-            <option value="Nagad">Nagad (Auto TrxID Verify)</option>
-            <option value="Rocket">Rocket DBBL (Auto TrxID Verify)</option>
-            <option value="Card">Debit / Credit Card</option>
-            <option value="Cash on Delivery">Cash on Delivery (COD)</option>
-          </select>
-        </div>
+      <div class="field">
+        <label>Division *</label>
+        <select id="cDivision">
+          <option>Dhaka</option><option>Chattogram</option><option>Sylhet</option><option>Rajshahi</option>
+          <option>Khulna</option><option>Barishal</option><option>Rangpur</option><option>Mymensingh</option>
+        </select>
       </div>
       <div class="field"><label>Full Delivery Address *</label><textarea id="cAddress" required rows="2" placeholder="House, Road, Block, Thana, District"></textarea></div>
 
-      <!-- Mobile Banking Auto TrxID Verification Box -->
-      <div class="pay-box" id="mobilePayBox">
-        <div style="font-size:13px;font-weight:700;color:var(--emerald-dark)">
-          Step 1: Send <span id="payExactAmount" style="color:var(--crimson)">৳0</span> via <span id="payMethodLabel">bKash</span> to:
-        </div>
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-          <span class="copy-chip" id="merchantPayNumber">Not set yet</span>
-          <button type="button" class="secondary sm" id="copyMerchantNumBtn">📋 Copy Number</button>
-        </div>
-        <div style="font-size:12px;color:var(--muted);margin:8px 0 6px">
-          Step 2: Enter the mobile number you paid from &amp; Transaction ID (TrxID). We verify automatically from our payment SMS API.
-        </div>
-        <div class="form-row">
-          <div class="field" style="margin:0"><label>Sender Number (01XXXXXXXXX) *</label><input id="cSenderNumber" placeholder="017XXXXXXXX"></div>
-          <div class="field" style="margin:0"><label>Transaction ID (TrxID) *</label><input id="cTrxId" placeholder="e.g. BL74K9M2PQ" style="text-transform:uppercase"></div>
+      <div class="cod-box">
+        <div style="font-weight:800;color:var(--emerald-dark)">💵 Payment Method: Cash on Delivery (COD)</div>
+        <div style="font-size:12.5px;color:var(--muted);margin-top:3px">
+          Pay cash upon doorstep delivery across all 64 districts of Bangladesh. Free delivery on orders over ৳3,000.
         </div>
       </div>
 
       <div id="checkoutTotals" style="background:#f8faf9;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:10px 0;font-size:13.5px"></div>
-      <button type="submit" id="placeOrderBtn" style="width:100%;min-height:46px">Verify & Place Order</button>
+      <button type="submit" id="placeOrderBtn" style="width:100%;min-height:46px">✅ Place Cash on Delivery Order</button>
     </form>
   </div>
 </div>
@@ -818,18 +885,12 @@ let userAddresses = {};
 let products = {};
 let categories = {};
 let coupons = {};
+let sales = {};
+let activePreviewId = "";
 let heroData = {
   badge: "সাশ্রয়ে সেরা অনলাইন শপিং সারা বাংলাদেশে!",
   title: "SPR ZONE BD",
   subtitle: "এখন আরও কাছে, আরও সাশ্রয়ী!"
-};
-let paymentSettings = {
-  bkashNumber: "",
-  nagadNumber: "",
-  rocketNumber: "",
-  smsApiUrl: "",
-  smsApiKey: "",
-  autoVerifyEnabled: true
 };
 
 let cart = JSON.parse(localStorage.getItem("spr_web_cart") || "[]");
@@ -887,20 +948,73 @@ function isValidBdPhone(raw = "") {
   return /^01[3-9][0-9]{8}$/.test(normalizeBdPhone(raw));
 }
 
-function isValidTrxId(method, trx = "") {
-  const clean = trx.trim().toUpperCase();
-  if (method === "bKash") return /^[A-Z0-9]{10}$/.test(clean);
-  if (method === "Nagad") return /^[A-Z0-9]{8,12}$/.test(clean);
-  if (method === "Rocket") return /^[A-Z0-9]{8,14}$/.test(clean);
-  return true;
-}
-
 function canCancelOrder(status = "") {
   return status === "Pending" || status === "Placed";
 }
 
 function deliveryFeeForDivision(division = "Dhaka") {
   return String(division).trim().toLowerCase() === "dhaka" ? 60 : 120;
+}
+
+function getActiveSale() {
+  const now = Date.now();
+  const list = Object.values(sales || {})
+    .filter((s) => s && s.active !== false && (!s.endAt || Number(s.endAt) > now))
+    .sort((a, b) => (Number(a.endAt || 9e15) - Number(b.endAt || 9e15)));
+  return list[0] || null;
+}
+
+function formatCountdownText(endAt) {
+  if (!endAt) return "Limited Time Offer";
+  const diff = Number(endAt) - Date.now();
+  if (diff <= 0) return "Ended";
+  const totalSec = Math.floor(diff / 1000);
+  const days = Math.floor(totalSec / 86400);
+  const hrs = Math.floor((totalSec % 86400) / 3600);
+  const mins = Math.floor((totalSec % 3600) / 60);
+  const secs = totalSec % 60;
+  const pad = (n) => String(n).padStart(2, "0");
+  return `Ends in ${days} days ${pad(hrs)}:${pad(mins)}:${pad(secs)}`;
+}
+
+function updateLiveSaleUI() {
+  const sale = getActiveSale();
+  if (sale) {
+    const countdown = formatCountdownText(sale.endAt);
+    $("storefrontSaleBar").classList.remove("hidden");
+    $("sfSaleBadge").textContent = `⚡ ${sale.badge || "FLASH SALE"}`;
+    $("sfSaleTitle").textContent = sale.title || "Flash Sale Live";
+    $("sfSaleSub").textContent = [sale.discountText, sale.subtitle].filter(Boolean).join(" · ");
+    $("sfSaleTimer").textContent = countdown;
+
+    $("bigSaleBadge").textContent = sale.badge || "BIG SALE";
+    $("bigSaleTitle").textContent = sale.title || "Limited Time Offer";
+    $("bigSalePct").textContent = sale.discountText || "UP TO 70% OFF";
+    $("bigSaleSub").textContent = sale.subtitle || "Flash Deals across SPR ZONE BD";
+    $("bigSaleTimer").textContent = countdown;
+    $("bigSaleTimer").classList.remove("hidden");
+  } else {
+    $("storefrontSaleBar").classList.add("hidden");
+    $("bigSaleBadge").textContent = "BIG SALE";
+    $("bigSaleTitle").textContent = "Up to";
+    $("bigSalePct").textContent = "70% OFF";
+    $("bigSaleSub").textContent = "Flash Deals across SPR ZONE BD";
+    $("bigSaleTimer").classList.add("hidden");
+  }
+
+  if (activePreviewId && products[activePreviewId] && !$("productPreviewPage").classList.contains("hidden")) {
+    const p = products[activePreviewId];
+    const showFlash = Boolean(sale || p.isFlashDeal);
+    $("ppFlashBar").classList.toggle("hidden", !showFlash);
+    if (showFlash) {
+      $("ppFlashBadge").textContent = `⚡ ${sale?.badge || "FLASH SALE DEAL"}`;
+      $("ppFlashTimer").textContent = sale?.endAt ? formatCountdownText(sale.endAt) : "Limited Time Flash Offer";
+      const sold = parseNum(p.soldCount || 0);
+      $("ppFlashSoldText").textContent = sold > 0 ? `${sold} sold` : `${Number(p.stock || 0)} left`;
+      const pct = sale?.soldPercent ? Number(sale.soldPercent) : Math.min(95, Math.max(25, sold ? Math.round((sold / (sold + Math.max(1, parseNum(p.stock)))) * 100) : 65));
+      $("ppFlashMeterFill").style.width = `${pct}%`;
+    }
+  }
 }
 
 function saveCart() {
@@ -946,7 +1060,18 @@ function computeTotals(division = "") {
   return { subtotal, discount, deliveryFee, total, promo };
 }
 
-/* ---------- Storefront Rendering ---------- */
+/* ---------- Storefront & Full Product Preview Page ---------- */
+function closeProductPreview(pushUrl = true) {
+  activePreviewId = "";
+  $("productPreviewPage").classList.add("hidden");
+  $("storefrontView").classList.remove("hidden");
+  if (pushUrl && new URLSearchParams(location.search).has("product")) {
+    const url = new URL(location.href);
+    url.searchParams.delete("product");
+    history.pushState({}, "", url.pathname + url.search);
+  }
+}
+
 function renderCategories() {
   const prodValues = Object.values(products);
   let catArr = Object.entries(categories)
@@ -973,11 +1098,53 @@ function renderCategories() {
   $("categoryList").querySelectorAll(".cat-btn").forEach((b) => {
     b.onclick = () => {
       selectedCategory = b.dataset.cat;
+      closeProductPreview();
       renderCategories();
       renderProducts();
       $("leftSidebar").classList.remove("mobile-open");
       $("productsSection").scrollIntoView({ behavior: "smooth" });
     };
+  });
+}
+
+function productCardHtml(p) {
+  const disc = p.oldPrice > p.price ? Math.round(((p.oldPrice - p.price) / p.oldPrice) * 100) : 0;
+  const liked = wishlist.includes(p.id);
+  const imgSrc = p.image || "assets/favicon.svg";
+  const stars = "★".repeat(Math.max(1, Math.min(5, Math.round(Number(p.rating || 4.6)))));
+  return `<article class="product-card">
+    <div class="p-img-wrap" data-open="${safe(p.id)}">
+      ${disc > 0 ? `<span class="p-badge">-${disc}%</span>` : ""}
+      <img src="${safe(imgSrc)}" alt="${safe(p.name)}" onerror="this.src='assets/favicon.svg'">
+    </div>
+    <div class="p-body">
+      <div class="p-title-row">
+        <div class="p-title" data-open="${safe(p.id)}">${safe(p.name)}</div>
+        <button class="p-wish ${liked ? "liked" : ""}" data-wish="${safe(p.id)}" title="Save to wishlist">${liked ? "♥" : "♡"}</button>
+      </div>
+      <div class="p-rating">${stars} <span>(${Number(p.reviewCount || 0)} Reviews)</span></div>
+      <div class="p-price-row">
+        <span class="p-price">${money(p.price)}</span>
+        ${p.oldPrice > p.price ? `<span class="p-old">${money(p.oldPrice)}</span>` : ""}
+      </div>
+      <button class="add-btn" data-add="${safe(p.id)}" ${Number(p.stock || 0) <= 0 ? "disabled" : ""}>
+        ${Number(p.stock || 0) > 0 ? "🛒 Add to Cart" : "Out of Stock"}
+      </button>
+    </div>
+  </article>`;
+}
+
+function bindProductGridEvents(containerEl) {
+  containerEl.querySelectorAll("[data-open]").forEach((el) => el.onclick = () => openProductPreview(el.dataset.open));
+  containerEl.querySelectorAll("[data-add]").forEach((el) => el.onclick = () => addToCart(el.dataset.add));
+  containerEl.querySelectorAll("[data-wish]").forEach((el) => el.onclick = (e) => {
+    e.stopPropagation();
+    const id = el.dataset.wish;
+    if (wishlist.includes(id)) wishlist = wishlist.filter((x) => x !== id);
+    else wishlist.push(id);
+    saveWishlist();
+    renderProducts();
+    if (activePreviewId) renderRelatedProducts(activePreviewId);
   });
 }
 
@@ -1003,7 +1170,7 @@ function renderProducts() {
   else if (navMode === "new") list.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
   else list.sort((a, b) => Number(!!b.isFeatured) - Number(!!a.isFeatured));
 
-  const titlePrefix = navMode === "deals" ? "🔥 Big Sale Deals" : navMode === "new" ? "✨ New Arrivals" : (selectedCategory === "All" ? "🔥 Products" : `📦 ${selectedCategory}`);
+  const titlePrefix = navMode === "deals" ? "🔥 Flash Sale Deals" : navMode === "new" ? "✨ New Arrivals" : (selectedCategory === "All" ? "🔥 Products" : `📦 ${selectedCategory}`);
   $("catalogHeading").innerHTML = `${safe(titlePrefix)} <span class="muted" style="font-size:13px;font-weight:600">(${list.length} items)</span>`;
 
   if (!list.length) {
@@ -1020,43 +1187,26 @@ function renderProducts() {
     return;
   }
 
-  $("productGrid").innerHTML = list.map((p) => {
-    const disc = p.oldPrice > p.price ? Math.round(((p.oldPrice - p.price) / p.oldPrice) * 100) : 0;
-    const liked = wishlist.includes(p.id);
-    const imgSrc = p.image || "assets/favicon.svg";
-    const stars = "★".repeat(Math.max(1, Math.min(5, Math.round(Number(p.rating || 4.6)))));
-    return `<article class="product-card">
-      <div class="p-img-wrap" data-open="${safe(p.id)}">
-        ${disc > 0 ? `<span class="p-badge">-${disc}%</span>` : ""}
-        <img src="${safe(imgSrc)}" alt="${safe(p.name)}" onerror="this.src='assets/favicon.svg'">
-      </div>
-      <div class="p-body">
-        <div class="p-title-row">
-          <div class="p-title" data-open="${safe(p.id)}">${safe(p.name)}</div>
-          <button class="p-wish ${liked ? "liked" : ""}" data-wish="${safe(p.id)}" title="Save to wishlist">${liked ? "♥" : "♡"}</button>
-        </div>
-        <div class="p-rating">${stars} <span>(${Number(p.reviewCount || 0)} Reviews)</span></div>
-        <div class="p-price-row">
-          <span class="p-price">${money(p.price)}</span>
-          ${p.oldPrice > p.price ? `<span class="p-old">${money(p.oldPrice)}</span>` : ""}
-        </div>
-        <button class="add-btn" data-add="${safe(p.id)}" ${Number(p.stock || 0) <= 0 ? "disabled" : ""}>
-          ${Number(p.stock || 0) > 0 ? "🛒 Add to Cart" : "Out of Stock"}
-        </button>
-      </div>
-    </article>`;
-  }).join("");
+  $("productGrid").innerHTML = list.map(productCardHtml).join("");
+  bindProductGridEvents($("productGrid"));
+}
 
-  $("productGrid").querySelectorAll("[data-open]").forEach((el) => el.onclick = () => openProductModal(el.dataset.open));
-  $("productGrid").querySelectorAll("[data-add]").forEach((el) => el.onclick = () => addToCart(el.dataset.add));
-  $("productGrid").querySelectorAll("[data-wish]").forEach((el) => el.onclick = (e) => {
-    e.stopPropagation();
-    const id = el.dataset.wish;
-    if (wishlist.includes(id)) wishlist = wishlist.filter((x) => x !== id);
-    else wishlist.push(id);
-    saveWishlist();
-    renderProducts();
-  });
+function renderRelatedProducts(currentId) {
+  const cur = products[currentId];
+  if (!cur) return;
+  const rel = Object.entries(products)
+    .filter(([oid]) => oid !== currentId)
+    .map(([id, p]) => ({ id, ...p }))
+    .sort((a, b) => Number(b.category === cur.category) - Number(a.category === cur.category))
+    .slice(0, 4);
+
+  if (!rel.length) {
+    $("ppRelatedWrap").classList.add("hidden");
+    return;
+  }
+  $("ppRelatedWrap").classList.remove("hidden");
+  $("ppRelatedGrid").innerHTML = rel.map(productCardHtml).join("");
+  bindProductGridEvents($("ppRelatedGrid"));
 }
 
 window.resetStoreFilters = () => {
@@ -1064,74 +1214,83 @@ window.resetStoreFilters = () => {
   navMode = "home";
   searchTerm = "";
   $("searchInput").value = "";
+  closeProductPreview();
   renderCategories();
   renderProducts();
 };
 
-function openProductModal(id) {
+function openProductPreview(id, pushUrl = true) {
   const p = products[id];
   if (!p) return;
+  activePreviewId = id;
   const stock = Number(p.stock || 0);
   const disc = p.oldPrice > p.price ? Math.round(((p.oldPrice - p.price) / p.oldPrice) * 100) : 0;
   const ratingNum = Number(p.rating || 4.7);
   const stars = "★".repeat(Math.max(1, Math.min(5, Math.round(ratingNum))));
 
-  $("pmBreadcrumb").textContent = `${p.category || "SPR Zone BD"} › ${p.brand || "Official"}`;
-  $("pmTitle").textContent = p.name;
-  $("pmRating").innerHTML = `${stars} ${ratingNum.toFixed(1)} <span>(${Number(p.reviewCount || 0)} Ratings)</span>`;
-  $("pmBrand").textContent = p.brand || "SPR ZONE BD";
-  $("pmMoreCatLink").textContent = `More from ${p.category || "Store"}`;
-  $("pmMoreCatLink").onclick = (e) => {
+  $("ppBreadcrumb").textContent = `Home › ${p.category || "Store"} › ${p.brand || "Official"} › ${p.name}`;
+  $("ppTitle").textContent = p.name;
+  $("ppRating").innerHTML = `${stars} ${ratingNum.toFixed(1)} <span>Ratings ${Number(p.reviewCount || 0)}</span>`;
+  $("ppBrand").textContent = p.brand || "SPR ZONE BD";
+  $("ppMoreCatLink").textContent = `More ${p.category || "Products"} from ${p.brand || "SPR ZONE BD"}`;
+  $("ppMoreCatLink").onclick = (e) => {
     e.preventDefault();
-    closeModal("productModal");
+    closeProductPreview();
     selectedCategory = p.category || "All";
     renderCategories();
     renderProducts();
     $("productsSection").scrollIntoView({ behavior: "smooth" });
   };
 
-  $("pmFlashBar").classList.toggle("hidden", !p.isFlashDeal);
-  $("pmFlashStock").textContent = stock > 0 ? `${stock} in stock` : "Sold Out";
+  $("ppPrice").textContent = money(p.price);
+  $("ppOldPrice").textContent = p.oldPrice > p.price ? money(p.oldPrice) : "";
+  $("ppDiscBadge").textContent = `-${disc}%`;
+  $("ppDiscBadge").classList.toggle("hidden", disc <= 0);
+  $("ppDiscInline").textContent = `-${disc}%`;
+  $("ppDiscInline").classList.toggle("hidden", disc <= 0);
 
-  $("pmPrice").textContent = money(p.price);
-  $("pmOldPrice").textContent = p.oldPrice > p.price ? money(p.oldPrice) : "";
-  $("pmDiscBadge").textContent = `-${disc}%`;
-  $("pmDiscBadge").classList.toggle("hidden", disc <= 0);
-  $("pmDiscInline").textContent = `-${disc}% OFF`;
-  $("pmDiscInline").classList.toggle("hidden", disc <= 0);
+  $("ppSpecs").textContent = p.specs || "100% Original & Quality Checked";
+  $("ppDesc").textContent = p.description || "Order online from SPR ZONE BD with fast Cash on Delivery anywhere in Bangladesh.";
+  $("ppWarrantyNote").textContent = p.specs || "Authentic Brand Warranty";
 
-  $("pmSpecs").textContent = p.specs || "100% Original & Quality Checked";
-  $("pmDesc").textContent = p.description || "Order online from SPR ZONE BD for fast delivery anywhere in Bangladesh.";
-  $("pmWarrantyNote").textContent = p.specs || "Authentic Product Guarantee";
-
-  // Gallery thumbnails (supports comma-separated p.gallery or main image)
+  // Gallery thumbnails + carousel arrows
   const imgs = [p.image, ...String(p.gallery || "").split(",").map((s) => s.trim())].filter(Boolean);
   const uniqImgs = [...new Set(imgs.length ? imgs : ["assets/favicon.svg"])];
-  $("pmImg").src = uniqImgs[0];
-  $("pmThumbs").innerHTML = uniqImgs.map((src, i) => `
-    <button type="button" class="pd-thumb ${i === 0 ? "active" : ""}" data-thumb-src="${safe(src)}">
+  let imgIdx = 0;
+  const showGalleryIndex = (idx) => {
+    imgIdx = (idx + uniqImgs.length) % uniqImgs.length;
+    $("ppMainImg").src = uniqImgs[imgIdx];
+    $("ppThumbs").querySelectorAll(".pp-thumb").forEach((el, k) => el.classList.toggle("active", k === imgIdx));
+  };
+  $("ppThumbs").innerHTML = uniqImgs.map((src, i) => `
+    <button type="button" class="pp-thumb ${i === 0 ? "active" : ""}" data-thumb-idx="${i}">
       <img src="${safe(src)}" alt="Preview ${i + 1}" onerror="this.src='assets/favicon.svg'">
     </button>
   `).join("");
-  $("pmThumbs").querySelectorAll("[data-thumb-src]").forEach((b) => {
-    b.onclick = () => {
-      $("pmImg").src = b.dataset.thumbSrc;
-      $("pmThumbs").querySelectorAll(".pd-thumb").forEach((x) => x.classList.remove("active"));
-      b.classList.add("active");
-    };
+  $("ppThumbs").querySelectorAll("[data-thumb-idx]").forEach((b) => {
+    b.onclick = () => showGalleryIndex(Number(b.dataset.thumbIdx));
   });
+  $("ppThumbPrev").onclick = () => {
+    showGalleryIndex(imgIdx - 1);
+    $("ppThumbs").scrollBy({ left: -120, behavior: "smooth" });
+  };
+  $("ppThumbNext").onclick = () => {
+    showGalleryIndex(imgIdx + 1);
+    $("ppThumbs").scrollBy({ left: 120, behavior: "smooth" });
+  };
+  showGalleryIndex(0);
 
-  // Variant pill selector
+  // Variant selector
   const vars = String(p.variants || "Standard").split(",").map((s) => s.trim()).filter(Boolean);
   let selectedVar = vars[0] || "Standard";
   const renderVarChips = () => {
-    $("pmVariantLabel").textContent = selectedVar;
-    $("pmVariantChips").innerHTML = vars.map((v) => `
+    $("ppVariantLabel").textContent = selectedVar;
+    $("ppVariantChips").innerHTML = vars.map((v) => `
       <button type="button" class="pd-var-chip ${v === selectedVar ? "active" : ""}" data-var="${safe(v)}">
         ${v === selectedVar ? "✓ " : ""}${safe(v)}
       </button>
     `).join("");
-    $("pmVariantChips").querySelectorAll("[data-var]").forEach((b) => {
+    $("ppVariantChips").querySelectorAll("[data-var]").forEach((b) => {
       b.onclick = () => { selectedVar = b.dataset.var; renderVarChips(); };
     });
   };
@@ -1140,41 +1299,51 @@ function openProductModal(id) {
   // Quantity stepper
   let qty = 1;
   const maxQty = Math.max(1, stock);
-  $("pmQtyVal").textContent = qty;
-  $("pmStockHint").textContent = stock <= 0 ? "Out of stock" : stock <= 5 ? `Only ${stock} left — order soon!` : `In Stock (${stock} available)`;
-  $("pmStockHint").style.color = stock <= 5 ? "var(--crimson)" : "var(--emerald-dark)";
-  $("pmQtyMinus").onclick = () => { if (qty > 1) { qty--; $("pmQtyVal").textContent = qty; } };
-  $("pmQtyPlus").onclick = () => { if (qty < maxQty) { qty++; $("pmQtyVal").textContent = qty; } };
+  $("ppQtyVal").textContent = qty;
+  $("ppStockHint").textContent = stock <= 0 ? "Out of stock" : stock <= 5 ? "Almost sold out, buy now!" : `In Stock (${stock} available)`;
+  $("ppStockHint").style.color = stock <= 5 ? "var(--crimson)" : "var(--emerald-dark)";
+  $("ppQtyMinus").onclick = () => { if (qty > 1) { qty--; $("ppQtyVal").textContent = qty; } };
+  $("ppQtyPlus").onclick = () => { if (qty < maxQty) { qty++; $("ppQtyVal").textContent = qty; } };
 
   // Wishlist & Share
-  const updateModalWish = () => {
+  const updatePreviewWish = () => {
     const liked = wishlist.includes(id);
-    $("pmWishBtn").textContent = liked ? "♥ Saved" : "♡ Save";
-    $("pmWishBtn").style.color = liked ? "var(--crimson)" : "var(--ink)";
+    $("ppWishBtn").textContent = liked ? "♥ Saved" : "♡ Save";
+    $("ppWishBtn").style.color = liked ? "var(--crimson)" : "var(--ink)";
   };
-  updateModalWish();
-  $("pmWishBtn").onclick = () => {
+  updatePreviewWish();
+  $("ppWishBtn").onclick = () => {
     if (wishlist.includes(id)) wishlist = wishlist.filter((x) => x !== id);
     else wishlist.push(id);
     saveWishlist();
-    updateModalWish();
+    updatePreviewWish();
     renderProducts();
   };
-  $("pmShareBtn").onclick = async () => {
+  $("ppShareBtn").onclick = async () => {
     const shareUrl = `${location.origin}${location.pathname}?product=${encodeURIComponent(id)}`;
     try { await navigator.clipboard.writeText(shareUrl); toast("Product link copied!"); }
     catch (_) { toast(shareUrl); }
   };
 
-  $("pmAddBtn").disabled = stock <= 0;
-  $("pmBuyBtn").disabled = stock <= 0;
-  $("pmAddBtn").onclick = () => { addToCart(id, selectedVar, qty); closeModal("productModal"); };
-  $("pmBuyBtn").onclick = () => {
+  $("ppAddBtn").disabled = stock <= 0;
+  $("ppBuyBtn").disabled = stock <= 0;
+  $("ppAddBtn").onclick = () => addToCart(id, selectedVar, qty);
+  $("ppBuyBtn").onclick = () => {
     addToCart(id, selectedVar, qty);
-    closeModal("productModal");
     openCheckout();
   };
-  openModal("productModal");
+
+  $("storefrontView").classList.add("hidden");
+  $("productPreviewPage").classList.remove("hidden");
+  updateLiveSaleUI();
+  renderRelatedProducts(id);
+  window.scrollTo({ top: 0, behavior: "smooth" });
+
+  if (pushUrl) {
+    const url = new URL(location.href);
+    url.searchParams.set("product", id);
+    history.pushState({ productId: id }, "", url.pathname + url.search);
+  }
 }
 
 function addToCart(id, variant = "", qty = 1) {
@@ -1235,7 +1404,7 @@ function renderCartDrawer() {
     <div style="display:flex;justify-content:space-between"><span>Subtotal</span><b>${money(t.subtotal)}</b></div>
     ${t.discount > 0 ? `<div style="display:flex;justify-content:space-between;color:var(--emerald)"><span>Promo (${safe(t.promo.code)})</span><b>-${money(t.discount)}</b></div>` : ""}
     <div style="display:flex;justify-content:space-between"><span>Delivery Fee (Est.)</span><b>${t.deliveryFee === 0 ? "FREE" : money(t.deliveryFee)}</b></div>
-    <div style="display:flex;justify-content:space-between;font-size:16px;padding-top:4px;border-top:1px solid var(--line)"><b>Grand Total</b><b style="color:var(--crimson)">${money(t.total)}</b></div>
+    <div style="display:flex;justify-content:space-between;font-size:16px;padding-top:4px;border-top:1px solid var(--line)"><b>Grand Total (COD)</b><b style="color:var(--crimson)">${money(t.total)}</b></div>
   `;
 }
 
@@ -1312,27 +1481,16 @@ function resetAddressForm() {
   $("addrLabel").value = "Home";
 }
 
-/* ---------- Checkout & Auto TrxID Verification ---------- */
-function syncCheckoutPaymentUI() {
+/* ---------- Cash on Delivery Checkout ---------- */
+function syncCheckoutTotalsUI() {
   healCartWithProducts();
-  const method = $("cPayment").value;
   const division = $("cDivision").value || "Dhaka";
-  const isMobile = method === "bKash" || method === "Nagad" || method === "Rocket";
-  $("mobilePayBox").classList.toggle("hidden", !isMobile);
-  $("cSenderNumber").required = isMobile;
-  $("cTrxId").required = isMobile;
-
   const t = computeTotals(division);
-  $("payExactAmount").textContent = money(t.total);
-  $("payMethodLabel").textContent = method;
-  const num = method === "bKash" ? paymentSettings.bkashNumber : method === "Nagad" ? paymentSettings.nagadNumber : paymentSettings.rocketNumber;
-  $("merchantPayNumber").textContent = num || "Not configured in Admin yet";
-
   $("checkoutTotals").innerHTML = `
     <div style="display:flex;justify-content:space-between"><span>Subtotal (${cart.reduce((s, x) => s + Math.max(1, parseNum(x.qty) || 1), 0)} items)</span><b>${money(t.subtotal)}</b></div>
     ${t.discount > 0 ? `<div style="display:flex;justify-content:space-between;color:var(--emerald)"><span>Discount</span><b>-${money(t.discount)}</b></div>` : ""}
     <div style="display:flex;justify-content:space-between"><span>Delivery Fee (${safe(division)})</span><b>${t.deliveryFee === 0 ? "FREE" : money(t.deliveryFee)}</b></div>
-    <div style="display:flex;justify-content:space-between;font-size:16px;margin-top:4px;padding-top:4px;border-top:1px solid var(--line)"><b>Grand Total</b><b style="color:var(--crimson)">${money(t.total)}</b></div>
+    <div style="display:flex;justify-content:space-between;font-size:16px;margin-top:4px;padding-top:4px;border-top:1px solid var(--line)"><b>Grand Total (Cash on Delivery)</b><b style="color:var(--crimson)">${money(t.total)}</b></div>
   `;
 }
 
@@ -1359,45 +1517,8 @@ function openCheckout() {
       $("cPhone").value = $("cPhone").value || userProfile?.phone || "";
     }
   }
-  syncCheckoutPaymentUI();
+  syncCheckoutTotalsUI();
   openModal("checkoutModal");
-}
-
-async function autoVerifyTransaction(method, senderNorm, trxUpper, totalAmount) {
-  if (!paymentSettings.autoVerifyEnabled) return false;
-
-  if (paymentSettings.smsApiUrl) {
-    try {
-      const url = new URL(paymentSettings.smsApiUrl);
-      url.searchParams.set("sender", senderNorm);
-      url.searchParams.set("trxId", trxUpper);
-      url.searchParams.set("amount", String(totalAmount));
-      url.searchParams.set("provider", method);
-      const headers = {};
-      if (paymentSettings.smsApiKey) headers["x-api-key"] = paymentSettings.smsApiKey;
-      const resp = await fetch(url.toString(), { headers });
-      if (resp.ok) {
-        const json = await resp.json();
-        if (json.verified === true || String(json.status || "").toLowerCase() === "verified") {
-          return true;
-        }
-      }
-    } catch (_) {}
-  }
-
-  try {
-    const snap = await get(ref(db, "sms_inbox/" + trxUpper));
-    if (snap.exists()) {
-      const rec = snap.val();
-      const recSender = normalizeBdPhone(rec.senderNumber || "");
-      const recAmount = Number(rec.amount || 0);
-      if (!rec.matchedOrderId && recSender === senderNorm && recAmount >= totalAmount) {
-        return true;
-      }
-    }
-  } catch (_) {}
-
-  return false;
 }
 
 /* ---------- Order Tracking & Cancel Lock ---------- */
@@ -1430,9 +1551,7 @@ function renderSingleOrderCard(id, o) {
     ${renderOrderTimeline(o.status || "Pending")}
     <div style="font-size:13px;border-top:1px solid var(--line);padding-top:8px;display:grid;gap:4px">
       <div><b>Items:</b> ${(o.items || []).map((it) => `${safe(it.name)} ×${it.qty}`).join(", ") || safe(o.itemsSummary || "")}</div>
-      <div><b>Payment:</b> ${safe(o.paymentMethod)} · <span style="color:var(--emerald-dark);font-weight:700">${safe(o.paymentStatus || "Pending")}</span></div>
-      ${o.senderNumber ? `<div><b>Sender:</b> ${safe(o.senderNumber)} · <b>TrxID:</b> ${safe(o.trxId)}</div>` : ""}
-      ${o.courier ? `<div><b>Courier:</b> ${safe(o.courier.courierName)} · <span class="badge green">${safe(o.courier.pickupStatus || "Pickup Requested")}</span> · <b>ID:</b> <code>${safe(o.courier.consignmentId || "-")}</code></div>` : ""}
+      <div><b>Payment:</b> Cash on Delivery · <span style="color:var(--emerald-dark);font-weight:700">${safe(o.paymentStatus || "Pay on Delivery")}</span></div>
       <div><b>Grand Total:</b> <b style="color:var(--crimson)">${money(o.total)}</b></div>
     </div>
     <div style="margin-top:10px">
@@ -1497,8 +1616,10 @@ function subscribeStoreData() {
       const targetId = new URLSearchParams(location.search).get("product");
       if (targetId && products[targetId]) {
         deepLinkOpened = true;
-        openProductModal(targetId);
+        openProductPreview(targetId, false);
       }
+    } else if (activePreviewId && products[activePreviewId]) {
+      renderRelatedProducts(activePreviewId);
     }
   });
 
@@ -1511,18 +1632,17 @@ function subscribeStoreData() {
     coupons = snap.val() || {};
   });
 
+  onValue(ref(db, "deals/sales"), (snap) => {
+    sales = snap.val() || {};
+    updateLiveSaleUI();
+  });
+
   onValue(ref(db, "deals/hero"), (snap) => {
     if (snap.exists()) {
       heroData = { ...heroData, ...snap.val() };
       $("heroBadgeView").textContent = heroData.badge;
       $("heroTitleView").innerHTML = safe(heroData.title).replace("ZONE", `<span class="red">ZONE</span>`);
       $("heroSubtitleView").textContent = heroData.subtitle;
-    }
-  });
-
-  onValue(ref(db, "settings/payment"), (snap) => {
-    if (snap.exists()) {
-      paymentSettings = { ...paymentSettings, ...snap.val() };
     }
   });
 }
@@ -1562,14 +1682,25 @@ saveCart();
 renderCategories();
 renderProducts();
 subscribeStoreData();
+setInterval(updateLiveSaleUI, 1000);
 
+window.addEventListener("popstate", () => {
+  const pid = new URLSearchParams(location.search).get("product");
+  if (pid && products[pid]) openProductPreview(pid, false);
+  else closeProductPreview(false);
+});
+
+$("ppBackBtn").onclick = () => closeProductPreview();
+$("brandHomeLink").onclick = (e) => { e.preventDefault(); closeProductPreview(); window.scrollTo({ top: 0, behavior: "smooth" }); };
+$("aboutNavLink").onclick = () => closeProductPreview();
 $("mobileCatToggle").onclick = () => $("leftSidebar").classList.toggle("mobile-open");
-$("searchForm").onsubmit = (e) => { e.preventDefault(); searchTerm = $("searchInput").value.trim().toLowerCase(); renderProducts(); };
-$("searchInput").oninput = () => { searchTerm = $("searchInput").value.trim().toLowerCase(); renderProducts(); };
+$("searchForm").onsubmit = (e) => { e.preventDefault(); closeProductPreview(); searchTerm = $("searchInput").value.trim().toLowerCase(); renderProducts(); };
+$("searchInput").oninput = () => { if (activePreviewId) closeProductPreview(); searchTerm = $("searchInput").value.trim().toLowerCase(); renderProducts(); };
 $("sortSelect").onchange = () => { sortMode = $("sortSelect").value; renderProducts(); };
 
 document.querySelectorAll("[data-nav]").forEach((btn) => {
   btn.onclick = () => {
+    closeProductPreview();
     document.querySelectorAll("[data-nav]").forEach((x) => x.classList.remove("active"));
     btn.classList.add("active");
     navMode = btn.dataset.nav;
@@ -1580,7 +1711,8 @@ document.querySelectorAll("[data-nav]").forEach((btn) => {
   };
 });
 
-$("bigSaleBtn").onclick = () => { navMode = "deals"; renderProducts(); $("productsSection").scrollIntoView({ behavior: "smooth" }); };
+$("bigSaleBtn").onclick = () => { closeProductPreview(); navMode = "deals"; renderProducts(); $("productsSection").scrollIntoView({ behavior: "smooth" }); };
+$("sfSaleShopBtn").onclick = () => { closeProductPreview(); navMode = "deals"; renderProducts(); $("productsSection").scrollIntoView({ behavior: "smooth" }); };
 $("heroShopBtn").onclick = () => $("productsSection").scrollIntoView({ behavior: "smooth" });
 $("heroTrackBtn").onclick = () => openOrdersModal();
 $("trackOrderNavBtn").onclick = () => openOrdersModal();
@@ -1602,8 +1734,7 @@ $("applyPromoBtn").onclick = () => {
   renderCartDrawer();
 };
 $("proceedCheckoutBtn").onclick = () => { $("cartDrawer").classList.remove("show"); openCheckout(); };
-$("cPayment").onchange = syncCheckoutPaymentUI;
-$("cDivision").onchange = syncCheckoutPaymentUI;
+$("cDivision").onchange = syncCheckoutTotalsUI;
 $("checkoutSavedAddr").onchange = () => {
   const id = $("checkoutSavedAddr").value;
   const a = userAddresses[id];
@@ -1612,49 +1743,17 @@ $("checkoutSavedAddr").onchange = () => {
     $("cPhone").value = a.phone || "";
     $("cDivision").value = a.division || "Dhaka";
     $("cAddress").value = `${a.street}, ${a.thana}, ${a.division}`;
-    syncCheckoutPaymentUI();
+    syncCheckoutTotalsUI();
   }
-};
-$("copyMerchantNumBtn").onclick = async () => {
-  const num = $("merchantPayNumber").textContent;
-  try {
-    await navigator.clipboard.writeText(num);
-    toast("Merchant number copied!");
-  } catch (_) { toast("Copy: " + num); }
 };
 
 $("checkoutForm").onsubmit = async (e) => {
   e.preventDefault();
   if (!cart.length) return toast("Cart is empty");
-  const method = $("cPayment").value;
+  const phoneNorm = normalizeBdPhone($("cPhone").value);
+  if (!isValidBdPhone(phoneNorm)) return toast("Enter valid 11-digit BD mobile phone (01XXXXXXXXX)");
   const division = $("cDivision").value;
-  const isMobile = method === "bKash" || method === "Nagad" || method === "Rocket";
   const totals = computeTotals(division);
-  let senderNorm = "", trxUpper = "", payStatus = "Pay on Delivery", status = "Pending";
-
-  if (isMobile) {
-    senderNorm = normalizeBdPhone($("cSenderNumber").value);
-    trxUpper = $("cTrxId").value.trim().toUpperCase();
-    if (!isValidBdPhone(senderNorm)) return toast("Enter valid 11-digit BD sender number (01XXXXXXXXX)");
-    if (!isValidTrxId(method, trxUpper)) return toast(`Invalid ${method} TrxID format`);
-
-    $("placeOrderBtn").disabled = true;
-    $("placeOrderBtn").textContent = "Verifying TrxID...";
-    const verified = await autoVerifyTransaction(method, senderNorm, trxUpper, totals.total);
-    if (verified) {
-      payStatus = "Verified (Auto SMS)";
-      status = "Confirmed";
-    } else {
-      payStatus = "Pending TrxID Check";
-      status = "Pending";
-    }
-  } else if (method === "Card") {
-    trxUpper = "CARD" + Date.now().toString().slice(-6);
-    payStatus = "Verified (Card)";
-    status = "Confirmed";
-  } else {
-    trxUpper = "COD" + Date.now().toString().slice(-6);
-  }
 
   const d = new Date();
   const datePart = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`;
@@ -1666,7 +1765,7 @@ $("checkoutForm").onsubmit = async (e) => {
     customerEmail: currentUser?.email || "",
     customer: {
       name: $("cName").value.trim(),
-      phone: normalizeBdPhone($("cPhone").value),
+      phone: phoneNorm,
       address: $("cAddress").value.trim(),
       division
     },
@@ -1678,33 +1777,29 @@ $("checkoutForm").onsubmit = async (e) => {
     total: totals.total,
     promoCode: totals.promo?.code || "",
     currency: "BDT",
-    paymentMethod: method,
-    senderNumber: senderNorm,
-    trxId: trxUpper,
-    paymentStatus: payStatus,
-    status,
+    paymentMethod: "Cash on Delivery",
+    paymentStatus: "Pay on Delivery",
+    status: "Pending",
     createdAt: Date.now(),
     updatedAt: Date.now()
   };
 
+  $("placeOrderBtn").disabled = true;
+  $("placeOrderBtn").textContent = "Placing Order...";
   try {
     await set(ref(db, "orders/" + orderId), orderData);
-    if (payStatus === "Verified (Auto SMS)" && trxUpper) {
-      await update(ref(db, "sms_inbox/" + trxUpper), { matchedOrderId: orderId });
-    }
     cart = [];
     appliedPromoCode = "";
     saveCart();
     closeModal("checkoutModal");
-    toast(status === "Confirmed"
-      ? `Order ${orderId} Confirmed via Auto TrxID!`
-      : `Order ${orderId} placed (${payStatus})`);
+    closeProductPreview();
+    toast(`Order ${orderId} placed (Cash on Delivery)!`);
     openOrdersModal(orderId);
   } catch (err) {
     toast(err.message);
   } finally {
     $("placeOrderBtn").disabled = false;
-    $("placeOrderBtn").textContent = "Verify & Place Order";
+    $("placeOrderBtn").textContent = "✅ Place Cash on Delivery Order";
   }
 };
 
