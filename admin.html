@@ -215,7 +215,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
     <section id="tab-products" class="split-grid">
       <div class="card">
         <h3 id="prodFormTitle" style="margin-bottom:12px">Add New Product</h3>
-        <form id="productForm">
+        <form id="productForm" novalidate>
           <input type="hidden" id="pEditId">
           <div class="field"><label>Product Name *</label><input id="pName" required placeholder="e.g. Sokany 6 in 1 Wonder Chopper"></div>
           <div class="form-row">
@@ -227,8 +227,8 @@ button:disabled{opacity:.5;cursor:not-allowed}
             <div class="field"><label>Brand</label><input id="pBrand" placeholder="Brand Name"></div>
           </div>
           <div class="form-row">
-            <div class="field"><label>Regular / Old Price (৳)</label><input id="pOldPrice" type="number" min="0" value="0"></div>
-            <div class="field"><label>Selling Price (৳ BDT) *</label><input id="pPrice" type="number" min="1" required></div>
+            <div class="field"><label>Regular / Old Price (৳)</label><input id="pOldPrice" type="number" min="0" step="any" value="0"></div>
+            <div class="field"><label>Selling Price (৳ BDT) *</label><input id="pPrice" type="number" min="1" step="any" required></div>
           </div>
           <div class="form-row">
             <div class="field">
@@ -239,7 +239,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
                 <option value="flat">Flat Discount (৳)</option>
               </select>
             </div>
-            <div class="field"><label>Discount Value (% or ৳)</label><input id="pDiscountValue" type="number" min="0" value="0"></div>
+            <div class="field"><label>Discount Value (% or ৳)</label><input id="pDiscountValue" type="number" min="0" step="any" value="0"></div>
           </div>
           <div id="pDiscountPreview" style="font-size:12px;color:var(--emerald-dark);font-weight:700;margin:-4px 0 10px"></div>
           <div class="form-row">
@@ -1020,6 +1020,19 @@ function renderCategoryDatalist() {
   $("categoryOptionsList").innerHTML = [...names].map((n) => `<option value="${safe(n)}">`).join("");
 }
 
+let lastSyncedProductBasePrice = 1;
+
+function syncAutoVariantPricesToBase(nextBase) {
+  const cleanNext = Math.max(1, parseNum(nextBase || 0));
+  document.querySelectorAll("[data-vp-key]").forEach((inp) => {
+    const curVal = parseNum(inp.value);
+    if (!curVal || curVal === 1 || curVal === lastSyncedProductBasePrice) {
+      inp.value = cleanNext;
+    }
+  });
+  lastSyncedProductBasePrice = cleanNext;
+}
+
 function updateProductDiscountPreview() {
   const reg = parseNum($("pOldPrice").value);
   const dType = $("pDiscountType").value;
@@ -1028,13 +1041,16 @@ function updateProductDiscountPreview() {
     const clamped = Math.min(99, Math.max(0, dVal));
     const finalP = Math.max(1, Math.round(reg * (1 - clamped / 100)));
     $("pPrice").value = finalP;
+    syncAutoVariantPricesToBase(finalP);
     $("pDiscountPreview").textContent = `Product Discount Active: -${clamped}% (Save ${money(reg - finalP)}) → Selling Price ${money(finalP)}`;
   } else if (dType === "flat" && reg > 0 && dVal > 0) {
     const finalP = Math.max(1, reg - dVal);
     $("pPrice").value = finalP;
+    syncAutoVariantPricesToBase(finalP);
     $("pDiscountPreview").textContent = `Product Discount Active: -${money(dVal)} flat → Selling Price ${money(finalP)}`;
   } else {
     const sell = parseNum($("pPrice").value);
+    if (sell > 0) syncAutoVariantPricesToBase(sell);
     const pct = reg > sell && reg > 0 ? Math.round(((reg - sell) / reg) * 100) : 0;
     $("pDiscountPreview").textContent = pct > 0 ? `Calculated Discount vs Regular Price: -${pct}%` : "";
   }
@@ -1152,6 +1168,7 @@ function renderAdminProducts() {
       $("pDesc").value = p.description || "";
       $("pFlashDeal").checked = !!p.isFlashDeal;
       $("pFeatured").checked = !!p.isFeatured;
+      lastSyncedProductBasePrice = Math.max(1, parseNum(p.price || 0));
       renderVariantPriceInputs(p.variantPrices || {});
       updateProductDiscountPreview();
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -1165,6 +1182,16 @@ function renderAdminProducts() {
       toast("Product deleted");
     };
   });
+}
+
+function sanitizeFirebaseKey(rawKey = "") {
+  const cleaned = String(rawKey || "")
+    .trim()
+    .replace(/\s*\/\s*/g, " | ")
+    .replace(/\./g, "·")
+    .replace(/[#$\[\]/]/g, "-")
+    .slice(0, 120);
+  return cleaned || "Standard";
 }
 
 function getStructuredVariantKeys() {
@@ -1181,12 +1208,25 @@ function getStructuredVariantKeys() {
   return rawVars.length ? rawVars : ["Standard"];
 }
 
+function lookupVariantPriceInMap(map, key) {
+  if (!map || typeof map !== "object") return 0;
+  const direct = parseNum(map[key]);
+  if (direct > 0) return direct;
+  const safeKey = sanitizeFirebaseKey(key);
+  const bySafe = parseNum(map[safeKey]);
+  if (bySafe > 0) return bySafe;
+  return 0;
+}
+
 function collectCurrentVariantPrices() {
   const map = {};
+  const fallbackBase = Math.max(1, parseNum($("pPrice")?.value || 0));
   document.querySelectorAll("[data-vp-key]").forEach((inp) => {
-    const key = inp.dataset.vpKey;
+    const rawKey = inp.dataset.vpKey;
+    if (!rawKey) return;
     const val = parseNum(inp.value);
-    if (key && val > 0) map[key] = val;
+    const safeKey = sanitizeFirebaseKey(rawKey);
+    map[safeKey] = val > 0 ? val : fallbackBase;
   });
   return map;
 }
@@ -1203,10 +1243,11 @@ function renderVariantPriceInputs(presetMap = null) {
     $("pVariants").value = keys.join(", ");
   }
   container.innerHTML = keys.map((k) => {
-    const priceVal = existingMap[k] !== undefined && parseNum(existingMap[k]) > 0 ? parseNum(existingMap[k]) : basePrice;
+    const existingVal = lookupVariantPriceInMap(existingMap, k);
+    const priceVal = existingVal > 0 ? existingVal : basePrice;
     return `<div style="display:flex;align-items:center;gap:8px;background:#fff;padding:6px 8px;border:1px solid var(--line);border-radius:8px">
       <span style="flex:1;font-size:12.5px;font-weight:700">${safe(k)}</span>
-      <input type="number" min="1" data-vp-key="${safe(k)}" value="${priceVal}" required style="width:120px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;font-size:13px">
+      <input type="number" min="1" step="any" data-vp-key="${safe(k)}" value="${priceVal}" style="width:120px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;font-size:13px">
     </div>`;
   }).join("");
 }
@@ -1216,6 +1257,7 @@ function resetProductForm() {
   $("pEditId").value = "";
   $("prodFormTitle").textContent = "Add New Product";
   $("pSaveBtn").textContent = "➕ Add Product";
+  $("pSaveBtn").disabled = false;
   $("pFeatured").checked = true;
   $("pRating").value = "0";
   $("pStock").value = "10";
@@ -1228,6 +1270,7 @@ function resetProductForm() {
   $("pSizes").value = "";
   $("pVariants").value = "Standard";
   $("pDiscountPreview").textContent = "";
+  lastSyncedProductBasePrice = 1;
   renderVariantPriceInputs({});
 }
 
@@ -2286,47 +2329,82 @@ $("hsType").onchange = () => {
 /* ---------- Form Submissions ---------- */
 $("productForm").onsubmit = async (e) => {
   e.preventDefault();
-  const editId = $("pEditId").value;
-  const prodId = editId || push(ref(db, "products")).key;
+  const editId = $("pEditId").value.trim();
+  const name = $("pName").value.trim();
+  const category = $("pCategory").value.trim();
   const price = parseNum($("pPrice").value);
-  const oldPrice = parseNum($("pOldPrice").value || 0);
-  const discountType = $("pDiscountType").value;
-  const discountValue = parseNum($("pDiscountValue").value || 0);
-  const freeDeliveryMinQty = Math.max(0, Math.round(parseNum($("pFreeShipMinQty").value || 0)));
-  const variantColors = $("pColors").value.trim();
-  const variantSizes = $("pSizes").value.trim();
-  const variantPrices = collectCurrentVariantPrices();
-  const variantsStr = (variantColors || variantSizes)
-    ? getStructuredVariantKeys().join(", ")
-    : ($("pVariants").value.trim() || "Standard");
+  const image = $("pImage").value.trim();
 
-  await set(ref(db, "products/" + prodId), {
-    name: $("pName").value.trim(),
-    category: $("pCategory").value.trim(),
-    brand: $("pBrand").value.trim() || storeSettings.storeName || "SPR ZONE BD",
-    price,
-    oldPrice: oldPrice > price ? oldPrice : 0,
-    discountType,
-    discountValue: discountType === "none" ? 0 : discountValue,
-    freeDeliveryMinQty,
-    stock: Number($("pStock").value || 0),
-    soldCount: Number($("pSoldCount").value || 0),
-    rating: getAdminProductRatingStats(prodId, null).rating,
-    reviewCount: getAdminProductRatingStats(prodId, null).count,
-    variantColors,
-    variantSizes,
-    variantPrices,
-    variants: variantsStr,
-    image: $("pImage").value.trim(),
-    gallery: $("pGallery").value.trim(),
-    specs: $("pSpecs").value.trim(),
-    description: $("pDesc").value.trim(),
-    isFlashDeal: $("pFlashDeal").checked,
-    isFeatured: $("pFeatured").checked,
-    updatedAt: Date.now()
-  });
-  resetProductForm();
-  toast(editId ? "Product updated!" : "Product added to live store!");
+  if (!name) {
+    $("pName").focus();
+    return toast("Please enter Product Name.");
+  }
+  if (!category) {
+    $("pCategory").focus();
+    return toast("Please select or type a Category.");
+  }
+  if (!Number.isFinite(price) || price <= 0) {
+    $("pPrice").focus();
+    return toast("Please enter a valid Selling Price greater than 0.");
+  }
+  if (!image) {
+    $("pImage").focus();
+    return toast("Please enter Main Product Image URL.");
+  }
+
+  const saveBtn = $("pSaveBtn");
+  saveBtn.disabled = true;
+  saveBtn.textContent = editId ? "Updating..." : "Saving...";
+
+  try {
+    const prodId = editId || push(ref(db, "products")).key;
+    if (!prodId) throw new Error("Unable to generate product ID.");
+
+    const oldPrice = parseNum($("pOldPrice").value || 0);
+    const discountType = $("pDiscountType").value;
+    const discountValue = parseNum($("pDiscountValue").value || 0);
+    const freeDeliveryMinQty = Math.max(0, Math.round(parseNum($("pFreeShipMinQty").value || 0)));
+    const variantColors = $("pColors").value.trim();
+    const variantSizes = $("pSizes").value.trim();
+    const variantPrices = collectCurrentVariantPrices();
+    const variantsStr = (variantColors || variantSizes)
+      ? getStructuredVariantKeys().join(", ")
+      : ($("pVariants").value.trim() || "Standard");
+
+    await set(ref(db, "products/" + prodId), {
+      name,
+      category,
+      brand: $("pBrand").value.trim() || storeSettings.storeName || "SPR ZONE BD",
+      price,
+      oldPrice: oldPrice > price ? oldPrice : 0,
+      discountType,
+      discountValue: discountType === "none" ? 0 : discountValue,
+      freeDeliveryMinQty,
+      stock: Math.max(0, Number($("pStock").value || 0)),
+      soldCount: Math.max(0, Number($("pSoldCount").value || 0)),
+      rating: getAdminProductRatingStats(prodId, null).rating,
+      reviewCount: getAdminProductRatingStats(prodId, null).count,
+      variantColors,
+      variantSizes,
+      variantPrices,
+      variants: variantsStr,
+      image,
+      gallery: $("pGallery").value.trim(),
+      specs: $("pSpecs").value.trim(),
+      description: $("pDesc").value.trim(),
+      isFlashDeal: $("pFlashDeal").checked,
+      isFeatured: $("pFeatured").checked,
+      updatedAt: Date.now()
+    });
+    resetProductForm();
+    toast(editId ? "Product updated!" : "Product added to live store!");
+  } catch (err) {
+    console.error("Failed to save product:", err);
+    toast(`Failed to save product: ${err?.message || "Permission or network error"}`);
+  } finally {
+    saveBtn.disabled = false;
+    saveBtn.textContent = $("pEditId").value ? "💾 Update Product" : "➕ Add Product";
+  }
 };
 $("pResetBtn").onclick = resetProductForm;
 

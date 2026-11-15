@@ -347,6 +347,37 @@ class SprZoneDatabaseTest {
         assertTrue(emailLogin.isSuccess)
         assertEquals("Nusrat Jahan", emailLogin.getOrThrow().fullName)
     }
+
+    @Test
+    fun variantPricesResolvesFirebaseSafeKeys() {
+        val product = ProductEntity(
+            id = "p_var",
+            name = "Polo Shirt",
+            category = "Fashion & Apparel",
+            brand = "SPR",
+            sellerName = "SPR Official",
+            priceBdt = 550L,
+            originalPriceBdt = 700L,
+            discountPercent = 21,
+            rating = 0.0,
+            reviewCount = 0,
+            stock = 20,
+            isFlashSale = false,
+            isFeatured = true,
+            imageKey = "fashion",
+            imageUrl = "",
+            description = "Test",
+            specsSummary = "Specs",
+            variantsCsv = "Red / S, Blue / XL, 1.5L",
+            variantColorsCsv = "Red, Blue",
+            variantSizesCsv = "S, XL",
+            variantPricesJson = """{"Red | S":590,"Blue | XL":650,"1·5L":820}"""
+        )
+        assertEquals(590L, product.priceForVariant("Red / S"))
+        assertEquals(650L, product.priceForVariant("Blue / XL"))
+        assertEquals(820L, product.priceForVariant("1.5L"))
+        assertEquals(550L, product.priceForVariant("Green / M"))
+    }
 }
 
 private class InMemoryFirebaseAuthService : FirebaseAuthRestService {

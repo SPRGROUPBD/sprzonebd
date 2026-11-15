@@ -1260,16 +1260,31 @@ const parseNum = (v) => {
 const money = (n) => "৳" + parseNum(n).toLocaleString("en-BD");
 const safe = (s = "") => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
+function sanitizeFirebaseVariantKey(rawKey = "") {
+  return String(rawKey || "")
+    .trim()
+    .replace(/\s*\/\s*/g, " | ")
+    .replace(/\./g, "·")
+    .replace(/[#$\[\]/]/g, "-")
+    .slice(0, 120) || "Standard";
+}
+
 function resolveProductVariantPrice(p, variant = "") {
   if (!p) return 0;
   const base = parseNum(p.price);
   const vp = p.variantPrices;
   if (vp && typeof vp === "object") {
     const clean = String(variant || "").trim();
-    if (clean && parseNum(vp[clean]) > 0) return parseNum(vp[clean]);
-    const parts = clean.split("/").map((s) => s.trim()).filter(Boolean);
+    if (clean) {
+      if (parseNum(vp[clean]) > 0) return parseNum(vp[clean]);
+      const safeKey = sanitizeFirebaseVariantKey(clean);
+      if (parseNum(vp[safeKey]) > 0) return parseNum(vp[safeKey]);
+    }
+    const parts = clean.split(/[\/|]/).map((s) => s.trim()).filter(Boolean);
     for (const part of parts) {
       if (parseNum(vp[part]) > 0) return parseNum(vp[part]);
+      const safePart = sanitizeFirebaseVariantKey(part);
+      if (parseNum(vp[safePart]) > 0) return parseNum(vp[safePart]);
     }
   }
   return base;

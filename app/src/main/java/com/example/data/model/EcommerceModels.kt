@@ -88,12 +88,25 @@ data class ProductEntity(
         if (map.isEmpty()) return priceBdt
         val clean = variant.trim()
         if (clean.isNotEmpty()) {
-            map[clean]?.let { return it }
-            map.entries.firstOrNull { it.key.equals(clean, ignoreCase = true) }?.let { return it.value }
-            val parts = clean.split("/").map { it.trim() }.filter { it.isNotEmpty() }
+            val sanitized = clean
+                .replace(Regex("\\s*/\\s*"), " | ")
+                .replace('.', '·')
+                .replace(Regex("[#$\\[\\]/]"), "-")
+                .take(120)
+            listOf(clean, sanitized).distinct().forEach { candidate ->
+                map[candidate]?.let { return it }
+                map.entries.firstOrNull { it.key.equals(candidate, ignoreCase = true) }?.let { return it.value }
+            }
+            val parts = clean.split('/', '|').map { it.trim() }.filter { it.isNotEmpty() }
             for (part in parts) {
-                map[part]?.let { return it }
-                map.entries.firstOrNull { it.key.equals(part, ignoreCase = true) }?.let { return it.value }
+                val safePart = part
+                    .replace('.', '·')
+                    .replace(Regex("[#$\\[\\]/]"), "-")
+                    .take(120)
+                listOf(part, safePart).distinct().forEach { candidate ->
+                    map[candidate]?.let { return it }
+                    map.entries.firstOrNull { it.key.equals(candidate, ignoreCase = true) }?.let { return it.value }
+                }
             }
         }
         return priceBdt
