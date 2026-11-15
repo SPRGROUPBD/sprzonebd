@@ -1,8 +1,15 @@
 package com.example.ui.screens
 
 import android.app.Activity
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import android.content.ContextWrapper
+import android.content.MutableContextWrapper
+import android.content.pm.PackageManager
+import android.os.Build
+import android.os.SystemClock
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -77,11 +84,14 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.credentials.ClearCredentialStateRequest
 import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialCancellationException
+import androidx.credentials.exceptions.GetCredentialCustomException
 import androidx.credentials.exceptions.GetCredentialException
+import androidx.credentials.exceptions.GetCredentialUnsupportedException
 import androidx.credentials.exceptions.NoCredentialException
 import com.example.data.model.AddressEntity
 import com.example.data.model.ProductEntity
@@ -94,10 +104,12 @@ import com.example.ui.components.ProductCard
 import com.example.ui.components.SprBrandLogo
 import com.example.ui.theme.DiscountRed
 import com.example.ui.theme.EmeraldPrimary
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
 import kotlinx.coroutines.launch
+import java.security.MessageDigest
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -175,6 +187,8 @@ fun AccountScreen(
             return@Box
         }
 
+        val profileContext = LocalContext.current
+        val profileScope = rememberCoroutineScope()
         var selectedTab by remember { mutableIntStateOf(0) }
         var showEditProfileDialog by remember { mutableStateOf(false) }
         var showDeleteProfileDialog by remember { mutableStateOf(false) }
@@ -238,7 +252,15 @@ fun AccountScreen(
                             }
                         }
                         IconButton(
-                            onClick = onSignOut,
+                            onClick = {
+                                profileScope.launch {
+                                    runCatching {
+                                        CredentialManager.create(profileContext)
+                                            .clearCredentialState(ClearCredentialStateRequest())
+                                    }
+                                    onSignOut()
+                                }
+                            },
                             modifier = Modifier.testTag("sign_out_button")
                         ) {
                             Icon(
@@ -932,37 +954,249 @@ private tailrec fun Context.findActivity(): Activity? = when (this) {
     else -> null
 }
 
+private data class AppSigningInfo(
+    val packageName: String,
+    val sha1: String,
+    val sha256: String
+)
+
+private class GoogleSignInDiagnosticException(
+    message: String,
+    val technicalReason: String,
+    val signingInfo: AppSigningInfo
+) : IllegalStateException(message)
+
+@Suppress("DEPRECATION")
+private fun readAppSigningInfo(context: Context): AppSigningInfo {
+    val pkg = context.packageName
+    return try {
+        val pm = context.packageManager
+        val signatures = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            val info = pm.getPackageInfo(pkg, PackageManager.GET_SIGNING_CERTIFICATES)
+            val signingInfo = info.signingInfo
+            if (signingInfo == null) emptyArray()
+            else if (signingInfo.hasMultipleSigners()) signingInfo.apkContentsSigners
+            else signingInfo.signingCertificateHistory
+        } else {
+            val info = pm.getPackageInfo(pkg, PackageManager.GET_SIGNATURES)
+            info.signatures ?: emptyArray()
+        }
+        val firstBytes = signatures.firstOrNull()?.toByteArray()
+        if (firstBytes == null) {
+            AppSigningInfo(pkg, "Unavailable", "Unavailable")
+        } else {
+            AppSigningInfo(
+                packageName = pkg,
+                sha1 = digestHex(firstBytes, "SHA-1"),
+                sha256 = digestHex(firstBytes, "SHA-256")
+            )
+        }
+    } catch (_: Throwable) {
+        AppSigningInfo(pkg, "Unavailable", "Unavailable")
+    }
+}
+
+private fun digestHex(bytes: ByteArray, algorithm: String): String {
+    val digest = MessageDigest.getInstance(algorithm).digest(bytes)
+    return digest.joinToString(":") { "%02X".format(it) }
+}
+
+private fun extractGoogleIdToken(credential: androidx.credentials.Credential): Result<String> {
+    return if (credential is CustomCredential &&
+        credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
+    ) {
+        try {
+            val googleCred = GoogleIdTokenCredential.createFrom(credential.data)
+            Result.success(googleCred.idToken)
+        } catch (e: GoogleIdTokenParsingException) {
+            Result.failure(IllegalStateException("Failed to read Google ID token: ${e.message ?: "Invalid token"}"))
+        }
+    } else {
+        Result.failure(IllegalStateException("Unexpected credential type returned by Google."))
+    }
+}
+
 private suspend fun launchGoogleCredentialFlow(context: Context): Result<String> {
     val activity = context.findActivity()
         ?: return Result.failure(IllegalStateException("Unable to open Google Sign-In picker from current screen."))
-    return try {
-        val manager = CredentialManager.create(activity)
-        val googleOption = GetSignInWithGoogleOption.Builder(StoreConstants.GOOGLE_WEB_CLIENT_ID)
-            .build()
-        val request = GetCredentialRequest.Builder()
-            .addCredentialOption(googleOption)
-            .build()
-        val result = manager.getCredential(context = activity, request = request)
-        val credential = result.credential
-        if (credential is CustomCredential &&
-            credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
-        ) {
-            val googleCred = GoogleIdTokenCredential.createFrom(credential.data)
-            Result.success(googleCred.idToken)
-        } else {
-            Result.failure(IllegalStateException("Unexpected credential type returned by Google."))
+    val mutableContext = MutableContextWrapper(activity)
+    val manager = CredentialManager.create(mutableContext)
+    val signingInfo = readAppSigningInfo(activity)
+
+    // Stage 1: Dedicated "Sign in with Google" button option
+    val buttonOption = GetSignInWithGoogleOption.Builder(StoreConstants.GOOGLE_WEB_CLIENT_ID)
+        .build()
+    val buttonRequest = GetCredentialRequest.Builder()
+        .addCredentialOption(buttonOption)
+        .build()
+
+    val stage1StartMs = SystemClock.elapsedRealtime()
+    val stage1Error: Throwable = try {
+        val result = manager.getCredential(context = mutableContext, request = buttonRequest)
+        return extractGoogleIdToken(result.credential)
+    } catch (e: GetCredentialCancellationException) {
+        val elapsedMs = SystemClock.elapsedRealtime() - stage1StartMs
+        // If user saw the Google sheet (>= 900ms) and manually cancelled, don't immediately re-prompt.
+        if (elapsedMs >= 900L) {
+            return Result.failure(
+                GoogleSignInDiagnosticException(
+                    message = "Google Sign-In was cancelled.",
+                    technicalReason = "User dismissed picker after ${elapsedMs}ms (${e.errorMessage ?: e.message ?: "cancelled"})",
+                    signingInfo = signingInfo
+                )
+            )
         }
-    } catch (_: GetCredentialCancellationException) {
-        Result.failure(IllegalStateException("Google Sign-In was cancelled."))
-    } catch (_: NoCredentialException) {
-        Result.failure(IllegalStateException("No Google account available on this device. Please sign in to Google on your device or use Email/Password."))
-    } catch (e: GoogleIdTokenParsingException) {
-        Result.failure(IllegalStateException("Failed to read Google ID token: ${e.message ?: "Invalid token"}"))
-    } catch (e: GetCredentialException) {
-        Result.failure(IllegalStateException("Google Sign-In unavailable: ${e.errorMessage ?: "Check Google Play Services & Firebase SHA-1"}"))
+        e
     } catch (t: Throwable) {
-        Result.failure(IllegalStateException(t.message ?: "Google Sign-In failed"))
+        t
     }
+
+    val stage1Msg = (stage1Error as? GetCredentialException)?.errorMessage?.toString()
+        ?: stage1Error.message.orEmpty()
+    val shouldFallbackToSheet = stage1Error is GetCredentialCancellationException ||
+        stage1Error is NoCredentialException ||
+        stage1Error is GetCredentialUnsupportedException ||
+        stage1Error is GetCredentialCustomException ||
+        stage1Error is GetCredentialException ||
+        stage1Msg.contains("TransactionTooLarge", ignoreCase = true)
+
+    if (shouldFallbackToSheet) {
+        val googleIdOption = GetGoogleIdOption.Builder()
+            .setFilterByAuthorizedAccounts(false)
+            .setAutoSelectEnabled(false)
+            .setServerClientId(StoreConstants.GOOGLE_WEB_CLIENT_ID)
+            .build()
+        val sheetRequest = GetCredentialRequest.Builder()
+            .addCredentialOption(googleIdOption)
+            .build()
+
+        val stage2StartMs = SystemClock.elapsedRealtime()
+        try {
+            val result = manager.getCredential(context = mutableContext, request = sheetRequest)
+            return extractGoogleIdToken(result.credential)
+        } catch (e: GetCredentialCancellationException) {
+            val elapsedMs = SystemClock.elapsedRealtime() - stage2StartMs
+            if (elapsedMs >= 900L) {
+                return Result.failure(
+                    GoogleSignInDiagnosticException(
+                        message = "Google Sign-In was cancelled.",
+                        technicalReason = "User dismissed bottom sheet after ${elapsedMs}ms (${e.errorMessage ?: e.message ?: "cancelled"})",
+                        signingInfo = signingInfo
+                    )
+                )
+            }
+            val detail = e.errorMessage?.toString().orEmpty().ifBlank { e.message.orEmpty() }.ifBlank { stage1Msg }
+            return Result.failure(
+                GoogleSignInDiagnosticException(
+                    message = "Google Sign-In did not open (Play Services aborted immediately). Register package ${signingInfo.packageName} + SHA-1 in Firebase Console or check your device's Google account.",
+                    technicalReason = "Immediate abort (${elapsedMs}ms): $detail",
+                    signingInfo = signingInfo
+                )
+            )
+        } catch (e: NoCredentialException) {
+            return Result.failure(
+                GoogleSignInDiagnosticException(
+                    message = "No Google account found or Sign-In prompts disabled on this device. Sign in to Google in Android Settings or register app SHA-1 in Firebase Console.",
+                    technicalReason = e.errorMessage?.toString() ?: e.message ?: "NoCredentialException",
+                    signingInfo = signingInfo
+                )
+            )
+        } catch (e: GetCredentialException) {
+            val detail = e.errorMessage?.toString().orEmpty().ifBlank { e.message.orEmpty() }
+            return Result.failure(
+                GoogleSignInDiagnosticException(
+                    message = "Google Sign-In unavailable: ${detail.ifBlank { "Check Google Play Services & Firebase Android SHA-1" }}",
+                    technicalReason = "${e::class.java.simpleName}: $detail",
+                    signingInfo = signingInfo
+                )
+            )
+        } catch (t: Throwable) {
+            return Result.failure(
+                GoogleSignInDiagnosticException(
+                    message = t.message ?: "Google Sign-In failed.",
+                    technicalReason = "${t::class.java.simpleName}: ${t.message.orEmpty()}",
+                    signingInfo = signingInfo
+                )
+            )
+        }
+    }
+
+    return Result.failure(
+        GoogleSignInDiagnosticException(
+            message = stage1Msg.ifBlank { "Google Sign-In failed." },
+            technicalReason = "${stage1Error::class.java.simpleName}: $stage1Msg",
+            signingInfo = signingInfo
+        )
+    )
+}
+
+@Composable
+private fun GoogleSignInSetupDialog(
+    diagnostic: GoogleSignInDiagnosticException,
+    onDismiss: () -> Unit
+) {
+    val context = LocalContext.current
+    fun copyValue(label: String, value: String) {
+        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+        clipboard?.setPrimaryClip(ClipData.newPlainText(label, value))
+        Toast.makeText(context, "$label copied", Toast.LENGTH_SHORT).show()
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Google Sign-In Setup & SHA-1") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = "If Google Sign-In cancels immediately without showing the account picker, Google Play Services requires this Android app's Package Name and SHA-1 fingerprint to be registered in Firebase Console (project: e-commarcebd).",
+                    style = MaterialTheme.typography.bodySmall
+                )
+                Text(
+                    text = "Reason: ${diagnostic.technicalReason}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = DiscountRed
+                )
+                Surface(
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.padding(10.dp)) {
+                        Text("Package Name:", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                        Text(diagnostic.signingInfo.packageName, style = MaterialTheme.typography.bodySmall)
+                        Text("APK SHA-1:", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                        Text(diagnostic.signingInfo.sha1, style = MaterialTheme.typography.bodySmall)
+                        Text("APK SHA-256:", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                        Text(diagnostic.signingInfo.sha256, style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                    OutlinedButton(
+                        onClick = { copyValue("Package Name", diagnostic.signingInfo.packageName) },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("Copy Pkg")
+                    }
+                    Button(
+                        onClick = { copyValue("SHA-1", diagnostic.signingInfo.sha1) },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("Copy SHA-1")
+                    }
+                }
+                Text(
+                    text = "Firebase Console → Project Settings → Your apps → Add Android app → paste Package Name & SHA-1. Also verify Google is enabled under Authentication → Sign-in method and a Google account is logged in on this device.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Close")
+            }
+        }
+    )
 }
 
 @Composable
@@ -980,6 +1214,8 @@ private fun AccountLinkingCard(
     var newPassword by remember { mutableStateOf("") }
     var showNewPassword by remember { mutableStateOf(false) }
     var statusMsg by remember { mutableStateOf<String?>(null) }
+    var googleDiagnostic by remember { mutableStateOf<GoogleSignInDiagnosticException?>(null) }
+    var showGoogleSetupDialog by remember { mutableStateOf(false) }
     var isError by remember { mutableStateOf(false) }
     var isBusy by remember { mutableStateOf(false) }
 
@@ -1060,12 +1296,17 @@ private fun AccountLinkingCard(
                         onClick = {
                             isBusy = true
                             statusMsg = null
+                            googleDiagnostic = null
                             scope.launch {
                                 val credRes = launchGoogleCredentialFlow(context)
                                 if (credRes.isFailure) {
                                     isBusy = false
                                     isError = true
-                                    statusMsg = credRes.exceptionOrNull()?.message
+                                    val ex = credRes.exceptionOrNull()
+                                    statusMsg = ex?.message
+                                    if (ex is GoogleSignInDiagnosticException) {
+                                        googleDiagnostic = ex
+                                    }
                                 } else {
                                     onLinkGoogleAccount(credRes.getOrThrow()) { res ->
                                         isBusy = false
@@ -1107,7 +1348,22 @@ private fun AccountLinkingCard(
                     color = if (isError) DiscountRed else EmeraldPrimary
                 )
             }
+            if (googleDiagnostic != null) {
+                TextButton(
+                    onClick = { showGoogleSetupDialog = true },
+                    modifier = Modifier.testTag("link_google_setup_help_button")
+                ) {
+                    Text("View App SHA-1 & Firebase Setup")
+                }
+            }
         }
+    }
+
+    if (showGoogleSetupDialog && googleDiagnostic != null) {
+        GoogleSignInSetupDialog(
+            diagnostic = googleDiagnostic!!,
+            onDismiss = { showGoogleSetupDialog = false }
+        )
     }
 
     if (showSetPasswordDialog) {
@@ -1204,6 +1460,8 @@ private fun AuthCardView(
     var forgotEmail by remember { mutableStateOf("") }
     var forgotFeedback by remember { mutableStateOf<String?>(null) }
     var forgotFeedbackIsError by remember { mutableStateOf(false) }
+    var googleDiagnostic by remember { mutableStateOf<GoogleSignInDiagnosticException?>(null) }
+    var showGoogleSetupDialog by remember { mutableStateOf(false) }
     var errorMsg by remember { mutableStateOf<String?>(null) }
     var infoMsg by remember { mutableStateOf<String?>(null) }
     var isSubmitting by remember { mutableStateOf(false) }
@@ -1424,11 +1682,16 @@ private fun AuthCardView(
                             isSubmitting = true
                             errorMsg = null
                             infoMsg = null
+                            googleDiagnostic = null
                             scope.launch {
                                 val credRes = launchGoogleCredentialFlow(context)
                                 if (credRes.isFailure) {
                                     isSubmitting = false
-                                    errorMsg = credRes.exceptionOrNull()?.message
+                                    val ex = credRes.exceptionOrNull()
+                                    errorMsg = ex?.message
+                                    if (ex is GoogleSignInDiagnosticException) {
+                                        googleDiagnostic = ex
+                                    }
                                 } else {
                                     val gToken = credRes.getOrThrow()
                                     onGoogleSignIn(gToken) { res ->
@@ -1454,6 +1717,17 @@ private fun AuthCardView(
                             .testTag("google_signin_button")
                     ) {
                         Text("Continue with Google (Login / Sign Up)", fontWeight = FontWeight.SemiBold)
+                    }
+
+                    if (googleDiagnostic != null) {
+                        TextButton(
+                            onClick = { showGoogleSetupDialog = true },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag("google_setup_help_button")
+                        ) {
+                            Text("Troubleshoot Google Sign-In / Copy SHA-1")
+                        }
                     }
 
                     OutlinedButton(
@@ -1543,6 +1817,13 @@ private fun AuthCardView(
                     Text("Close")
                 }
             }
+        )
+    }
+
+    if (showGoogleSetupDialog && googleDiagnostic != null) {
+        GoogleSignInSetupDialog(
+            diagnostic = googleDiagnostic!!,
+            onDismiss = { showGoogleSetupDialog = false }
         )
     }
 }

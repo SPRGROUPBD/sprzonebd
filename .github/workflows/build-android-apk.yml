@@ -102,11 +102,22 @@ jobs:
             echo "KEY_PASSWORD=$SECRET_KEY_PASS" >> "$GITHUB_ENV"
           else
             PASS="sprzonebdci2026"
-            keytool -genkeypair -v -keystore my-upload-key.jks -storepass "$PASS" -keypass "$PASS" -alias upload -keyalg RSA -keysize 2048 -validity 3650 -dname "CN=SPR Zone BD,OU=Mobile,O=SPR ZONE BD,L=Dhaka,C=BD"
+            rm -f my-upload-key.jks
+            keytool -importkeystore \
+              -srckeystore debug.keystore \
+              -srcstorepass android \
+              -srcalias androiddebugkey \
+              -srckeypass android \
+              -destkeystore my-upload-key.jks \
+              -deststorepass "$PASS" \
+              -destalias upload \
+              -destkeypass "$PASS" \
+              -noprompt
             echo "STORE_PASSWORD=$PASS" >> "$GITHUB_ENV"
             echo "KEY_PASSWORD=$PASS" >> "$GITHUB_ENV"
           fi
           echo "KEYSTORE_PATH=$GITHUB_WORKSPACE/my-upload-key.jks" >> "$GITHUB_ENV"
+          keytool -list -v -keystore my-upload-key.jks -storepass "${SECRET_STORE_PASS:-sprzonebdci2026}" -alias upload | grep -E "SHA1:|SHA256:" || true
 
       - name: Run unit tests
         run: gradle :app:testDebugUnitTest --no-daemon
