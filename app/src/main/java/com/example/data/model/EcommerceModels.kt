@@ -2,8 +2,20 @@ package com.example.data.model
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import org.json.JSONObject
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.Types
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import kotlin.math.roundToInt
+
+private val VARIANT_PRICE_ADAPTER by lazy {
+    val moshi = Moshi.Builder().addLast(KotlinJsonAdapterFactory()).build()
+    val mapType = Types.newParameterizedType(
+        Map::class.java,
+        String::class.java,
+        Any::class.java
+    )
+    moshi.adapter<Map<String, Any?>>(mapType)
+}
 
 @Entity(tableName = "products")
 data class ProductEntity(
@@ -44,13 +56,15 @@ data class ProductEntity(
         get() {
             if (variantPricesJson.isBlank() || variantPricesJson == "{}") return emptyMap()
             return try {
-                val obj = JSONObject(variantPricesJson)
+                val parsed = VARIANT_PRICE_ADAPTER.fromJson(variantPricesJson).orEmpty()
                 buildMap {
-                    val keys = obj.keys()
-                    while (keys.hasNext()) {
-                        val k = keys.next()
-                        val v = obj.optDouble(k, 0.0).roundToInt().toLong()
-                        if (v > 0L) put(k, v)
+                    parsed.forEach { (k, rawVal) ->
+                        val v = when (rawVal) {
+                            is Number -> rawVal.toDouble().roundToInt().toLong()
+                            is String -> rawVal.toDoubleOrNull()?.roundToInt()?.toLong() ?: 0L
+                            else -> 0L
+                        }
+                        if (k.isNotBlank() && v > 0L) put(k, v)
                     }
                 }
             } catch (_: Throwable) {

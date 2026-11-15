@@ -59,8 +59,10 @@ import com.example.ui.theme.StarAmber
 import java.text.NumberFormat
 import java.util.Locale
 
+private val BD_LOCALE: Locale = Locale.Builder().setLanguage("en").setRegion("BD").build()
+
 fun formatBdt(amount: Long): String {
-    val formatter = NumberFormat.getNumberInstance(Locale("en", "BD"))
+    val formatter = NumberFormat.getNumberInstance(BD_LOCALE)
     return "৳${formatter.format(amount)}"
 }
 

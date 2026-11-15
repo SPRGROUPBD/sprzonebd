@@ -1,5 +1,6 @@
 package com.example.ui.viewmodel
 
+import android.os.Build
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
@@ -717,9 +718,11 @@ class SprZoneViewModel(
                 val db = SprZoneDatabase.getInstance(app)
                 val prefs = SessionPreferences(app)
                 SprNotificationHelper.ensureChannel(app)
+                val isRobolectric = Build.FINGERPRINT.equals("robolectric", ignoreCase = true)
                 SprZoneViewModel(
                     repository = SprZoneRepository(db, prefs, filesDir = app.filesDir),
-                    onNewNotification = { item -> SprNotificationHelper.showSystemNotification(app, item) }
+                    onNewNotification = { item -> SprNotificationHelper.showSystemNotification(app, item) },
+                    enableRealtimeSync = !isRobolectric
                 )
             }
         }

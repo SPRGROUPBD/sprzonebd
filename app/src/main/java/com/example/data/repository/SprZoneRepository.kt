@@ -45,17 +45,18 @@ import com.example.data.remote.SprZoneNetworkClient.toDomain
 import com.example.data.remote.SprZoneRtdbService
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
+import okhttp3.Call
 import okhttp3.Request
 import org.json.JSONObject
 import java.io.File
@@ -302,19 +303,20 @@ class SprZoneRepository(
         }
     }
 
-    fun observeRealtimeNodeChanges(nodePath: String): Flow<Unit> = callbackFlow {
+    fun observeRealtimeNodeChanges(nodePath: String): Flow<Unit> = flow {
         val url = "${StoreConstants.RTDB_BASE_URL}$nodePath"
         var backoffMs = 2_000L
         while (currentCoroutineContext().isActive) {
             var gotEvent = false
+            var activeCall: Call? = null
             try {
                 val req = Request.Builder()
                     .url(url)
                     .header("Accept", "text/event-stream")
                     .header("Cache-Control", "no-cache")
                     .build()
-                val call = SprZoneNetworkClient.sseHttpClient.newCall(req)
-                call.execute().use { resp ->
+                activeCall = SprZoneNetworkClient.sseHttpClient.newCall(req)
+                activeCall.execute().use { resp ->
                     if (resp.isSuccessful) {
                         backoffMs = 2_000L
                         val body = resp.body
@@ -327,7 +329,7 @@ class SprZoneRepository(
                             } else if (line.startsWith("data:")) {
                                 if (currentEvent == "put" || currentEvent == "patch") {
                                     if (gotEvent) {
-                                        trySend(Unit)
+                                        emit(Unit)
                                     } else {
                                         // Skip emitting on very first SSE snapshot right at connect; emit on live updates
                                         gotEvent = true
@@ -339,12 +341,13 @@ class SprZoneRepository(
                 }
             } catch (t: Throwable) {
                 if (t is CancellationException) throw t
+            } finally {
+                activeCall?.cancel()
             }
             delay(backoffMs)
             backoffMs = (backoffMs * 2).coerceAtMost(30_000L)
         }
-        awaitClose {}
-    }
+    }.flowOn(Dispatchers.IO)
 
     suspend fun syncAppNotifications(): List<AppNotificationItem> = withContext(Dispatchers.IO) {
         return@withContext try {
