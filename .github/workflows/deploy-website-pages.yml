@@ -10,6 +10,7 @@ on:
       - "admin.html"
       - ".nojekyll"
       - "firebase.database.rules.json"
+      - "config/**"
       - "assets/**"
       - ".github/workflows/deploy-website-pages.yml"
   workflow_dispatch:
@@ -37,7 +38,7 @@ jobs:
         run: |
           mkdir -p _site
           cp index.html admin.html .nojekyll firebase.database.rules.json _site/
-          cp -r assets _site/
+          cp -r assets config _site/
 
       - name: Setup GitHub Pages
         uses: actions/configure-pages@v5

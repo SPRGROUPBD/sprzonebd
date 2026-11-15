@@ -28,33 +28,51 @@ import com.example.data.model.WishlistEntity
 import com.example.data.remote.FirebaseAuthRequest
 import com.example.data.remote.FirebaseAuthRestService
 import com.example.data.remote.FirebaseDeleteAccountRequest
+import com.example.data.remote.FirebaseLookupRequest
+import com.example.data.remote.FirebaseSendOobCodeRequest
+import com.example.data.remote.FirebaseSignInWithIdpRequest
 import com.example.data.remote.FirebaseTokenRefreshService
+import com.example.data.remote.FirebaseUpdateAccountRequest
 import com.example.data.remote.RemoteCouponDto
 import com.example.data.remote.RemoteCustomerAddressDto
 import com.example.data.remote.RemoteCustomerDto
 import com.example.data.remote.RemoteCustomerProfileDto
 import com.example.data.remote.RemoteOrderDto
 import com.example.data.remote.RemoteOrderItemDto
+import com.example.data.remote.RemoteReviewDto
 import com.example.data.remote.SprZoneNetworkClient
 import com.example.data.remote.SprZoneNetworkClient.toDomain
 import com.example.data.remote.SprZoneRtdbService
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
+import okhttp3.Request
 import org.json.JSONObject
 import java.io.File
 import java.io.FileOutputStream
+import java.net.URLEncoder
 import java.security.MessageDigest
 import java.security.SecureRandom
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import kotlin.math.roundToInt
+
+class GooglePendingLinkException(
+    val email: String,
+    val googleIdToken: String,
+    message: String
+) : Exception(message)
 
 data class PromoResult(
     val code: String,
@@ -142,6 +160,8 @@ class SprZoneRepository(
             if (t is CancellationException) throw t
         }
 
+        val reviewStatsByProduct = syncReviewsInternal()
+
         try {
             val productsResp = rtdb.getProducts()
             if (productsResp.isSuccessful) {
@@ -171,6 +191,7 @@ class SprZoneRepository(
                         }
                         val safeImageUrl = persistOrSanitizeImageUrl(safeId, dto.image)
                         val variantPricesStr = serializeVariantPrices(dto.variantPrices)
+                        val rStats = reviewStatsByProduct[safeId]
                         ProductEntity(
                             id = safeId,
                             name = name,
@@ -180,8 +201,8 @@ class SprZoneRepository(
                             priceBdt = price,
                             originalPriceBdt = if (oldPrice > price) oldPrice else price,
                             discountPercent = discount,
-                            rating = (dto.rating ?: 4.7).coerceIn(1.0, 5.0),
-                            reviewCount = dto.reviewCount ?: 25,
+                            rating = rStats?.first ?: 0.0,
+                            reviewCount = rStats?.second ?: 0,
                             stock = (dto.stock ?: 10).coerceAtLeast(0),
                             isFlashSale = dto.isFlashDeal ?: (discount >= 15),
                             isFeatured = dto.isFeatured ?: true,
@@ -212,6 +233,117 @@ class SprZoneRepository(
 
         // Sync currently signed-in customer profile & addresses from Firebase RTDB
         syncActiveCustomerSessionFromRemote()
+    }
+
+    suspend fun syncReviewsAndRatings() = withContext(Dispatchers.IO) {
+        val statsByProd = syncReviewsInternal()
+        val products = productDao.observeAllProducts().first()
+        products.forEach { prod ->
+            val st = statsByProd[prod.id]
+            val newRating = st?.first ?: 0.0
+            val newCount = st?.second ?: 0
+            if (prod.rating != newRating || prod.reviewCount != newCount) {
+                productDao.updateRatingSummary(prod.id, newRating, newCount)
+            }
+        }
+    }
+
+    private suspend fun syncReviewsInternal(): Map<String, Pair<Double, Int>> {
+        try {
+            val revResp = rtdb.getReviews()
+            if (revResp.isSuccessful) {
+                val raw = revResp.body().orEmpty()
+                val entities = mutableListOf<ReviewEntity>()
+                val stats = mutableMapOf<String, Pair<Double, Int>>()
+                raw.forEach { (productId, prodRevs) ->
+                    val validRatings = mutableListOf<Int>()
+                    prodRevs.forEach { (_, dto) ->
+                        val stars = (dto.rating ?: 0).coerceIn(0, 5)
+                        val comment = dto.comment?.trim().orEmpty()
+                        if (stars in 1..5 && comment.isNotBlank()) {
+                            validRatings.add(stars)
+                            entities.add(
+                                ReviewEntity(
+                                    productId = productId.take(120),
+                                    userName = dto.userName?.trim()?.takeIf { it.isNotBlank() }?.take(120) ?: "Customer",
+                                    userEmail = "",
+                                    rating = stars,
+                                    comment = comment.take(1500),
+                                    verifiedPurchase = dto.verifiedPurchase != false,
+                                    createdAt = dto.createdAt ?: System.currentTimeMillis()
+                                )
+                            )
+                        }
+                    }
+                    if (validRatings.isNotEmpty()) {
+                        val avg = validRatings.sum().toDouble() / validRatings.size
+                        val rounded = (avg * 10.0).roundToInt() / 10.0
+                        stats[productId] = rounded to validRatings.size
+                    }
+                }
+                reviewDao.clearAll()
+                if (entities.isNotEmpty()) {
+                    reviewDao.insertAll(entities)
+                }
+                return stats
+            }
+        } catch (t: Throwable) {
+            if (t is CancellationException) throw t
+        }
+
+        // Fallback to already cached local reviews so offline stats remain consistent
+        val cached = reviewDao.getAllReviews().groupBy { it.productId }
+        return cached.mapValues { (_, list) ->
+            if (list.isEmpty()) 0.0 to 0
+            else {
+                val avg = list.sumOf { it.rating }.toDouble() / list.size
+                ((avg * 10.0).roundToInt() / 10.0) to list.size
+            }
+        }
+    }
+
+    fun observeRealtimeNodeChanges(nodePath: String): Flow<Unit> = callbackFlow {
+        val url = "${StoreConstants.RTDB_BASE_URL}$nodePath"
+        var backoffMs = 2_000L
+        while (currentCoroutineContext().isActive) {
+            var gotEvent = false
+            try {
+                val req = Request.Builder()
+                    .url(url)
+                    .header("Accept", "text/event-stream")
+                    .header("Cache-Control", "no-cache")
+                    .build()
+                val call = SprZoneNetworkClient.sseHttpClient.newCall(req)
+                call.execute().use { resp ->
+                    if (resp.isSuccessful) {
+                        backoffMs = 2_000L
+                        val body = resp.body
+                        val reader = body?.charStream()?.buffered()
+                        var currentEvent = ""
+                        while (currentCoroutineContext().isActive && reader != null) {
+                            val line = reader.readLine() ?: break
+                            if (line.startsWith("event:")) {
+                                currentEvent = line.removePrefix("event:").trim()
+                            } else if (line.startsWith("data:")) {
+                                if (currentEvent == "put" || currentEvent == "patch") {
+                                    if (gotEvent) {
+                                        trySend(Unit)
+                                    } else {
+                                        // Skip emitting on very first SSE snapshot right at connect; emit on live updates
+                                        gotEvent = true
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (t: Throwable) {
+                if (t is CancellationException) throw t
+            }
+            delay(backoffMs)
+            backoffMs = (backoffMs * 2).coerceAtMost(30_000L)
+        }
+        awaitClose {}
     }
 
     suspend fun syncAppNotifications(): List<AppNotificationItem> = withContext(Dispatchers.IO) {
@@ -258,59 +390,63 @@ class SprZoneRepository(
     }
 
     suspend fun syncUserOrdersFromRemote(email: String) = withContext(Dispatchers.IO) {
+        val uid = prefs.firebaseUid.first()?.takeIf { it.isNotBlank() } ?: return@withContext
+        var token = resolveValidIdToken(forceRefresh = false) ?: return@withContext
         try {
-            val resp = rtdb.getAllOrders()
+            var resp = rtdb.getOrdersByUid(equalTo = "\"$uid\"", authToken = token)
+            if (resp.code() == 401) {
+                token = resolveValidIdToken(forceRefresh = true) ?: return@withContext
+                resp = rtdb.getOrdersByUid(equalTo = "\"$uid\"", authToken = token)
+            }
             if (resp.isSuccessful) {
                 val map = resp.body() ?: return@withContext
                 val normalizedEmail = email.trim().lowercase()
                 map.forEach { (key, dto) ->
-                    if (dto.customerEmail?.trim()?.lowercase() == normalizedEmail) {
-                        val orderId = (dto.orderId ?: key).trim().take(120)
-                        if (orderId.isBlank()) return@forEach
-                        val existing = orderDao.getOrderById(orderId)
-                        val newStatus = (dto.status ?: existing?.orderStatus ?: "Pending").take(60)
-                        val newPayStatus = (dto.paymentStatus ?: existing?.paymentStatus ?: "Pending").take(80)
-                        if (existing != null) {
-                            if (existing.orderStatus != newStatus || existing.paymentStatus != newPayStatus) {
-                                orderDao.insertOrder(
-                                    existing.copy(
-                                        orderStatus = newStatus,
-                                        paymentStatus = newPayStatus,
-                                        updatedAt = dto.updatedAt ?: System.currentTimeMillis()
-                                    )
-                                )
-                            }
-                        } else {
-                            val summaryText = (dto.itemsSummary ?: dto.items.orEmpty().joinToString("||") {
-                                "${it.name.orEmpty().take(120)} x${it.qty ?: 1} @৳${it.price ?: 0}"
-                            }).take(4000)
+                    val orderId = (dto.orderId ?: key).trim().take(120)
+                    if (orderId.isBlank()) return@forEach
+                    val existing = orderDao.getOrderById(orderId)
+                    val newStatus = (dto.status ?: existing?.orderStatus ?: "Pending").take(60)
+                    val newPayStatus = (dto.paymentStatus ?: existing?.paymentStatus ?: "Pending").take(80)
+                    if (existing != null) {
+                        if (existing.orderStatus != newStatus || existing.paymentStatus != newPayStatus) {
                             orderDao.insertOrder(
-                                OrderEntity(
-                                    orderId = orderId,
-                                    userEmail = normalizedEmail.take(160),
-                                    recipientName = (dto.customer?.name ?: "Customer").take(120),
-                                    phone = (dto.customer?.phone ?: "").take(40),
-                                    fullAddress = (dto.customer?.address ?: "").take(1000),
-                                    division = (dto.customer?.division ?: "Dhaka").take(60),
-                                    itemsSummary = summaryText,
-                                    itemCount = dto.items?.sumOf { it.qty ?: 1 } ?: 1,
-                                    subtotalBdt = dto.subtotal ?: dto.total ?: 0L,
-                                    discountBdt = dto.discount ?: 0L,
-                                    deliveryFeeBdt = dto.deliveryFee ?: 0L,
-                                    totalBdt = dto.total ?: 0L,
-                                    promoCode = dto.promoCode.orEmpty().take(40),
-                                    paymentMethod = (dto.paymentMethod ?: "Cash on Delivery").take(60),
-                                    senderNumber = dto.senderNumber.orEmpty().take(40),
-                                    trxId = dto.trxId.orEmpty().take(120),
-                                    paymentAccountMasked = dto.senderNumber?.takeLast(4)?.let { "•••• $it" } ?: "Cash on Delivery",
-                                    transactionId = dto.trxId?.takeIf { it.isNotBlank() }?.take(120) ?: orderId,
-                                    paymentStatus = newPayStatus,
+                                existing.copy(
                                     orderStatus = newStatus,
-                                    createdAt = dto.createdAt ?: System.currentTimeMillis(),
+                                    paymentStatus = newPayStatus,
                                     updatedAt = dto.updatedAt ?: System.currentTimeMillis()
                                 )
                             )
                         }
+                    } else {
+                        val summaryText = (dto.itemsSummary ?: dto.items.orEmpty().joinToString("||") {
+                            "${it.name.orEmpty().take(120)} x${it.qty ?: 1} @৳${it.price ?: 0}"
+                        }).take(4000)
+                        orderDao.insertOrder(
+                            OrderEntity(
+                                orderId = orderId,
+                                userEmail = (dto.customerEmail?.takeIf { it.isNotBlank() } ?: normalizedEmail).trim().lowercase().take(160),
+                                recipientName = (dto.customer?.name ?: "Customer").take(120),
+                                phone = (dto.customer?.phone ?: "").take(40),
+                                fullAddress = (dto.customer?.address ?: "").take(1000),
+                                division = (dto.customer?.division ?: "Dhaka").take(60),
+                                itemsSummary = summaryText,
+                                itemCount = dto.items?.sumOf { it.qty ?: 1 } ?: 1,
+                                subtotalBdt = dto.subtotal ?: dto.total ?: 0L,
+                                discountBdt = dto.discount ?: 0L,
+                                deliveryFeeBdt = dto.deliveryFee ?: 0L,
+                                totalBdt = dto.total ?: 0L,
+                                promoCode = dto.promoCode.orEmpty().take(40),
+                                paymentMethod = (dto.paymentMethod ?: "Cash on Delivery").take(60),
+                                senderNumber = dto.senderNumber.orEmpty().take(40),
+                                trxId = dto.trxId.orEmpty().take(120),
+                                paymentAccountMasked = dto.senderNumber?.takeLast(4)?.let { "•••• $it" } ?: "Cash on Delivery",
+                                transactionId = dto.trxId?.takeIf { it.isNotBlank() }?.take(120) ?: orderId,
+                                paymentStatus = newPayStatus,
+                                orderStatus = newStatus,
+                                createdAt = dto.createdAt ?: System.currentTimeMillis(),
+                                updatedAt = dto.updatedAt ?: System.currentTimeMillis()
+                            )
+                        )
                     }
                 }
             }
@@ -324,7 +460,14 @@ class SprZoneRepository(
         if (cleanId.isBlank()) return@withContext Result.failure(IllegalArgumentException("Enter an Order ID"))
         val local = orderDao.getOrderById(cleanId)
         try {
-            val remote = rtdb.getOrder(cleanId)
+            val token = resolveValidIdToken(forceRefresh = false)
+            var remote = rtdb.getOrder(cleanId, token)
+            if (remote.code() == 401) {
+                val refreshed = resolveValidIdToken(forceRefresh = true)
+                if (!refreshed.isNullOrBlank()) {
+                    remote = rtdb.getOrder(cleanId, refreshed)
+                }
+            }
             if (remote.isSuccessful && remote.body() != null) {
                 val dto = remote.body()!!
                 val summaryText = (dto.itemsSummary ?: local?.itemsSummary ?: dto.items.orEmpty().joinToString("||") {
@@ -495,6 +638,255 @@ class SprZoneRepository(
         prefs.setLoggedInEmail(normalizedEmail)
         syncUserOrdersFromRemote(normalizedEmail)
         Result.success(user)
+    }
+
+    suspend fun sendPasswordResetEmail(email: String): Result<String> = withContext(Dispatchers.IO) {
+        val normalizedEmail = email.trim().lowercase()
+        if (!normalizedEmail.contains("@") || !normalizedEmail.contains(".")) {
+            return@withContext Result.failure(IllegalArgumentException("Enter a valid email address"))
+        }
+        val resp = try {
+            authApi.sendOobCode(body = FirebaseSendOobCodeRequest(email = normalizedEmail))
+        } catch (t: Throwable) {
+            if (t is CancellationException) throw t
+            return@withContext Result.failure(IllegalStateException("Network error sending reset email: ${t.message ?: "Check internet connection"}"))
+        }
+        if (!resp.isSuccessful) {
+            val rawErr = resp.errorBody()?.string().orEmpty()
+            return@withContext Result.failure(IllegalArgumentException(parseFirebaseAuthError(rawErr, "Could not send password reset email")))
+        }
+        Result.success("Password reset link sent to $normalizedEmail. Check your inbox and spam folder.")
+    }
+
+    suspend fun signInWithGoogleIdToken(googleIdToken: String): Result<UserAccountEntity> = withContext(Dispatchers.IO) {
+        val cleanGoogleToken = googleIdToken.trim()
+        if (cleanGoogleToken.isBlank()) {
+            return@withContext Result.failure(IllegalArgumentException("Google ID token was empty."))
+        }
+        val encodedToken = URLEncoder.encode(cleanGoogleToken, "UTF-8")
+        val idpResp = try {
+            authApi.signInWithIdp(
+                body = FirebaseSignInWithIdpRequest(
+                    postBody = "id_token=$encodedToken&providerId=google.com",
+                    returnIdpCredential = true,
+                    returnSecureToken = true
+                )
+            )
+        } catch (t: Throwable) {
+            if (t is CancellationException) throw t
+            return@withContext Result.failure(IllegalStateException("Network error during Google Sign-In: ${t.message ?: "Check internet connection"}"))
+        }
+
+        if (!idpResp.isSuccessful) {
+            val rawErr = idpResp.errorBody()?.string().orEmpty()
+            return@withContext Result.failure(IllegalStateException(parseFirebaseAuthError(rawErr, "Google Sign-In failed")))
+        }
+
+        val body = idpResp.body()
+        if (body?.needConfirmation == true) {
+            val conflictEmail = body.email?.trim()?.lowercase().orEmpty()
+            return@withContext Result.failure(
+                GooglePendingLinkException(
+                    email = conflictEmail,
+                    googleIdToken = cleanGoogleToken,
+                    message = "An account already exists for $conflictEmail. Enter your password once to link Google Sign-In."
+                )
+            )
+        }
+
+        val uid = body?.localId?.takeIf { it.isNotBlank() }
+        val idToken = body?.idToken?.takeIf { it.isNotBlank() }
+        val resolvedEmail = body?.email?.trim()?.lowercase()?.takeIf { it.isNotBlank() }
+        if (uid == null || idToken == null || resolvedEmail == null) {
+            return@withContext Result.failure(IllegalStateException("Google Sign-In did not return a complete Firebase session."))
+        }
+
+        prefs.setFirebaseSession(uid, idToken, body.refreshToken.orEmpty())
+        val user = pullAndCacheRemoteCustomer(
+            uid = uid,
+            idToken = idToken,
+            email = resolvedEmail,
+            fallbackName = body.displayName?.takeIf { it.isNotBlank() }
+                ?: resolvedEmail.substringBefore("@"),
+            passwordForLocalCache = generateSalt()
+        )
+        migrateGuestCart(resolvedEmail)
+        prefs.setLoggedInEmail(resolvedEmail)
+        syncUserOrdersFromRemote(resolvedEmail)
+        Result.success(user)
+    }
+
+    suspend fun loginAndLinkGoogle(
+        email: String,
+        password: String,
+        googleIdToken: String
+    ): Result<UserAccountEntity> = withContext(Dispatchers.IO) {
+        val normalizedEmail = email.trim().lowercase()
+        if (!normalizedEmail.contains("@") || !normalizedEmail.contains(".")) {
+            return@withContext Result.failure(IllegalArgumentException("Enter a valid email address"))
+        }
+        if (password.isBlank()) {
+            return@withContext Result.failure(IllegalArgumentException("Enter your existing password to link Google"))
+        }
+
+        val authResp = try {
+            authApi.signInWithPassword(body = FirebaseAuthRequest(email = normalizedEmail, password = password))
+        } catch (t: Throwable) {
+            if (t is CancellationException) throw t
+            return@withContext Result.failure(IllegalStateException("Network error during account verification: ${t.message ?: "Check internet connection"}"))
+        }
+        if (!authResp.isSuccessful || authResp.body()?.localId.isNullOrBlank() || authResp.body()?.idToken.isNullOrBlank()) {
+            val rawErr = authResp.errorBody()?.string().orEmpty()
+            return@withContext Result.failure(IllegalArgumentException(parseFirebaseAuthError(rawErr, "Invalid email or password")))
+        }
+
+        val baseBody = authResp.body()!!
+        var finalUid = baseBody.localId!!
+        var finalIdToken = baseBody.idToken!!
+        var finalRefreshToken = baseBody.refreshToken.orEmpty()
+        var resolvedName = baseBody.displayName?.takeIf { it.isNotBlank() }
+
+        val cleanGoogleToken = googleIdToken.trim()
+        if (cleanGoogleToken.isNotBlank()) {
+            val encodedToken = URLEncoder.encode(cleanGoogleToken, "UTF-8")
+            val linkResp = try {
+                authApi.signInWithIdp(
+                    body = FirebaseSignInWithIdpRequest(
+                        postBody = "id_token=$encodedToken&providerId=google.com",
+                        returnIdpCredential = true,
+                        returnSecureToken = true,
+                        idToken = finalIdToken
+                    )
+                )
+            } catch (t: Throwable) {
+                if (t is CancellationException) throw t
+                null
+            }
+            if (linkResp != null && linkResp.isSuccessful && linkResp.body() != null) {
+                val lb = linkResp.body()!!
+                if (!lb.localId.isNullOrBlank()) finalUid = lb.localId
+                if (!lb.idToken.isNullOrBlank()) finalIdToken = lb.idToken
+                if (!lb.refreshToken.isNullOrBlank()) finalRefreshToken = lb.refreshToken
+                if (!lb.displayName.isNullOrBlank() && resolvedName.isNullOrBlank()) resolvedName = lb.displayName
+            } else if (linkResp != null && !linkResp.isSuccessful) {
+                val errRaw = linkResp.errorBody()?.string().orEmpty()
+                if (!errRaw.contains("FEDERATED_USER_ID_ALREADY_LINKED", ignoreCase = true)) {
+                    return@withContext Result.failure(IllegalStateException(parseFirebaseAuthError(errRaw, "Could not link Google credential")))
+                }
+            }
+        }
+
+        prefs.setFirebaseSession(finalUid, finalIdToken, finalRefreshToken)
+        val user = pullAndCacheRemoteCustomer(
+            uid = finalUid,
+            idToken = finalIdToken,
+            email = normalizedEmail,
+            fallbackName = resolvedName ?: normalizedEmail.substringBefore("@"),
+            passwordForLocalCache = password
+        )
+        migrateGuestCart(normalizedEmail)
+        prefs.setLoggedInEmail(normalizedEmail)
+        syncUserOrdersFromRemote(normalizedEmail)
+        Result.success(user)
+    }
+
+    suspend fun getLinkedProvidersForCurrentUser(): List<String> = withContext(Dispatchers.IO) {
+        var token = resolveValidIdToken(forceRefresh = false) ?: return@withContext emptyList()
+        return@withContext try {
+            var resp = authApi.lookupAccount(body = FirebaseLookupRequest(token))
+            if (resp.code() == 401) {
+                token = resolveValidIdToken(forceRefresh = true) ?: return@withContext emptyList()
+                resp = authApi.lookupAccount(body = FirebaseLookupRequest(token))
+            }
+            if (!resp.isSuccessful) return@withContext emptyList()
+            resp.body()?.users?.firstOrNull()?.providerUserInfo.orEmpty()
+                .mapNotNull { it.providerId?.trim()?.takeIf { p -> p.isNotBlank() } }
+                .distinct()
+        } catch (t: Throwable) {
+            if (t is CancellationException) throw t
+            emptyList()
+        }
+    }
+
+    suspend fun linkGoogleToCurrentAccount(googleIdToken: String): Result<List<String>> = withContext(Dispatchers.IO) {
+        val cleanGoogleToken = googleIdToken.trim()
+        if (cleanGoogleToken.isBlank()) {
+            return@withContext Result.failure(IllegalArgumentException("Google credential was empty."))
+        }
+        var token = resolveValidIdToken(forceRefresh = false)
+            ?: return@withContext Result.failure(IllegalStateException("Please sign in first."))
+        val encodedToken = URLEncoder.encode(cleanGoogleToken, "UTF-8")
+        var resp = try {
+            authApi.signInWithIdp(
+                body = FirebaseSignInWithIdpRequest(
+                    postBody = "id_token=$encodedToken&providerId=google.com",
+                    returnIdpCredential = true,
+                    returnSecureToken = true,
+                    idToken = token
+                )
+            )
+        } catch (t: Throwable) {
+            if (t is CancellationException) throw t
+            return@withContext Result.failure(IllegalStateException("Network error while linking Google: ${t.message ?: "Check internet"}"))
+        }
+        if (resp.code() == 401) {
+            token = resolveValidIdToken(forceRefresh = true) ?: token
+            resp = authApi.signInWithIdp(
+                body = FirebaseSignInWithIdpRequest(
+                    postBody = "id_token=$encodedToken&providerId=google.com",
+                    returnIdpCredential = true,
+                    returnSecureToken = true,
+                    idToken = token
+                )
+            )
+        }
+        if (!resp.isSuccessful) {
+            val rawErr = resp.errorBody()?.string().orEmpty()
+            return@withContext Result.failure(IllegalStateException(parseFirebaseAuthError(rawErr, "Could not link Google account")))
+        }
+        resp.body()?.let { body ->
+            val nextUid = body.localId?.takeIf { it.isNotBlank() } ?: prefs.firebaseUid.first()
+            val nextIdToken = body.idToken?.takeIf { it.isNotBlank() } ?: token
+            val nextRefresh = body.refreshToken?.takeIf { it.isNotBlank() } ?: prefs.firebaseRefreshToken.first().orEmpty()
+            prefs.setFirebaseSession(nextUid, nextIdToken, nextRefresh)
+        }
+        Result.success(getLinkedProvidersForCurrentUser())
+    }
+
+    suspend fun linkPasswordToCurrentAccount(newPassword: String): Result<List<String>> = withContext(Dispatchers.IO) {
+        if (newPassword.length < 6) {
+            return@withContext Result.failure(IllegalArgumentException("Password must be at least 6 characters"))
+        }
+        var token = resolveValidIdToken(forceRefresh = false)
+            ?: return@withContext Result.failure(IllegalStateException("Please sign in first."))
+        var resp = try {
+            authApi.updateAccount(body = FirebaseUpdateAccountRequest(idToken = token, password = newPassword))
+        } catch (t: Throwable) {
+            if (t is CancellationException) throw t
+            return@withContext Result.failure(IllegalStateException("Network error setting password: ${t.message ?: "Check internet"}"))
+        }
+        if (resp.code() == 401) {
+            token = resolveValidIdToken(forceRefresh = true) ?: token
+            resp = authApi.updateAccount(body = FirebaseUpdateAccountRequest(idToken = token, password = newPassword))
+        }
+        if (!resp.isSuccessful) {
+            val rawErr = resp.errorBody()?.string().orEmpty()
+            return@withContext Result.failure(IllegalStateException(parseFirebaseAuthError(rawErr, "Could not set email password")))
+        }
+        resp.body()?.let { body ->
+            val nextUid = body.localId?.takeIf { it.isNotBlank() } ?: prefs.firebaseUid.first()
+            val nextIdToken = body.idToken?.takeIf { it.isNotBlank() } ?: token
+            val nextRefresh = body.refreshToken?.takeIf { it.isNotBlank() } ?: prefs.firebaseRefreshToken.first().orEmpty()
+            prefs.setFirebaseSession(nextUid, nextIdToken, nextRefresh)
+        }
+        val email = prefs.loggedInEmail.first()?.trim()?.lowercase()
+        if (!email.isNullOrBlank()) {
+            userDao.getUserByEmail(email)?.let { existing ->
+                val nextSalt = generateSalt()
+                userDao.upsertUser(existing.copy(salt = nextSalt, passwordHash = hashPassword(newPassword, nextSalt)))
+            }
+        }
+        Result.success(getLinkedProvidersForCurrentUser())
     }
 
     private suspend fun syncActiveCustomerSessionFromRemote() {
@@ -1184,7 +1576,13 @@ class SprZoneRepository(
         val now = System.currentTimeMillis()
         orderDao.updateOrderStatus(orderId, "Cancelled", now)
         try {
-            rtdb.patchOrderStatus(orderId, mapOf("status" to "Cancelled", "updatedAt" to now))
+            val token = resolveValidIdToken(forceRefresh = false)
+            val resp = rtdb.patchOrderStatus(orderId, mapOf("status" to "Cancelled", "updatedAt" to now), token)
+            if (resp.code() == 401) {
+                resolveValidIdToken(forceRefresh = true)?.let { fresh ->
+                    rtdb.patchOrderStatus(orderId, mapOf("status" to "Cancelled", "updatedAt" to now), fresh)
+                }
+            }
         } catch (_: Exception) {
         }
         Result.success(Unit)
@@ -1198,17 +1596,44 @@ class SprZoneRepository(
         userEmail: String,
         rating: Int,
         comment: String
-    ): Result<Unit> {
-        if (comment.isBlank()) return Result.failure(IllegalArgumentException("Please write a short review comment."))
+    ): Result<Unit> = withContext(Dispatchers.IO) {
+        if (comment.isBlank()) return@withContext Result.failure(IllegalArgumentException("Please write a short review comment."))
         val safeRating = rating.coerceIn(1, 5)
+        val trimmedComment = comment.trim()
+        val now = System.currentTimeMillis()
+        val uid = prefs.firebaseUid.first()
+        var token = resolveValidIdToken(forceRefresh = false)
+
+        if (!uid.isNullOrBlank() && !token.isNullOrBlank()) {
+            val reviewKey = "rev_${now}_${(100..999).random()}"
+            val remoteDto = RemoteReviewDto(
+                uid = uid,
+                userName = userName.trim().ifBlank { "Customer" },
+                rating = safeRating,
+                comment = trimmedComment,
+                verifiedPurchase = true,
+                createdAt = now
+            )
+            try {
+                var resp = rtdb.putReview(productId, reviewKey, token, remoteDto)
+                if (resp.code() == 401) {
+                    token = resolveValidIdToken(forceRefresh = true) ?: token
+                    resp = rtdb.putReview(productId, reviewKey, token, remoteDto)
+                }
+            } catch (t: Throwable) {
+                if (t is CancellationException) throw t
+            }
+        }
+
         reviewDao.insertReview(
             ReviewEntity(
                 productId = productId,
-                userName = userName,
+                userName = userName.trim().ifBlank { "Customer" },
                 userEmail = userEmail,
                 rating = safeRating,
-                comment = comment.trim(),
-                verifiedPurchase = true
+                comment = trimmedComment,
+                verifiedPurchase = true,
+                createdAt = now
             )
         )
         val allReviews = reviewDao.getReviewsForProduct(productId)
@@ -1217,7 +1642,7 @@ class SprZoneRepository(
             val rounded = (avg * 10.0).roundToInt() / 10.0
             productDao.updateRatingSummary(productId, rounded, allReviews.size)
         }
-        return Result.success(Unit)
+        Result.success(Unit)
     }
 
     // --- Helpers ---
@@ -1240,11 +1665,17 @@ class SprZoneRepository(
             val msg = JSONObject(rawJson).optJSONObject("error")?.optString("message").orEmpty()
             when {
                 msg.contains("EMAIL_EXISTS", ignoreCase = true) ->
-                    "An account already exists with this email. Please sign in."
+                    "An account already exists with this email. Sign in with Password, Continue with Google, or reset your password."
                 msg.contains("INVALID_LOGIN_CREDENTIALS", ignoreCase = true) ||
                     msg.contains("INVALID_PASSWORD", ignoreCase = true) ||
                     msg.contains("EMAIL_NOT_FOUND", ignoreCase = true) ->
-                    "Invalid email or password. Please check your credentials."
+                    "Invalid email or password. If you signed up with Google, tap Continue with Google or use Forgot Password."
+                msg.contains("CREDENTIAL_TOO_OLD_LOGIN_AGAIN", ignoreCase = true) ->
+                    "Please sign out and sign in again to complete this security action."
+                msg.contains("FEDERATED_USER_ID_ALREADY_LINKED", ignoreCase = true) ->
+                    "This Google account is already linked to another SPR Zone BD account."
+                msg.contains("OPERATION_NOT_ALLOWED", ignoreCase = true) ->
+                    "Google Sign-In is not yet enabled in Firebase Authentication Console."
                 msg.contains("USER_DISABLED", ignoreCase = true) ->
                     "This customer account has been disabled."
                 msg.contains("TOO_MANY_ATTEMPTS", ignoreCase = true) ->

@@ -218,13 +218,13 @@ enum class PaymentMethod(
     val requiresMobileTrx: Boolean,
     val isCardGateway: Boolean
 ) {
-    COD("Cash on Delivery", "Pay cash at doorstep (All 64 Districts)", false, false)
+    COD("Cash on Delivery", "Pay cash at doorstep", false, false)
 }
 
 enum class DeliveryZone(val label: String, val feeBdt: Long, val etaText: String) {
     DHAKA_METRO("Dhaka Metro", 60L, "Same-day / 24h express"),
     DHAKA_SUBURBS("Dhaka Suburbs (Gazipur / Narayanganj / Savar)", 90L, "1–2 business days"),
-    OUTSIDE_DHAKA("All Bangladesh (64 Districts)", 120L, "2–4 business days")
+    OUTSIDE_DHAKA("Outside Dhaka", 120L, "2–4 business days")
 }
 
 object StoreConstants {
@@ -234,6 +234,7 @@ object StoreConstants {
     const val FIREBASE_AUTH_BASE_URL = "https://identitytoolkit.googleapis.com/"
     const val FIREBASE_TOKEN_BASE_URL = "https://securetoken.googleapis.com/"
     const val FIREBASE_WEB_API_KEY = "AIzaSyBmogqpXzirZC-aUHZrFMwutSJ5fmbyDXk"
+    const val GOOGLE_WEB_CLIENT_ID = "799252588942-itnqbin8ck1rpda2hhas07k4953rv0k1.apps.googleusercontent.com"
 
     fun deliveryFeeForDivision(division: String): Long {
         return if (division.trim().equals("Dhaka", ignoreCase = true)) 60L else 120L

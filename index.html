@@ -408,6 +408,27 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .footer p,.footer li{font-size:13px;color:#cdebd9;margin:4px 0}
 .footer ul{list-style:none;padding:0;margin:0}
 .toast{position:fixed;bottom:20px;right:20px;background:#0f291c;color:#fff;padding:12px 18px;border-radius:10px;display:none;z-index:90;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.22)}
+.order-toast-stack{position:fixed;top:18px;right:18px;z-index:120;display:grid;gap:10px;width:min(380px,calc(100vw - 28px));pointer-events:none}
+.order-status-toast{
+  pointer-events:auto;background:#fff;border:1px solid #bfe3cd;border-left:5px solid var(--emerald);
+  border-radius:12px;padding:12px 14px;box-shadow:0 14px 34px rgba(0,40,20,.18);
+  display:grid;gap:6px;animation:toastSlideIn .24s ease-out;
+}
+@keyframes toastSlideIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+.pass-wrap{position:relative;display:flex;align-items:center}
+.pass-wrap input{padding-right:42px}
+.pass-toggle{
+  position:absolute;right:6px;top:50%;transform:translateY(-50%);
+  background:transparent;color:var(--muted);padding:4px 8px;min-height:30px;border-radius:6px;font-size:15px;
+}
+.pass-toggle:hover{background:var(--emerald-soft);color:var(--emerald-dark)}
+.auth-divider{display:flex;align-items:center;gap:10px;margin:12px 0;color:var(--muted);font-size:12px;font-weight:700}
+.auth-divider::before,.auth-divider::after{content:"";flex:1;height:1px;background:var(--line)}
+.google-btn{
+  width:100%;background:#fff;color:var(--ink);border:1.5px solid #cbd5e1;
+  font-weight:700;gap:10px;min-height:42px;
+}
+.google-btn:hover{background:#f8faf9;border-color:#94a3b8}
 .hidden{display:none!important}
 
 /* Responsive Breakpoints */
@@ -683,7 +704,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
             <h1 class="pp-title" id="ppTitle"></h1>
 
             <div class="pp-meta-row">
-              <a href="#ppSpecsCard" class="pp-stars-link" id="ppRating"></a>
+              <a href="#ppReviewsCard" class="pp-stars-link" id="ppRating"></a>
               <div class="pp-icon-actions">
                 <button type="button" class="pp-icon-btn" id="ppShareBtn" title="Share product" aria-label="Share product">🔗</button>
                 <button type="button" class="pp-icon-btn" id="ppWishBtn" title="Add to wishlist" aria-label="Add to wishlist">♡</button>
@@ -813,6 +834,18 @@ button:disabled{opacity:.5;cursor:not-allowed}
         <p id="ppDesc" style="font-size:13.5px;color:#526059;margin:0;white-space:pre-line;line-height:1.6"></p>
       </div>
 
+      <!-- Real-Time Customer Reviews -->
+      <div class="pp-specs-card" id="ppReviewsCard">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+          <div style="font-size:13px;font-weight:800;color:#212121;text-transform:uppercase;letter-spacing:.3px">
+            Customer Ratings &amp; Reviews
+          </div>
+          <div id="ppReviewSummaryBadge" style="font-size:13px;font-weight:700;color:var(--emerald-dark)"></div>
+        </div>
+        <div id="ppReviewFormWrap" style="background:#f8faf9;border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:14px"></div>
+        <div id="ppReviewsList" style="display:grid;gap:10px"></div>
+      </div>
+
       <!-- Related Products -->
       <div class="pp-related-wrap hidden" id="ppRelatedWrap">
         <div class="section-head">
@@ -866,20 +899,52 @@ button:disabled{opacity:.5;cursor:not-allowed}
   </p>
 </footer>
 
-<!-- Auth Modal (Login / Register) -->
+<!-- Auth Modal (Login / Register / Google / Forgot Password / Linking) -->
 <div class="modal" id="authModal">
   <div class="dialog" style="width:min(440px,100%)">
     <div class="dialog-head">
       <h2 id="authTitle">Customer Login</h2>
       <button class="outline sm" onclick="closeModal('authModal')">✕</button>
     </div>
+    <div id="authLinkNotice" class="hidden" style="background:#fef3c7;color:#92400e;border:1px solid #fcd34d;border-radius:10px;padding:10px 12px;font-size:12.5px;margin-bottom:10px"></div>
     <form id="authForm">
       <div class="field hidden" id="authNameWrap"><label>Full Name *</label><input id="authName" placeholder="Your Full Name"></div>
-      <div class="field hidden" id="authPhoneWrap"><label>BD Mobile Number</label><input id="authPhone" placeholder="017XXXXXXXX"></div>
+      <div class="field hidden" id="authPhoneWrap"><label>BD Mobile Number *</label><input id="authPhone" placeholder="017XXXXXXXX"></div>
       <div class="field"><label>Email Address *</label><input id="authEmail" type="email" required placeholder="you@example.com"></div>
-      <div class="field"><label>Password (min 6 chars) *</label><input id="authPassword" type="password" minlength="6" required></div>
-      <button type="submit" id="authSubmitBtn" style="width:100%;margin-top:6px">Sign In</button>
+      <div class="field">
+        <label>Password (min 6 chars) *</label>
+        <div class="pass-wrap">
+          <input id="authPassword" type="password" minlength="6" required placeholder="Enter password">
+          <button type="button" class="pass-toggle" id="toggleAuthPasswordBtn" aria-label="Show password" title="Show / Hide Password">👁️</button>
+        </div>
+      </div>
+      <div id="forgotPasswordRow" style="display:flex;justify-content:flex-end;margin:-4px 0 8px">
+        <button type="button" class="outline sm" id="forgotPasswordBtn" style="border:0;color:var(--emerald);padding:2px 6px;min-height:26px">Forgot Password?</button>
+      </div>
+      <button type="submit" id="authSubmitBtn" style="width:100%;margin-top:4px">Sign In</button>
     </form>
+
+    <div id="forgotPasswordPanel" class="hidden" style="background:#f8faf9;border:1px solid var(--line);border-radius:10px;padding:12px;margin-top:10px">
+      <div style="font-weight:700;font-size:13px;margin-bottom:4px">🔑 Reset Your Password</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Enter your registered email and we will send a Firebase password reset link.</div>
+      <div style="display:flex;gap:6px">
+        <input id="forgotEmailInput" type="email" placeholder="you@example.com" style="flex:1;padding:8px 10px;border:1px solid #cbd5e1;border-radius:8px">
+        <button type="button" class="sm" id="sendResetEmailBtn">Send Link</button>
+      </div>
+      <div id="forgotResetStatus" style="font-size:12px;margin-top:6px;color:var(--emerald-dark)"></div>
+    </div>
+
+    <div class="auth-divider" id="authOrDivider">OR</div>
+    <button type="button" class="google-btn" id="googleAuthBtn">
+      <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+        <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17Z"/>
+        <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.11-6.72-4.96H1.29v3.14C3.26 21.3 7.31 24 12 24Z"/>
+        <path fill="#FBBC05" d="M5.28 14.24c-.24-.72-.38-1.49-.38-2.24s.14-1.52.38-2.24V6.62H1.29C.47 8.24 0 10.06 0 12s.47 3.76 1.29 5.38l3.99-3.14Z"/>
+        <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.62l3.99 3.14c.95-2.85 3.6-4.96 6.72-4.96Z"/>
+      </svg>
+      <span>Continue with Google</span>
+    </button>
+
     <p style="font-size:13px;color:var(--muted);text-align:center;margin:14px 0 0" id="authSwitchRow"></p>
   </div>
 </div>
@@ -916,6 +981,21 @@ button:disabled{opacity:.5;cursor:not-allowed}
           <button type="button" class="crimson" id="deleteAccountBtn">⚠️ Delete Account</button>
         </div>
       </form>
+      <div id="accountLinkingBox" style="margin-top:14px;background:#f8faf9;border:1px solid var(--line);border-radius:12px;padding:12px">
+        <div style="font-weight:700;font-size:13px;margin-bottom:4px">🔗 Sign-In Methods &amp; Account Linking</div>
+        <div id="accountProvidersSummary" style="font-size:12.5px;color:var(--muted);margin-bottom:8px"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <button type="button" class="secondary sm hidden" id="linkGoogleAccountBtn">Link Google Sign-In</button>
+          <button type="button" class="secondary sm hidden" id="showLinkPassBtn">Set / Link Email Password</button>
+        </div>
+        <div id="linkPasswordWrap" class="hidden" style="margin-top:8px;display:flex;gap:6px;align-items:center">
+          <div class="pass-wrap" style="flex:1">
+            <input id="linkNewPasswordInput" type="password" minlength="6" placeholder="New password (min 6 chars)" style="width:100%;padding:8px 36px 8px 10px;border:1px solid #cbd5e1;border-radius:8px">
+            <button type="button" class="pass-toggle" id="toggleLinkPassBtn" aria-label="Show password">👁️</button>
+          </div>
+          <button type="button" class="sm" id="saveLinkPasswordBtn">Link Password</button>
+        </div>
+      </div>
     </div>
 
     <div id="acTab-addresses" class="hidden">
@@ -1070,28 +1150,31 @@ button:disabled{opacity:.5;cursor:not-allowed}
   </div>
 </div>
 
+<div class="order-toast-stack" id="orderStatusToastStack" aria-live="polite"></div>
 <div class="toast" id="toast"></div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, updateProfile, deleteUser } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-import { getDatabase, ref, get, set, push, update, remove, onValue } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js";
+import {
+  onAuthStateChanged,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  updateProfile,
+  deleteUser,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
+  sendPasswordResetEmail,
+  fetchSignInMethodsForEmail,
+  linkWithCredential,
+  linkWithPopup,
+  EmailAuthProvider
+} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import { ref, get, set, push, update, remove, onValue, query as dbQuery, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js";
+import { getFirebaseClient, ADMIN_EMAIL } from "./config/firebase-config.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyBmogqpXzirZC-aUHZrFMwutSJ5fmbyDXk",
-  authDomain: "e-commarcebd.firebaseapp.com",
-  databaseURL: "https://e-commarcebd-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "e-commarcebd",
-  storageBucket: "e-commarcebd.firebasestorage.app",
-  messagingSenderId: "799252588942",
-  appId: "1:799252588942:web:985396062c3a1823c6dcdf",
-  measurementId: "G-FM6BH07VPM"
-};
-
-const ADMIN_EMAIL = "mail.sajjadahmed@gmail.com";
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getDatabase(app);
+const { app, auth, db } = getFirebaseClient();
 
 const DEFAULT_ZONES = [
   { key: "dhaka", name: "Dhaka", rate: 60, eta: "1-2 Days" },
@@ -1127,6 +1210,7 @@ let userProfile = null;
 let userAddresses = {};
 let products = {};
 let categories = {};
+let reviews = {};
 let coupons = {};
 let sales = {};
 let heroSlides = {};
@@ -1146,6 +1230,7 @@ let heroData = {
 
 let cart = JSON.parse(localStorage.getItem("spr_web_cart") || "[]");
 let wishlist = JSON.parse(localStorage.getItem("spr_web_wish") || "[]");
+let localGuestOrders = JSON.parse(sessionStorage.getItem("spr_guest_orders") || "{}");
 let selectedCategory = "All";
 let navMode = "home";
 let searchTerm = "";
@@ -1153,6 +1238,13 @@ let sortMode = "featured";
 let appliedPromoCode = "";
 let registerMode = false;
 let unsubscribeCustomer = null;
+let unsubscribeOrderWatcher = null;
+let knownOrderStatuses = {};
+let orderWatcherBaselineReady = false;
+let pendingOrderStatusToasts = [];
+let pendingLinkCredential = null;
+let pendingLinkEmail = "";
+let pendingLinkPassword = "";
 let previewDeliveryDivision = "";
 let previewDeliveryDistrict = "";
 let previewDeliveryArea = "";
@@ -1635,12 +1727,33 @@ function renderCategories() {
   });
 }
 
+function getProductRatingStats(prodId, p) {
+  const list = Object.entries(reviews?.[prodId] || {})
+    .map(([id, r]) => ({ id, ...r }))
+    .filter((r) => r && Number(r.rating) >= 1 && Number(r.rating) <= 5)
+    .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+  if (list.length > 0) {
+    const avg = list.reduce((s, r) => s + Number(r.rating || 0), 0) / list.length;
+    return { rating: Math.round(avg * 10) / 10, count: list.length, list };
+  }
+  return { rating: 0, count: 0, list: [] };
+}
+
+function renderStarsBar(rating, count) {
+  if (!count || rating <= 0) {
+    return `<span style="color:#cbd5e1">☆☆☆☆☆</span> <span>No reviews (0)</span>`;
+  }
+  const rounded = Math.max(1, Math.min(5, Math.round(rating)));
+  const filled = "★".repeat(rounded) + "☆".repeat(5 - rounded);
+  return `${filled} <span>${rating.toFixed(1)} (${count} Review${count > 1 ? "s" : ""})</span>`;
+}
+
 function productCardHtml(p) {
   const disc = p.oldPrice > p.price ? Math.round(((p.oldPrice - p.price) / p.oldPrice) * 100) : 0;
   const freeMinQ = parseNum(p.freeDeliveryMinQty || 0);
   const liked = wishlist.includes(p.id);
   const imgSrc = p.image || "assets/favicon.svg";
-  const stars = "★".repeat(Math.max(1, Math.min(5, Math.round(Number(p.rating || 4.6)))));
+  const rStats = getProductRatingStats(p.id, p);
   return `<article class="product-card">
     <div class="p-img-wrap" data-open="${safe(p.id)}">
       ${disc > 0 ? `<span class="p-badge">-${disc}%</span>` : ""}
@@ -1652,7 +1765,7 @@ function productCardHtml(p) {
         <div class="p-title" data-open="${safe(p.id)}">${safe(p.name)}</div>
         <button class="p-wish ${liked ? "liked" : ""}" data-wish="${safe(p.id)}" title="Save to wishlist">${liked ? "♥" : "♡"}</button>
       </div>
-      <div class="p-rating">${stars} <span>(${Number(p.reviewCount || 0)} Reviews)</span></div>
+      <div class="p-rating">${renderStarsBar(rStats.rating, rStats.count)}</div>
       <div class="p-price-row">
         <span class="p-price">${money(p.price)}</span>
         ${p.oldPrice > p.price ? `<span class="p-old">${money(p.oldPrice)}</span>` : ""}
@@ -1696,7 +1809,7 @@ function renderProducts() {
 
   if (sortMode === "price-asc") list.sort((a, b) => a.price - b.price);
   else if (sortMode === "price-desc") list.sort((a, b) => b.price - a.price);
-  else if (sortMode === "rating") list.sort((a, b) => (b.rating || 4.5) - (a.rating || 4.5));
+  else if (sortMode === "rating") list.sort((a, b) => getProductRatingStats(b.id, b).rating - getProductRatingStats(a.id, a).rating);
   else if (navMode === "new") list.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
   else list.sort((a, b) => Number(!!b.isFeatured) - Number(!!a.isFeatured));
 
@@ -1795,18 +1908,92 @@ function refreshPreviewDeliveryUI(p, unitPriceOverride = null) {
   }
 }
 
+function renderPreviewReviews(prodId) {
+  const p = products[prodId];
+  if (!p) return;
+  const rStats = getProductRatingStats(prodId, p);
+  $("ppRating").innerHTML = rStats.count > 0
+    ? `<span class="stars">${"★".repeat(Math.max(1, Math.min(5, Math.round(rStats.rating))))}${"☆".repeat(5 - Math.max(1, Math.min(5, Math.round(rStats.rating))))}</span> <span>${rStats.rating.toFixed(1)} · ${rStats.count} Review${rStats.count > 1 ? "s" : ""}</span>`
+    : `<span style="color:#cbd5e1">☆☆☆☆☆</span> <span>No reviews yet (0)</span>`;
+  $("ppReviewSummaryBadge").textContent = rStats.count > 0
+    ? `★ ${rStats.rating.toFixed(1)} out of 5 (${rStats.count} Review${rStats.count > 1 ? "s" : ""})`
+    : "No reviews yet — be the first to review!";
+
+  if (!currentUser) {
+    $("ppReviewFormWrap").innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+        <span style="font-size:13px;color:var(--muted)">Sign in with your customer account to submit a verified product review.</span>
+        <button type="button" class="outline sm" id="ppReviewLoginBtn">Sign In to Review</button>
+      </div>`;
+    $("ppReviewLoginBtn").onclick = () => $("accountBtn").click();
+  } else {
+    let selectedStar = 5;
+    $("ppReviewFormWrap").innerHTML = `
+      <form id="ppReviewForm">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+          <b style="font-size:13px">Write a Review as ${safe(userProfile?.name || currentUser.displayName || "Customer")}</b>
+          <div id="ppStarPicker" style="display:flex;gap:4px">
+            ${[1, 2, 3, 4, 5].map((n) => `<button type="button" data-star="${n}" style="background:#fff;border:1px solid var(--line);color:#f59e0b;padding:4px 8px;font-size:15px;border-radius:7px;cursor:pointer">★</button>`).join("")}
+          </div>
+        </div>
+        <textarea id="ppReviewComment" rows="2" required placeholder="Share your experience with this product..." style="width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px;font:inherit;margin-bottom:8px"></textarea>
+        <button type="submit" class="sm">Submit Review</button>
+      </form>`;
+    const paintStars = () => {
+      $("ppStarPicker").querySelectorAll("[data-star]").forEach((btn) => {
+        const val = Number(btn.dataset.star);
+        btn.textContent = val <= selectedStar ? "★" : "☆";
+        btn.style.borderColor = val <= selectedStar ? "#f59e0b" : "var(--line)";
+      });
+    };
+    paintStars();
+    $("ppStarPicker").querySelectorAll("[data-star]").forEach((btn) => {
+      btn.onclick = () => { selectedStar = Number(btn.dataset.star); paintStars(); };
+    });
+    $("ppReviewForm").onsubmit = async (e) => {
+      e.preventDefault();
+      const comment = $("ppReviewComment").value.trim();
+      if (!comment) return toast("Please write your review comment");
+      const reviewerName = userProfile?.name || currentUser.displayName || (currentUser.email ? currentUser.email.split("@")[0] : "Customer");
+      try {
+        await push(ref(db, `reviews/${prodId}`), {
+          uid: currentUser.uid,
+          userName: reviewerName,
+          rating: selectedStar,
+          comment,
+          verifiedPurchase: true,
+          createdAt: Date.now()
+        });
+        toast("Thank you! Your review is live.");
+      } catch (err) {
+        toast(err.message || "Could not submit review");
+      }
+    };
+  }
+
+  $("ppReviewsList").innerHTML = rStats.list.length
+    ? rStats.list.map((r) => `
+      <div style="border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#fff">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+          <div style="font-weight:700;font-size:13px">${safe(r.userName || "Verified Customer")} <span style="color:#f59e0b;margin-left:6px">${"★".repeat(Math.max(1, Math.min(5, Number(r.rating || 5))))}</span></div>
+          <span style="font-size:11.5px;color:var(--muted)">${new Date(r.createdAt || Date.now()).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</span>
+        </div>
+        <p style="margin:6px 0 0;font-size:13px;color:#334155;line-height:1.5">${safe(r.comment || "")}</p>
+      </div>
+    `).join("")
+    : `<p class="muted" style="margin:0;font-size:13px">No customer reviews for this product yet.</p>`;
+}
+
 function openProductPreview(id, pushUrl = true) {
   const p = products[id];
   if (!p) return;
   activePreviewId = id;
   const stock = Number(p.stock || 0);
   const disc = p.oldPrice > p.price ? Math.round(((p.oldPrice - p.price) / p.oldPrice) * 100) : 0;
-  const ratingNum = Number(p.rating || 4.7);
-  const stars = "★".repeat(Math.max(1, Math.min(5, Math.round(ratingNum))));
 
   $("ppBreadcrumb").textContent = `Home › ${p.category || "Store"} › ${p.brand || "Official"} › ${p.name}`;
   $("ppTitle").textContent = p.name;
-  $("ppRating").innerHTML = `<span class="stars">${stars}</span> <span>Ratings ${Number(p.reviewCount || 0)}</span>`;
+  renderPreviewReviews(id);
   $("ppBrandLink").textContent = p.brand || "SPR ZONE BD";
   $("ppBrandLink").onclick = (e) => {
     e.preventDefault();
@@ -2109,6 +2296,20 @@ function renderAccountModalData() {
   $("profPhone").value = userProfile?.phone ?? "";
   $("profBio").value = userProfile?.bio ?? "";
 
+  const providerIds = (currentUser.providerData || []).map((p) => p.providerId);
+  const hasGoogle = providerIds.includes("google.com");
+  const hasPassword = providerIds.includes("password");
+  const providerLabels = [
+    hasPassword ? "✅ Email & Password" : null,
+    hasGoogle ? "✅ Google Account" : null
+  ].filter(Boolean);
+  $("accountProvidersSummary").textContent = providerLabels.length
+    ? `Linked: ${providerLabels.join(" · ")}`
+    : "Signed in";
+  $("linkGoogleAccountBtn").classList.toggle("hidden", hasGoogle);
+  $("showLinkPassBtn").classList.toggle("hidden", hasPassword);
+  if (hasPassword) $("linkPasswordWrap").classList.add("hidden");
+
   const addrEntries = Object.entries(userAddresses || {});
   $("savedAddressesList").innerHTML = addrEntries.length
     ? addrEntries.map(([id, a]) => `
@@ -2149,11 +2350,11 @@ function renderAccountModalData() {
   $("savedAddressesList").querySelectorAll("[data-def-addr]").forEach((b) => {
     b.onclick = async () => {
       const targetId = b.dataset.defAddr;
-      const updates = {};
+      const addrUpdates = {};
       Object.keys(userAddresses).forEach((k) => {
-        updates[`customers/${currentUser.uid}/addresses/${k}/isDefault`] = k === targetId;
+        addrUpdates[`${k}/isDefault`] = k === targetId;
       });
-      await update(ref(db), updates);
+      await update(ref(db, `customers/${currentUser.uid}/addresses`), addrUpdates);
       toast("Default address updated");
     };
   });
@@ -2173,6 +2374,10 @@ function resetAddressForm() {
   $("addrFormHeading").textContent = "Add New Address";
   $("addrSaveBtn").textContent = "➕ Save Address";
   $("addrLabel").value = "Home";
+  if (currentUser && !$("addrEditId").value) {
+    $("addrRecipient").value = userProfile?.name || currentUser.displayName || "";
+    $("addrPhone").value = userProfile?.phone || "";
+  }
   populateDistrictSelect("addrDivision", "addrDistrict");
 }
 
@@ -2205,8 +2410,8 @@ function openCheckout() {
       addrEntries.map(([id, a]) => `<option value="${safe(id)}" ${a.isDefault ? "selected" : ""}>${safe(a.label || "Address")}: ${safe(a.recipientName)} (${safe(a.district || a.division)})</option>`).join("");
     const def = addrEntries.find(([_, a]) => a.isDefault) || addrEntries[0];
     if (def) {
-      $("cName").value = def[1].recipientName || "";
-      $("cPhone").value = def[1].phone || "";
+      $("cName").value = def[1].recipientName || userProfile?.name || currentUser?.displayName || "";
+      $("cPhone").value = def[1].phone || userProfile?.phone || "";
       setSelectValueSafely($("cDivision"), def[1].division || "Dhaka");
       populateDistrictSelect("cDivision", "cDistrict", def[1].district || "");
       $("cAddress").value = `${def[1].street}, ${def[1].thana}`;
@@ -2214,8 +2419,8 @@ function openCheckout() {
   } else {
     wrap.classList.add("hidden");
     if (currentUser) {
-      $("cName").value = $("cName").value || userProfile?.name || currentUser.displayName || "";
-      $("cPhone").value = $("cPhone").value || userProfile?.phone || "";
+      $("cName").value = userProfile?.name || currentUser.displayName || "";
+      $("cPhone").value = userProfile?.phone || "";
     }
     if (previewDeliveryDivision) {
       setSelectValueSafely($("cDivision"), previewDeliveryDivision);
@@ -2285,24 +2490,42 @@ async function openOrdersModal(highlightId = "") {
   openModal("ordersModal");
   if (highlightId) {
     $("trackOrderInput").value = highlightId;
-    const snap = await get(ref(db, "orders/" + highlightId));
-    $("trackOrderResult").innerHTML = snap.exists()
-      ? renderSingleOrderCard(highlightId, snap.val())
-      : `<p class="muted">No order found with ID ${safe(highlightId)}</p>`;
+    try {
+      const snap = await get(ref(db, "orders/" + highlightId));
+      if (snap.exists()) {
+        $("trackOrderResult").innerHTML = renderSingleOrderCard(highlightId, snap.val());
+      } else if (localGuestOrders[highlightId]) {
+        $("trackOrderResult").innerHTML = renderSingleOrderCard(highlightId, localGuestOrders[highlightId]);
+      } else {
+        $("trackOrderResult").innerHTML = `<p class="muted">No order found with ID ${safe(highlightId)}</p>`;
+      }
+    } catch (_) {
+      if (localGuestOrders[highlightId]) {
+        $("trackOrderResult").innerHTML = renderSingleOrderCard(highlightId, localGuestOrders[highlightId]);
+      } else {
+        $("trackOrderResult").innerHTML = `<p class="muted">Please sign in with the customer account that placed order <b>${safe(highlightId)}</b> to view its protected details.</p>`;
+      }
+    }
   } else {
     $("trackOrderResult").innerHTML = "";
   }
 
   if (currentUser) {
-    const snap = await get(ref(db, "orders"));
-    const data = snap.val() || {};
-    const mine = Object.entries(data)
-      .filter(([_, o]) => (o.customerEmail || "").toLowerCase() === currentUser.email.toLowerCase() || o.uid === currentUser.uid)
-      .sort((a, b) => (b[1].createdAt || 0) - (a[1].createdAt || 0));
-    $("customerOrdersList").innerHTML = `<h3 style="margin:12px 0 8px">My Order History (${mine.length})</h3>` +
-      (mine.length ? mine.map(([id, o]) => renderSingleOrderCard(id, o)).join("") : `<p style="color:var(--muted)">You haven't placed any orders yet.</p>`);
+    try {
+      const snap = await get(dbQuery(ref(db, "orders"), orderByChild("uid"), equalTo(currentUser.uid)));
+      const data = snap.val() || {};
+      const mine = Object.entries(data)
+        .sort((a, b) => (b[1].createdAt || 0) - (a[1].createdAt || 0));
+      $("customerOrdersList").innerHTML = `<h3 style="margin:12px 0 8px">My Order History (${mine.length})</h3>` +
+        (mine.length ? mine.map(([id, o]) => renderSingleOrderCard(id, o)).join("") : `<p style="color:var(--muted)">You haven't placed any orders yet.</p>`);
+    } catch (_) {
+      $("customerOrdersList").innerHTML = `<p style="color:var(--muted);font-size:13px">Could not load order history right now. Track an order ID above.</p>`;
+    }
   } else {
-    $("customerOrdersList").innerHTML = `<p style="color:var(--muted);font-size:13px">Sign in to view your full order history, or track any order above using its Order ID.</p>`;
+    const guestEntries = Object.entries(localGuestOrders || {}).sort((a, b) => (b[1].createdAt || 0) - (a[1].createdAt || 0));
+    $("customerOrdersList").innerHTML = guestEntries.length
+      ? `<h3 style="margin:12px 0 8px">Recent Session Orders (${guestEntries.length})</h3>` + guestEntries.map(([id, o]) => renderSingleOrderCard(id, o)).join("")
+      : `<p style="color:var(--muted);font-size:13px">Sign in to view your full order history, or track your Order ID above.</p>`;
   }
 
   $("ordersModal").querySelectorAll("[data-cancel-order]").forEach((b) => {
@@ -2334,6 +2557,15 @@ function subscribeStoreData() {
   onValue(ref(db, "categories"), (snap) => {
     categories = snap.val() || {};
     renderCategories();
+  });
+
+  onValue(ref(db, "reviews"), (snap) => {
+    reviews = snap.val() || {};
+    renderProducts();
+    if (activePreviewId && products[activePreviewId]) {
+      renderPreviewReviews(activePreviewId);
+      renderRelatedProducts(activePreviewId);
+    }
   });
 
   onValue(ref(db, "coupons"), (snap) => {
@@ -2379,8 +2611,175 @@ function subscribeStoreData() {
   });
 }
 
+/* ---------- Real-time Customer Order Status Change Checker & Browser Toast ---------- */
+function orderStatusStorageKey(uid = "guest") {
+  return `spr_order_statuses_${uid}`;
+}
+
+function showBrowserOrderStatusToast(orderId, prevStatus, nextStatus, orderObj = {}) {
+  const stack = $("orderStatusToastStack");
+  if (!stack) return;
+  const item = document.createElement("div");
+  item.className = "order-status-toast";
+  const statusColor = nextStatus === "Confirmed" || nextStatus === "Delivered"
+    ? "var(--emerald)"
+    : nextStatus === "Cancelled"
+      ? "var(--crimson)"
+      : "var(--gold)";
+  item.style.borderLeftColor = statusColor;
+
+  const badgeCls = nextStatus === "Confirmed" || nextStatus === "Delivered"
+    ? "green"
+    : nextStatus === "Cancelled"
+      ? "red"
+      : "amber";
+
+  item.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+      <div style="font-weight:800;font-size:13.5px;color:var(--ink)">📦 Order Status Updated</div>
+      <button type="button" class="outline sm" style="min-height:24px;padding:2px 7px;font-size:11px" aria-label="Dismiss notification">✕</button>
+    </div>
+    <div style="font-size:12.5px;color:var(--muted)">
+      Order <b style="color:var(--ink)">${safe(orderId)}</b> changed from
+      <b>${safe(prevStatus)}</b> → <span class="badge ${badgeCls}">${safe(nextStatus)}</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:2px">
+      <span style="font-size:12px;font-weight:700;color:var(--crimson)">Total: ${money(orderObj.total || 0)}</span>
+      <button type="button" class="secondary sm" data-view-toast-order="${safe(orderId)}" style="min-height:28px;font-size:11.5px">Track Order →</button>
+    </div>
+  `;
+
+  const removeToast = () => {
+    clearTimeout(timer);
+    item.remove();
+  };
+  const timer = setTimeout(removeToast, 7500);
+  item.querySelector("button[aria-label='Dismiss notification']").onclick = removeToast;
+  item.querySelector("[data-view-toast-order]").onclick = () => {
+    removeToast();
+    openOrdersModal(orderId);
+  };
+  stack.prepend(item);
+
+  // Also trigger Web Notification if the browser permission is already granted
+  try {
+    if ("Notification" in window && Notification.permission === "granted") {
+      new Notification(`SPR ZONE BD — Order ${orderId}`, {
+        body: `Your order status updated from ${prevStatus} to ${nextStatus}.`,
+        icon: "assets/favicon.svg"
+      });
+    }
+  } catch (_) {}
+}
+
+function flushPendingOrderToasts() {
+  if (document.visibilityState !== "visible") return;
+  if (!pendingOrderStatusToasts.length) return;
+  const toShow = pendingOrderStatusToasts.splice(0, pendingOrderStatusToasts.length);
+  toShow.forEach((n) => showBrowserOrderStatusToast(n.orderId, n.prevStatus, n.nextStatus, n.orderObj));
+}
+
+function checkOrderStatusChanges(ordersMap = {}, uid = "guest") {
+  const storageKey = orderStatusStorageKey(uid);
+  let persisted = {};
+  try {
+    persisted = JSON.parse(localStorage.getItem(storageKey) || "{}");
+  } catch (_) {}
+
+  const entries = Object.entries(ordersMap || {});
+  const nextKnown = { ...knownOrderStatuses };
+  const changes = [];
+
+  for (const [orderId, orderObj] of entries) {
+    const currentStatus = String(orderObj?.status || "Pending");
+    const previousStatus = orderWatcherBaselineReady
+      ? knownOrderStatuses[orderId]
+      : persisted[orderId];
+
+    if (previousStatus && previousStatus !== currentStatus) {
+      changes.push({ orderId, prevStatus: previousStatus, nextStatus: currentStatus, orderObj });
+    }
+    nextKnown[orderId] = currentStatus;
+  }
+
+  knownOrderStatuses = nextKnown;
+  orderWatcherBaselineReady = true;
+  try {
+    localStorage.setItem(storageKey, JSON.stringify(nextKnown));
+  } catch (_) {}
+
+  if (changes.length) {
+    changes.forEach((ch) => {
+      if (document.visibilityState === "visible") {
+        showBrowserOrderStatusToast(ch.orderId, ch.prevStatus, ch.nextStatus, ch.orderObj);
+      } else {
+        pendingOrderStatusToasts.push(ch);
+      }
+    });
+    if ($("ordersModal")?.classList.contains("show")) {
+      const highlighted = $("trackOrderInput")?.value?.trim() || "";
+      openOrdersModal(highlighted);
+    }
+  }
+}
+
+function startCustomerOrderWatcher(user) {
+  if (unsubscribeOrderWatcher) {
+    unsubscribeOrderWatcher();
+    unsubscribeOrderWatcher = null;
+  }
+  knownOrderStatuses = {};
+  orderWatcherBaselineReady = false;
+  pendingOrderStatusToasts = [];
+
+  if (!user) return;
+  unsubscribeOrderWatcher = onValue(
+    dbQuery(ref(db, "orders"), orderByChild("uid"), equalTo(user.uid)),
+    (snap) => {
+      checkOrderStatusChanges(snap.val() || {}, user.uid);
+    },
+    () => {}
+  );
+}
+
+document.addEventListener("visibilitychange", flushPendingOrderToasts);
+window.addEventListener("focus", flushPendingOrderToasts);
+
+async function mergeCustomerProfileFromAuth(user, preferredName = "", preferredPhone = "") {
+  if (!user) return null;
+  const custRef = ref(db, "customers/" + user.uid);
+  const snap = await get(custRef);
+  const now = Date.now();
+  const providerList = (user.providerData || []).map((p) => p.providerId);
+  if (!snap.exists()) {
+    const seed = {
+      name: (preferredName || user.displayName || (user.email ? user.email.split("@")[0] : "Customer")).trim(),
+      email: user.email || "",
+      phone: preferredPhone || "",
+      photoURL: user.photoURL || "",
+      providers: providerList,
+      createdAt: now,
+      updatedAt: now
+    };
+    await set(custRef, seed);
+    return seed;
+  }
+  const existing = snap.val() || {};
+  const merged = {
+    name: existing.name || preferredName || user.displayName || (user.email ? user.email.split("@")[0] : "Customer"),
+    email: existing.email || user.email || "",
+    phone: existing.phone || preferredPhone || "",
+    photoURL: existing.photoURL || user.photoURL || "",
+    providers: providerList,
+    updatedAt: now
+  };
+  await update(custRef, merged);
+  return { ...existing, ...merged };
+}
+
 onAuthStateChanged(auth, async (user) => {
   if (unsubscribeCustomer) { unsubscribeCustomer(); unsubscribeCustomer = null; }
+  if (unsubscribeOrderWatcher) { unsubscribeOrderWatcher(); unsubscribeOrderWatcher = null; }
   currentUser = user;
   userProfile = null;
   userAddresses = {};
@@ -2395,17 +2794,12 @@ onAuthStateChanged(auth, async (user) => {
     $("accountBtn").textContent = `👤 ${user.displayName || user.email.split("@")[0]}`;
     $("adminPortalLink").classList.toggle("hidden", !isAdmin);
 
+    startCustomerOrderWatcher(user);
+
     unsubscribeCustomer = onValue(ref(db, "customers/" + user.uid), async (snap) => {
       if (!snap.exists()) {
         try {
-          const seed = {
-            name: user.displayName || (user.email ? user.email.split("@")[0] : "Customer"),
-            email: user.email || "",
-            phone: "",
-            createdAt: Date.now(),
-            updatedAt: Date.now()
-          };
-          await set(ref(db, "customers/" + user.uid), seed);
+          const seed = await mergeCustomerProfileFromAuth(user);
           userProfile = seed;
           userAddresses = {};
           renderAccountModalData();
@@ -2422,6 +2816,7 @@ onAuthStateChanged(auth, async (user) => {
       }
     });
   } else {
+    startCustomerOrderWatcher(null);
     $("accountBtn").textContent = "👤 Login | Register";
     $("adminPortalLink").classList.add("hidden");
   }
@@ -2451,7 +2846,7 @@ $("deliveryZoneForm").onsubmit = (e) => {
   previewDeliveryArea = $("dzArea").value.trim();
   closeModal("deliveryZoneModal");
   if (activePreviewId && products[activePreviewId]) {
-    refreshPreviewDeliveryUI(products[activePreviewId]);
+    refreshPreviewDeliveryUI(products[actactivePreviewIdivePreviewId]);
   }
   toast("Delivery location updated");
 };
@@ -2509,12 +2904,16 @@ $("checkoutSavedAddr").onchange = () => {
   const id = $("checkoutSavedAddr").value;
   const a = userAddresses[id];
   if (a) {
-    $("cName").value = a.recipientName || "";
-    $("cPhone").value = a.phone || "";
+    $("cName").value = a.recipientName || userProfile?.name || currentUser?.displayName || "";
+    $("cPhone").value = a.phone || userProfile?.phone || "";
     setSelectValueSafely($("cDivision"), a.division || "Dhaka");
     populateDistrictSelect("cDivision", "cDistrict", a.district || "");
     $("cAddress").value = `${a.street}, ${a.thana}`;
     syncCheckoutTotalsUI();
+  } else if (currentUser) {
+    $("cName").value = userProfile?.name || currentUser.displayName || "";
+    $("cPhone").value = userProfile?.phone || "";
+    $("cAddress").value = previewDeliveryArea || "";
   }
 };
 
@@ -2563,6 +2962,8 @@ $("checkoutForm").onsubmit = async (e) => {
   $("placeOrderBtn").textContent = "Placing Order...";
   try {
     await set(ref(db, "orders/" + orderId), orderData);
+    localGuestOrders[orderId] = orderData;
+    try { sessionStorage.setItem("spr_guest_orders", JSON.stringify(localGuestOrders)); } catch (_) {}
     cart = [];
     appliedPromoCode = "";
     saveCart();
@@ -2579,16 +2980,143 @@ $("checkoutForm").onsubmit = async (e) => {
 };
 
 /* ---------- Auth & Account Modals ---------- */
+function clearAuthLinkingNotice() {
+  pendingLinkCredential = null;
+  pendingLinkEmail = "";
+  $("authLinkNotice").classList.add("hidden");
+  $("authLinkNotice").innerHTML = "";
+}
+
+function togglePasswordVisibility(inputEl, btnEl) {
+  if (!inputEl || !btnEl) return;
+  const showing = inputEl.type === "text";
+  inputEl.type = showing ? "password" : "text";
+  btnEl.textContent = showing ? "👁️" : "🙈";
+  btnEl.setAttribute("aria-label", showing ? "Show password" : "Hide password");
+}
+
+$("toggleAuthPasswordBtn").onclick = () => togglePasswordVisibility($("authPassword"), $("toggleAuthPasswordBtn"));
+$("toggleLinkPassBtn").onclick = () => togglePasswordVisibility($("linkNewPasswordInput"), $("toggleLinkPassBtn"));
+
+$("forgotPasswordBtn").onclick = () => {
+  const panel = $("forgotPasswordPanel");
+  const isHidden = panel.classList.contains("hidden");
+  panel.classList.toggle("hidden", !isHidden);
+  if (isHidden) {
+    $("forgotEmailInput").value = $("authEmail").value.trim();
+    $("forgotResetStatus").textContent = "";
+    $("forgotEmailInput").focus();
+  }
+};
+
+$("sendResetEmailBtn").onclick = async () => {
+  const email = ($("forgotEmailInput").value || $("authEmail").value).trim();
+  if (!email) return toast("Enter your email address to reset password.");
+  $("sendResetEmailBtn").disabled = true;
+  $("sendResetEmailBtn").textContent = "Sending...";
+  try {
+    await sendPasswordResetEmail(auth, email);
+    $("forgotResetStatus").style.color = "var(--emerald-dark)";
+    $("forgotResetStatus").textContent = `✅ Reset link sent to ${email}. Check Inbox & Spam folder.`;
+    toast(`Password reset link sent to ${email}`);
+  } catch (err) {
+    $("forgotResetStatus").style.color = "var(--crimson)";
+    $("forgotResetStatus").textContent = err?.code === "auth/user-not-found"
+      ? "No account found with this email."
+      : (err?.message || "Could not send reset email.");
+  } finally {
+    $("sendResetEmailBtn").disabled = false;
+    $("sendResetEmailBtn").textContent = "Send Link";
+  }
+};
+
+async function finalizeGoogleSignInUser(user) {
+  if (!user) return;
+  if (pendingLinkPassword && user.email) {
+    try {
+      const emailCred = EmailAuthProvider.credential(user.email, pendingLinkPassword);
+      await linkWithCredential(user, emailCred);
+      toast("Google & Email password linked to your account!");
+    } catch (_) {}
+    pendingLinkPassword = "";
+  }
+  const merged = await mergeCustomerProfileFromAuth(user);
+  userProfile = merged;
+  $("accountBtn").textContent = `👤 ${merged?.name || user.displayName || user.email?.split("@")[0] || "Customer"}`;
+  clearAuthLinkingNotice();
+  closeModal("authModal");
+  toast("Signed in with Google!");
+  if (activePreviewId && products[activePreviewId]) {
+    renderPreviewReviews(activePreviewId);
+  }
+}
+
+async function handleGoogleAuthFlow() {
+  const provider = new GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: "select_account" });
+  $("googleAuthBtn").disabled = true;
+  try {
+    const result = await signInWithPopup(auth, provider);
+    await finalizeGoogleSignInUser(result.user);
+  } catch (err) {
+    if (err?.code === "auth/account-exists-with-different-credential") {
+      const cred = GoogleAuthProvider.credentialFromError(err);
+      const email = err?.customData?.email || $("authEmail").value.trim();
+      pendingLinkCredential = cred;
+      pendingLinkEmail = email;
+      registerMode = false;
+      renderAuthMode();
+      if (email) $("authEmail").value = email;
+      $("authLinkNotice").innerHTML = `<b>🔗 Account Linking Needed:</b> Email <b>${safe(email)}</b> is already registered with Email/Password. Enter your password below once to link Google &amp; Email Sign-In permanently.`;
+      $("authLinkNotice").classList.remove("hidden");
+      toast("Enter your password once to link your Google account");
+    } else if (err?.code === "auth/popup-blocked" || err?.code === "auth/operation-not-supported-in-this-environment") {
+      await signInWithRedirect(auth, provider);
+    } else if (err?.code !== "auth/popup-closed-by-user") {
+      toast(err?.message || "Google sign-in failed");
+    }
+  } finally {
+    $("googleAuthBtn").disabled = false;
+  }
+}
+
+$("googleAuthBtn").onclick = handleGoogleAuthFlow;
+
+getRedirectResult(auth)
+  .then(async (res) => {
+    if (res?.user) await finalizeGoogleSignInUser(res.user);
+  })
+  .catch((err) => {
+    if (err?.code === "auth/account-exists-with-different-credential") {
+      pendingLinkCredential = GoogleAuthProvider.credentialFromError(err);
+      pendingLinkEmail = err?.customData?.email || "";
+      registerMode = false;
+      renderAuthMode();
+      if (pendingLinkEmail) $("authEmail").value = pendingLinkEmail;
+      $("authLinkNotice").innerHTML = `<b>🔗 Account Linking Needed:</b> Enter password for <b>${safe(pendingLinkEmail)}</b> once to link Google Sign-In.`;
+      $("authLinkNotice").classList.remove("hidden");
+      openModal("authModal");
+    }
+  });
+
 function renderAuthMode() {
   $("authTitle").textContent = registerMode ? "Create Customer Account" : "Customer Login";
   $("authSubmitBtn").textContent = registerMode ? "Create Account" : "Sign In";
   $("authNameWrap").classList.toggle("hidden", !registerMode);
   $("authPhoneWrap").classList.toggle("hidden", !registerMode);
+  $("forgotPasswordRow").classList.toggle("hidden", registerMode);
+  if (registerMode) $("forgotPasswordPanel").classList.add("hidden");
   $("authName").required = registerMode;
+  $("authPhone").required = registerMode;
   $("authSwitchRow").innerHTML = registerMode
     ? `Already have an account? <a href="#" id="authToggleLink" style="color:var(--emerald);font-weight:700">Sign In</a>`
     : `New to SPR ZONE BD? <a href="#" id="authToggleLink" style="color:var(--emerald);font-weight:700">Create Account</a>`;
-  $("authToggleLink").onclick = (e) => { e.preventDefault(); registerMode = !registerMode; renderAuthMode(); };
+  $("authToggleLink").onclick = (e) => {
+    e.preventDefault();
+    registerMode = !registerMode;
+    clearAuthLinkingNotice();
+    renderAuthMode();
+  };
 }
 
 $("accountBtn").onclick = () => {
@@ -2597,6 +3125,7 @@ $("accountBtn").onclick = () => {
     openModal("accountModal");
   } else {
     registerMode = false;
+    clearAuthLinkingNotice();
     renderAuthMode();
     openModal("authModal");
   }
@@ -2606,6 +3135,49 @@ $("signOutBtn").onclick = async () => {
   await signOut(auth);
   closeModal("accountModal");
   toast("Signed out");
+};
+
+$("linkGoogleAccountBtn").onclick = async () => {
+  if (!currentUser) return;
+  const provider = new GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: "select_account" });
+  try {
+    const res = await linkWithPopup(currentUser, provider);
+    await mergeCustomerProfileFromAuth(res.user);
+    renderAccountModalData();
+    toast("✅ Google Account linked! You can now sign in with Google or Password.");
+  } catch (err) {
+    if (err?.code === "auth/credential-already-in-use") {
+      toast("This Google account is already linked to another account.");
+    } else {
+      toast(err?.message || "Could not link Google account");
+    }
+  }
+};
+
+$("showLinkPassBtn").onclick = () => {
+  $("linkPasswordWrap").classList.toggle("hidden");
+};
+
+$("saveLinkPasswordBtn").onclick = async () => {
+  if (!currentUser || !currentUser.email) return;
+  const newPass = $("linkNewPasswordInput").value;
+  if (!newPass || newPass.length < 6) return toast("Password must be at least 6 characters.");
+  try {
+    const emailCred = EmailAuthProvider.credential(currentUser.email, newPass);
+    await linkWithCredential(currentUser, emailCred);
+    await mergeCustomerProfileFromAuth(currentUser);
+    $("linkNewPasswordInput").value = "";
+    $("linkPasswordWrap").classList.add("hidden");
+    renderAccountModalData();
+    toast("✅ Email password linked! You can now log in with Email or Google.");
+  } catch (err) {
+    if (err?.code === "auth/requires-recent-login") {
+      toast("Please sign out and sign back in with Google once, then set your password.");
+    } else {
+      toast(err?.message || "Could not link password");
+    }
+  }
 };
 
 document.querySelectorAll("[data-ac-tab]").forEach((t) => {
@@ -2670,13 +3242,13 @@ $("addressForm").onsubmit = async (e) => {
   const existingId = $("addrEditId").value;
   const addrId = existingId || push(ref(db, `customers/${currentUser.uid}/addresses`)).key;
   const makeDefault = $("addrDefault").checked || Object.keys(userAddresses || {}).length === 0;
-  const updates = {};
+  const addrUpdates = {};
   if (makeDefault) {
     Object.keys(userAddresses || {}).forEach((k) => {
-      updates[`customers/${currentUser.uid}/addresses/${k}/isDefault`] = false;
+      addrUpdates[`${k}/isDefault`] = false;
     });
   }
-  updates[`customers/${currentUser.uid}/addresses/${addrId}`] = {
+  addrUpdates[addrId] = {
     label: $("addrLabel").value.trim() || "Home",
     recipientName: $("addrRecipient").value.trim(),
     phone: normalizeBdPhone(phone),
@@ -2687,7 +3259,7 @@ $("addressForm").onsubmit = async (e) => {
     isDefault: makeDefault
   };
   try {
-    await update(ref(db), updates);
+    await update(ref(db, `customers/${currentUser.uid}/addresses`), addrUpdates);
     resetAddressForm();
     toast(existingId ? "Address updated!" : "Address saved!");
   } catch (err) {
@@ -2703,22 +3275,62 @@ $("authForm").onsubmit = async (e) => {
   try {
     if (registerMode) {
       const name = $("authName").value.trim();
-      const phone = $("authPhone").value.trim();
+      const phoneRaw = $("authPhone").value.trim();
+      const phoneNorm = normalizeBdPhone(phoneRaw);
+      if (!isValidBdPhone(phoneNorm)) return toast("Enter valid 11-digit BD mobile number (01XXXXXXXXX)");
       const cred = await createUserWithEmailAndPassword(auth, email, password);
       try { await updateProfile(cred.user, { displayName: name }); } catch (_) {}
-      await set(ref(db, "customers/" + cred.user.uid), {
+      const profileData = {
         name,
         email,
-        phone: phone ? normalizeBdPhone(phone) : "",
-        createdAt: Date.now()
-      });
+        phone: phoneNorm,
+        providers: ["password"],
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      };
+      await set(ref(db, "customers/" + cred.user.uid), profileData);
+      userProfile = profileData;
+      $("accountBtn").textContent = `👤 ${name}`;
     } else {
-      await signInWithEmailAndPassword(auth, email, password);
+      const cred = await signInWithEmailAndPassword(auth, email, password);
+      if (pendingLinkCredential && (!pendingLinkEmail || pendingLinkEmail.toLowerCase() === email.toLowerCase())) {
+        try {
+          await linkWithCredential(cred.user, pendingLinkCredential);
+          toast("✅ Google & Email/Password linked! You can use either method.");
+        } catch (_) {}
+      }
+      await mergeCustomerProfileFromAuth(cred.user);
     }
+    clearAuthLinkingNotice();
     closeModal("authModal");
     toast("Signed in successfully!");
+    if (activePreviewId && products[activePreviewId]) {
+      renderPreviewReviews(activePreviewId);
+    }
   } catch (err) {
-    toast(err.message);
+    if (err?.code === "auth/email-already-in-use") {
+      let methods = [];
+      try { methods = await fetchSignInMethodsForEmail(auth, email); } catch (_) {}
+      if (methods.includes("google.com") && !methods.includes("password")) {
+        pendingLinkPassword = password;
+        $("authLinkNotice").innerHTML = `<b>🔗 Google Account Exists:</b> <b>${safe(email)}</b> was created with Google. Tap <b>Continue with Google</b> below to link this password automatically!`;
+        $("authLinkNotice").classList.remove("hidden");
+        toast("Tap 'Continue with Google' to link this password with your Google account");
+      } else {
+        pendingLinkPassword = password;
+        registerMode = false;
+        renderAuthMode();
+        $("authLinkNotice").innerHTML = `<b>ℹ️ Account Exists:</b> <b>${safe(email)}</b> is already registered. Sign in with your password, reset password, or tap <b>Continue with Google</b> to link accounts.`;
+        $("authLinkNotice").classList.remove("hidden");
+        toast("Account already exists — switched to Sign In");
+      }
+    } else if (err?.code === "auth/invalid-credential" || err?.code === "auth/wrong-password") {
+      $("authLinkNotice").innerHTML = `Incorrect password or Google-linked account. Try <b>Forgot Password?</b> or tap <b>Continue with Google</b> below.`;
+      $("authLinkNotice").classList.remove("hidden");
+      toast("Invalid credentials — try Forgot Password or Continue with Google");
+    } else {
+      toast(err.message);
+    }
   }
 };
 

@@ -16,6 +16,15 @@
       ".read": true,
       ".write": "auth != null && (auth.token.email == 'mail.sajjadahmed@gmail.com' || auth.token.admin === true)"
     },
+    "reviews": {
+      ".read": true,
+      "$productId": {
+        "$reviewId": {
+          ".write": "auth != null && (auth.token.email == 'mail.sajjadahmed@gmail.com' || auth.token.admin === true || (!data.exists() && newData.exists() && newData.child('uid').val() == auth.uid) || (data.exists() && data.child('uid').val() == auth.uid))",
+          ".validate": "newData.hasChildren(['userName', 'uid', 'rating', 'comment', 'createdAt']) && !newData.hasChild('email') && !newData.hasChild('customerEmail') && !newData.hasChild('phone') && newData.child('rating').isNumber() && newData.child('rating').val() >= 1 && newData.child('rating').val() <= 5"
+        }
+      }
+    },
     "settings": {
       "store": {
         ".read": true,
@@ -36,12 +45,10 @@
     },
     "sms_inbox": {
       ".read": "auth != null && (auth.token.email == 'mail.sajjadahmed@gmail.com' || auth.token.admin === true)",
-      "$trxId": {
-        ".read": true,
-        ".write": "(auth != null && (auth.token.email == 'mail.sajjadahmed@gmail.com' || auth.token.admin === true)) || (data.exists() && (!data.child('matchedOrderId').exists() || data.child('matchedOrderId').val() == '') && newData.child('matchedOrderId').val() != '')"
-      }
+      ".write": "auth != null && (auth.token.email == 'mail.sajjadahmed@gmail.com' || auth.token.admin === true)"
     },
     "customers": {
+      ".indexOn": ["email", "phone"],
       ".read": "auth != null && (auth.token.email == 'mail.sajjadahmed@gmail.com' || auth.token.admin === true)",
       "$uid": {
         ".read": "auth != null && (auth.uid == $uid || auth.token.email == 'mail.sajjadahmed@gmail.com' || auth.token.admin === true)",
@@ -53,10 +60,11 @@
       ".write": true
     },
     "orders": {
-      ".read": true,
+      ".indexOn": ["uid", "customerEmail", "orderId"],
+      ".read": "auth != null && (auth.token.email == 'mail.sajjadahmed@gmail.com' || auth.token.admin === true || (query.orderByChild == 'uid' && query.equalTo == auth.uid) || (query.orderByChild == 'customerEmail' && query.equalTo == auth.token.email))",
       "$orderId": {
-        ".read": true,
-        ".write": "(auth != null && (auth.token.email == 'mail.sajjadahmed@gmail.com' || auth.token.admin === true)) || (!data.exists() && newData.exists()) || (data.exists() && (data.child('status').val() == 'Pending' || data.child('status').val() == 'Placed') && newData.child('status').val() == 'Cancelled')"
+        ".read": "auth != null && (auth.token.email == 'mail.sajjadahmed@gmail.com' || auth.token.admin === true || data.child('uid').val() == auth.uid || data.child('customerEmail').val() == auth.token.email)",
+        ".write": "(auth != null && (auth.token.email == 'mail.sajjadahmed@gmail.com' || auth.token.admin === true)) || (!data.exists() && newData.exists()) || (auth != null && data.exists() && (data.child('uid').val() == auth.uid || data.child('customerEmail').val() == auth.token.email) && (data.child('status').val() == 'Pending' || data.child('status').val() == 'Placed') && newData.child('status').val() == 'Cancelled')"
       }
     }
   }

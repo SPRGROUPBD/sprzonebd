@@ -174,6 +174,16 @@ data class RemoteCustomerProfileDto(
 )
 
 @JsonClass(generateAdapter = true)
+data class RemoteReviewDto(
+    val uid: String? = null,
+    val userName: String? = null,
+    val rating: Int? = null,
+    val comment: String? = null,
+    val verifiedPurchase: Boolean? = null,
+    val createdAt: Long? = null
+)
+
+@JsonClass(generateAdapter = true)
 data class FirebaseAuthRequest(
     val email: String,
     val password: String,
@@ -195,6 +205,71 @@ data class FirebaseDeleteAccountRequest(
 )
 
 @JsonClass(generateAdapter = true)
+data class FirebaseSendOobCodeRequest(
+    val requestType: String = "PASSWORD_RESET",
+    val email: String
+)
+
+@JsonClass(generateAdapter = true)
+data class FirebaseSendOobCodeResponse(
+    val email: String? = null
+)
+
+@JsonClass(generateAdapter = true)
+data class FirebaseSignInWithIdpRequest(
+    val postBody: String,
+    val requestUri: String = "https://e-commarcebd.firebaseapp.com",
+    val returnIdpCredential: Boolean = true,
+    val returnSecureToken: Boolean = true,
+    val idToken: String? = null
+)
+
+@JsonClass(generateAdapter = true)
+data class FirebaseSignInWithIdpResponse(
+    val localId: String? = null,
+    val email: String? = null,
+    val displayName: String? = null,
+    val idToken: String? = null,
+    val refreshToken: String? = null,
+    val federatedId: String? = null,
+    val providerId: String? = null,
+    val needConfirmation: Boolean? = null,
+    val verifiedProvider: List<String>? = null
+)
+
+@JsonClass(generateAdapter = true)
+data class FirebaseLookupRequest(
+    val idToken: String
+)
+
+@JsonClass(generateAdapter = true)
+data class FirebaseLookupProviderDto(
+    val providerId: String? = null,
+    val email: String? = null
+)
+
+@JsonClass(generateAdapter = true)
+data class FirebaseLookupUserDto(
+    val localId: String? = null,
+    val email: String? = null,
+    val displayName: String? = null,
+    val providerUserInfo: List<FirebaseLookupProviderDto>? = null
+)
+
+@JsonClass(generateAdapter = true)
+data class FirebaseLookupResponse(
+    val users: List<FirebaseLookupUserDto>? = null
+)
+
+@JsonClass(generateAdapter = true)
+data class FirebaseUpdateAccountRequest(
+    val idToken: String,
+    val password: String? = null,
+    val displayName: String? = null,
+    val returnSecureToken: Boolean = true
+)
+
+@JsonClass(generateAdapter = true)
 data class FirebaseTokenRefreshResponse(
     val id_token: String? = null,
     val refresh_token: String? = null,
@@ -212,6 +287,30 @@ interface FirebaseAuthRestService {
     suspend fun signInWithPassword(
         @Query("key") apiKey: String = StoreConstants.FIREBASE_WEB_API_KEY,
         @Body body: FirebaseAuthRequest
+    ): Response<FirebaseAuthResponse?>
+
+    @POST("v1/accounts:signInWithIdp")
+    suspend fun signInWithIdp(
+        @Query("key") apiKey: String = StoreConstants.FIREBASE_WEB_API_KEY,
+        @Body body: FirebaseSignInWithIdpRequest
+    ): Response<FirebaseSignInWithIdpResponse?>
+
+    @POST("v1/accounts:sendOobCode")
+    suspend fun sendOobCode(
+        @Query("key") apiKey: String = StoreConstants.FIREBASE_WEB_API_KEY,
+        @Body body: FirebaseSendOobCodeRequest
+    ): Response<FirebaseSendOobCodeResponse?>
+
+    @POST("v1/accounts:lookup")
+    suspend fun lookupAccount(
+        @Query("key") apiKey: String = StoreConstants.FIREBASE_WEB_API_KEY,
+        @Body body: FirebaseLookupRequest
+    ): Response<FirebaseLookupResponse?>
+
+    @POST("v1/accounts:update")
+    suspend fun updateAccount(
+        @Query("key") apiKey: String = StoreConstants.FIREBASE_WEB_API_KEY,
+        @Body body: FirebaseUpdateAccountRequest
     ): Response<FirebaseAuthResponse?>
 
     @POST("v1/accounts:delete")
@@ -246,6 +345,17 @@ interface SprZoneRtdbService {
 
     @GET("deals/appNotifications.json")
     suspend fun getAppNotifications(): Response<Map<String, RemoteAppNotificationDto>?>
+
+    @GET("reviews.json")
+    suspend fun getReviews(): Response<Map<String, Map<String, RemoteReviewDto>>?>
+
+    @PUT("reviews/{productId}/{reviewId}.json")
+    suspend fun putReview(
+        @Path("productId") productId: String,
+        @Path("reviewId") reviewId: String,
+        @Query("auth") authToken: String,
+        @Body review: RemoteReviewDto
+    ): Response<RemoteReviewDto?>
 
     @GET("customers/{uid}.json")
     suspend fun getCustomerProfile(
@@ -311,15 +421,23 @@ interface SprZoneRtdbService {
     ): Response<RemoteOrderDto?>
 
     @GET("orders/{orderId}.json")
-    suspend fun getOrder(@Path("orderId") orderId: String): Response<RemoteOrderDto?>
+    suspend fun getOrder(
+        @Path("orderId") orderId: String,
+        @Query("auth") authToken: String? = null
+    ): Response<RemoteOrderDto?>
 
     @GET("orders.json")
-    suspend fun getAllOrders(): Response<Map<String, RemoteOrderDto>?>
+    suspend fun getOrdersByUid(
+        @Query("orderBy") orderBy: String = "\"uid\"",
+        @Query("equalTo") equalTo: String,
+        @Query("auth") authToken: String
+    ): Response<Map<String, RemoteOrderDto>?>
 
     @PATCH("orders/{orderId}.json")
     suspend fun patchOrderStatus(
         @Path("orderId") orderId: String,
-        @Body patch: Map<String, Any>
+        @Body patch: Map<String, @JvmSuppressWildcards Any>,
+        @Query("auth") authToken: String? = null
     ): Response<Map<String, Any>?>
 
     @GET
@@ -349,6 +467,14 @@ object SprZoneNetworkClient {
             .connectTimeout(12, TimeUnit.SECONDS)
             .readTimeout(12, TimeUnit.SECONDS)
             .writeTimeout(12, TimeUnit.SECONDS)
+            .build()
+    }
+
+    val sseHttpClient: OkHttpClient by lazy {
+        OkHttpClient.Builder()
+            .connectTimeout(15, TimeUnit.SECONDS)
+            .readTimeout(0, TimeUnit.MILLISECONDS)
+            .retryOnConnectionFailure(true)
             .build()
     }
 

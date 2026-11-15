@@ -288,17 +288,17 @@ fun ProductCard(
                     Icon(
                         imageVector = Icons.Filled.Star,
                         contentDescription = null,
-                        tint = StarAmber,
+                        tint = if (product.reviewCount > 0) StarAmber else MaterialTheme.colorScheme.outlineVariant,
                         modifier = Modifier.size(14.dp)
                     )
                     Spacer(modifier = Modifier.width(3.dp))
                     Text(
-                        text = "${product.rating}",
+                        text = if (product.reviewCount > 0) "${product.rating}" else "0.0",
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = " (${product.reviewCount})",
+                        text = if (product.reviewCount > 0) " (${product.reviewCount})" else " (No reviews)",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

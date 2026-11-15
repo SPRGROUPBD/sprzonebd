@@ -126,36 +126,6 @@ fun HomeScreen(
                 .widthIn(max = 1200.dp)
                 .align(Alignment.TopCenter)
         ) {
-            // Emerald Top Promise Bar (matching screenshot)
-            item {
-                Surface(
-                    color = EmeraldDark,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 7.dp)
-                    ) {
-                        Text(
-                            text = "🇧🇩 Free Home Delivery across Bangladesh",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = Color.White,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.weight(1f)
-                        )
-                        Text(
-                            text = "24/7 Support: ${stringResource(R.string.support_hotline)}",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = Color(0xFFD5F5E3)
-                        )
-                    }
-                }
-            }
-
             // White Brand Header + Notification Bell, Sync & Theme (NO Admin UI)
             item {
                 Row(

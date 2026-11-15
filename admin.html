@@ -91,6 +91,20 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .inv-table th,.inv-table td{border-bottom:1px solid #e2e8f0;padding:8px 6px;text-align:left}
 .inv-table th{background:#f8faf9;color:var(--muted);font-size:12px;text-transform:uppercase}
 .toast{position:fixed;bottom:20px;right:20px;background:#0f291c;color:#fff;padding:12px 18px;border-radius:10px;display:none;z-index:90;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.22)}
+.pass-wrap{position:relative;display:flex;align-items:center}
+.pass-wrap input{padding-right:42px}
+.pass-toggle{
+  position:absolute;right:6px;top:50%;transform:translateY(-50%);
+  background:transparent;color:var(--muted);padding:4px 8px;min-height:30px;border-radius:6px;font-size:15px;
+}
+.pass-toggle:hover{background:var(--emerald-soft);color:var(--emerald-dark)}
+.auth-divider{display:flex;align-items:center;gap:10px;margin:12px 0;color:var(--muted);font-size:12px;font-weight:700}
+.auth-divider::before,.auth-divider::after{content:"";flex:1;height:1px;background:var(--line)}
+.google-btn{
+  width:100%;background:#fff;color:var(--ink);border:1.5px solid #cbd5e1;
+  font-weight:700;gap:10px;min-height:42px;
+}
+.google-btn:hover{background:#f8faf9;border-color:#94a3b8}
 .hidden{display:none!important}
 .muted{color:var(--muted)}
 
@@ -148,11 +162,32 @@ button:disabled{opacity:.5;cursor:not-allowed}
       Signed-in account <b id="nonAdminEmail"></b> does not have Admin permissions. Please sign out and log in with <b>mail.sajjadahmed@gmail.com</b>.
       <div style="margin-top:8px"><button type="button" class="crimson sm" id="switchAccountBtn">Sign Out &amp; Switch Account</button></div>
     </div>
+    <div id="adminLinkNotice" class="hidden" style="background:#fef3c7;color:#92400e;border:1px solid #fcd34d;border-radius:10px;padding:10px 12px;font-size:12.5px;margin-bottom:10px"></div>
     <form id="adminLoginForm">
       <div class="field"><label>Admin Email *</label><input id="loginEmail" type="email" required value="mail.sajjadahmed@gmail.com"></div>
-      <div class="field"><label>Password *</label><input id="loginPassword" type="password" required placeholder="Enter admin password"></div>
+      <div class="field">
+        <label>Password *</label>
+        <div class="pass-wrap">
+          <input id="loginPassword" type="password" required placeholder="Enter admin password">
+          <button type="button" class="pass-toggle" id="toggleAdminPassBtn" aria-label="Show password">👁️</button>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin:-4px 0 8px">
+        <button type="button" class="outline sm" id="adminForgotPassBtn" style="border:0;color:var(--emerald);padding:2px 6px;min-height:26px">Forgot Password?</button>
+      </div>
       <button type="submit" style="width:100%">Sign In to Admin Portal</button>
     </form>
+    <div id="adminResetStatus" class="hidden" style="font-size:12.5px;margin-top:8px;padding:8px 10px;border-radius:8px;background:#f8faf9;border:1px solid var(--line)"></div>
+    <div class="auth-divider">OR</div>
+    <button type="button" class="google-btn" id="adminGoogleLoginBtn">
+      <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+        <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17Z"/>
+        <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.11-6.72-4.96H1.29v3.14C3.26 21.3 7.31 24 12 24Z"/>
+        <path fill="#FBBC05" d="M5.28 14.24c-.24-.72-.38-1.49-.38-2.24s.14-1.52.38-2.24V6.62H1.29C.47 8.24 0 10.06 0 12s.47 3.76 1.29 5.38l3.99-3.14Z"/>
+        <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.62l3.99 3.14c.95-2.85 3.6-4.96 6.72-4.96Z"/>
+      </svg>
+      <span>Continue with Google (Admin)</span>
+    </button>
   </div>
 
   <!-- Admin Dashboard -->
@@ -213,7 +248,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
           </div>
           <div class="form-row">
             <div class="field"><label>Free Delivery Min Qty (0 = off)</label><input id="pFreeShipMinQty" type="number" min="0" value="0" title="Set 1 for always free delivery on this product, or 2+ for qty-wise free delivery"></div>
-            <div class="field"><label>Rating (1.0 - 5.0)</label><input id="pRating" type="number" min="1" max="5" step="0.1" value="4.8"></div>
+            <div class="field"><label>Rating (Live from Reviews)</label><input id="pRating" type="number" min="0" max="5" step="0.1" value="0" readonly title="Automatically calculated from real customer reviews"></div>
           </div>
           <div class="form-row">
             <div class="field"><label>Colours (comma-separated)</label><input id="pColors" placeholder="Red, Blue, Black, White"></div>
@@ -461,7 +496,50 @@ button:disabled{opacity:.5;cursor:not-allowed}
 
       <div class="card">
         <h3 style="margin-bottom:12px">Live Storefront &amp; Invoice Identity Preview</h3>
-        <div id="storeSettingsPreview" style="background:#f8faf9;border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:8px;font-size:13.5px"></div>
+        <div id="storeSettingsPreview" style="background:#f8faf9;border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:8px;font-size:13.5px;margin-bottom:18px"></div>
+
+        <hr style="border:0;border-top:1px solid var(--line);margin:14px 0">
+        <h3 style="margin-bottom:6px">📧 Order Confirmation Email Automation</h3>
+        <p class="muted" style="font-size:12px;margin:0 0 12px">
+          Automatically sends a confirmation email to the customer whenever an order is marked <b>Confirmed</b>. Stored privately under Admin-only database settings.
+        </p>
+        <form id="emailSettingsForm">
+          <label style="display:flex;align-items:center;gap:6px;font-weight:700;margin-bottom:10px">
+            <input type="checkbox" id="esEnabled" checked style="width:auto"> Enable Automatic Order Confirmation Email
+          </label>
+          <div class="field">
+            <label>Email Provider</label>
+            <select id="esProvider">
+              <option value="webhook">Google Apps Script / Webhook URL (Recommended — Free Gmail)</option>
+              <option value="emailjs">EmailJS REST API</option>
+            </select>
+          </div>
+          <div id="esWebhookFields">
+            <div class="field">
+              <label>Webhook / Apps Script Web App URL</label>
+              <input id="esWebhookUrl" type="url" placeholder="https://script.google.com/macros/s/.../exec">
+            </div>
+          </div>
+          <div id="esEmailjsFields" class="hidden">
+            <div class="form-row">
+              <div class="field"><label>EmailJS Service ID</label><input id="esEmailjsService" placeholder="service_xxxxxxx"></div>
+              <div class="field"><label>EmailJS Template ID</label><input id="esEmailjsTemplate" placeholder="template_xxxxxxx"></div>
+            </div>
+            <div class="field"><label>EmailJS Public Key</label><input id="esEmailjsPublicKey" placeholder="public_key_xxxxxxx"></div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+            <button type="submit" style="flex:1">💾 Save Email Settings</button>
+            <button type="button" class="secondary" id="esTestBtn">✉️ Send Test Mail</button>
+          </div>
+          <details style="font-size:12px;color:var(--muted);background:#f8faf9;border:1px solid var(--line);border-radius:10px;padding:10px">
+            <summary style="cursor:pointer;font-weight:700;color:var(--ink)">How to send free Gmail confirmations via Google Apps Script (1 min)</summary>
+            <pre style="white-space:pre-wrap;font-size:11px;background:#fff;padding:8px;border-radius:8px;border:1px solid var(--line);margin:8px 0 0">function doPost(e) {
+  var d = JSON.parse(e.postData.contents);
+  MailApp.sendEmail({ to: d.to_email, subject: d.subject, htmlBody: d.html || d.message });
+  return ContentService.createTextOutput(JSON.stringify({ ok: true })).setMimeType(ContentService.MimeType.JSON);
+}</pre>
+          </details>
+        </form>
       </div>
     </section>
 
@@ -545,7 +623,10 @@ button:disabled{opacity:.5;cursor:not-allowed}
           </div>
           <div class="field" id="custPasswordWrap">
             <label>Login Password (min 6 chars, required for new login account)</label>
-            <input id="custPassword" type="password" minlength="6" placeholder="Customer login password (min 6 chars)">
+            <div class="pass-wrap">
+              <input id="custPassword" type="password" minlength="6" placeholder="Customer login password (min 6 chars)">
+              <button type="button" class="pass-toggle" id="toggleCustPassBtn" aria-label="Show password">👁️</button>
+            </div>
           </div>
           <div class="field"><label>Bio / Notes</label><textarea id="custBio" rows="2" placeholder="Optional profile bio or note"></textarea></div>
           <div style="display:flex;gap:8px">
@@ -600,6 +681,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
           <h3>Customer Profiles &amp; Saved Addresses (<span id="custListCount">0</span>)</h3>
           <input id="adminCustSearch" placeholder="Search name, email, phone..." style="padding:8px 12px;border:1px solid var(--line);border-radius:8px;min-width:220px">
         </div>
+        <div id="custSyncStatus" class="hidden" style="margin-bottom:10px;padding:9px 12px;border-radius:8px;background:#fff1f2;color:#991b1b;font-size:12.5px;font-weight:700"></div>
         <div id="adminCustomerList"></div>
       </div>
     </section>
@@ -619,6 +701,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
         <div class="field"><label>Customer Name *</label><input id="oeName" required></div>
         <div class="field"><label>Customer Phone *</label><input id="oePhone" required placeholder="017XXXXXXXX"></div>
       </div>
+      <div class="field"><label>Customer Email (for order confirmation mail)</label><input id="oeEmail" type="email" placeholder="customer@example.com"></div>
       <div class="form-row">
         <div class="field">
           <label>Division *</label>
@@ -674,22 +757,20 @@ button:disabled{opacity:.5;cursor:not-allowed}
 <div class="toast" id="toast"></div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, signOut } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-import { getDatabase, ref, set, push, update, remove, onValue } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js";
+import {
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  updateProfile,
+  signOut,
+  GoogleAuthProvider,
+  signInWithPopup,
+  sendPasswordResetEmail,
+  linkWithCredential
+} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import { ref, set, push, update, remove, onValue } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js";
+import { getFirebaseClient, ADMIN_EMAIL } from "./config/firebase-config.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyBmogqpXzirZC-aUHZrFMwutSJ5fmbyDXk",
-  authDomain: "e-commarcebd.firebaseapp.com",
-  databaseURL: "https://e-commarcebd-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "e-commarcebd",
-  storageBucket: "e-commarcebd.firebasestorage.app",
-  messagingSenderId: "799252588942",
-  appId: "1:799252588942:web:985396062c3a1823c6dcdf",
-  measurementId: "G-FM6BH07VPM"
-};
-
-const ADMIN_EMAIL = "mail.sajjadahmed@gmail.com";
 const STANDARD_CATEGORIES = [
   "Electronics & Gadgets",
   "Mobile & Accessories",
@@ -734,14 +815,11 @@ const DEFAULT_STORE_SETTINGS = {
   address: "Dhaka, Bangladesh"
 };
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getDatabase(app);
-const customerCreatorApp = initializeApp(firebaseConfig, "CustomerCreator");
-const customerCreatorAuth = getAuth(customerCreatorApp);
+const { app, auth, db, customerCreatorAuth } = getFirebaseClient({ withCustomerCreator: true });
 
 let products = {};
 let categories = {};
+let reviews = {};
 let sales = {};
 let heroSlides = {};
 let appNotifications = {};
@@ -753,6 +831,9 @@ let deliveryConfig = {
   zones: Object.fromEntries(DEFAULT_ZONES.map((z) => [z.key, { name: z.name, rate: z.rate, eta: z.eta }]))
 };
 let storeSettings = { ...DEFAULT_STORE_SETTINGS };
+let emailConfig = { enabled: true, provider: "webhook", webhookUrl: "", emailjsServiceId: "", emailjsTemplateId: "", emailjsPublicKey: "" };
+let pendingAdminLinkCred = null;
+let pendingAdminLinkEmail = "";
 let listenersStarted = false;
 
 const $ = (id) => document.getElementById(id);
@@ -959,6 +1040,15 @@ function updateProductDiscountPreview() {
   }
 }
 
+function getAdminProductRatingStats(prodId, p) {
+  const revList = Object.entries(reviews?.[prodId] || {}).map(([rid, r]) => ({ id: rid, ...r })).filter((r) => r && Number(r.rating) > 0);
+  if (revList.length > 0) {
+    const avg = revList.reduce((s, r) => s + Number(r.rating || 0), 0) / revList.length;
+    return { rating: Math.round(avg * 10) / 10, count: revList.length, list: revList.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)) };
+  }
+  return { rating: 0, count: 0, list: [] };
+}
+
 function renderAdminProducts() {
   const q = $("adminProdSearch").value.trim().toLowerCase();
   const entries = Object.entries(products).filter(([_, p]) =>
@@ -982,29 +1072,57 @@ function renderAdminProducts() {
 
   $("adminProductList").innerHTML = entries.map(([id, p]) => {
     const freeMinQ = parseNum(p.freeDeliveryMinQty || 0);
+    const rStats = getAdminProductRatingStats(id, p);
+    const ratingBadge = rStats.count > 0
+      ? `<span class="badge blue">★ ${rStats.rating.toFixed(1)} (${rStats.count} review${rStats.count > 1 ? "s" : ""})</span>`
+      : `<span class="muted" style="font-size:11.5px">No reviews yet (0)</span>`;
     return `
-    <div class="list-item">
-      <div style="display:flex;gap:12px;align-items:center;min-width:0;flex:1">
-        <img src="${safe(p.image || "assets/favicon.svg")}" alt="${safe(p.name)}" onerror="this.src='assets/favicon.svg'">
-        <div style="min-width:0">
-          <div style="font-weight:700">${safe(p.name)}</div>
-          <div style="font-size:12px;color:var(--muted)">${safe(p.category)} · Brand: ${safe(p.brand || "-")} · Stock: <b>${Number(p.stock || 0)}</b> · Sold: <b>${Number(p.soldCount || 0)}</b></div>
-          <div style="margin-top:4px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
-            <b style="color:var(--crimson)">${money(p.price)}</b>
-            ${p.oldPrice > p.price ? `<span class="muted" style="text-decoration:line-through;font-size:12px">${money(p.oldPrice)}</span>` : ""}
-            ${p.discountType && p.discountType !== "none" && p.discountValue > 0 ? `<span class="badge blue">${p.discountType === "percent" ? `-${p.discountValue}% Discount` : `-${money(p.discountValue)} Off`}</span>` : ""}
-            ${freeMinQ > 0 ? `<span class="badge green">🆓 Free Delivery (Qty ≥ ${freeMinQ})</span>` : ""}
-            ${p.isFlashDeal ? `<span class="badge red">Flash Sale</span>` : ""}
-            ${p.isFeatured ? `<span class="badge green">Featured</span>` : ""}
+    <div class="list-item" style="flex-direction:column;align-items:stretch">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+        <div style="display:flex;gap:12px;align-items:center;min-width:0;flex:1">
+          <img src="${safe(p.image || "assets/favicon.svg")}" alt="${safe(p.name)}" onerror="this.src='assets/favicon.svg'">
+          <div style="min-width:0">
+            <div style="font-weight:700">${safe(p.name)}</div>
+            <div style="font-size:12px;color:var(--muted)">${safe(p.category)} · Brand: ${safe(p.brand || "-")} · Stock: <b>${Number(p.stock || 0)}</b> · Sold: <b>${Number(p.soldCount || 0)}</b></div>
+            <div style="margin-top:4px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+              <b style="color:var(--crimson)">${money(p.price)}</b>
+              ${p.oldPrice > p.price ? `<span class="muted" style="text-decoration:line-through;font-size:12px">${money(p.oldPrice)}</span>` : ""}
+              ${p.discountType && p.discountType !== "none" && p.discountValue > 0 ? `<span class="badge blue">${p.discountType === "percent" ? `-${p.discountValue}% Discount` : `-${money(p.discountValue)} Off`}</span>` : ""}
+              ${freeMinQ > 0 ? `<span class="badge green">🆓 Free Delivery (Qty ≥ ${freeMinQ})</span>` : ""}
+              ${p.isFlashDeal ? `<span class="badge red">Flash Sale</span>` : ""}
+              ${p.isFeatured ? `<span class="badge green">Featured</span>` : ""}
+              ${ratingBadge}
+            </div>
           </div>
         </div>
+        <div style="display:flex;gap:6px;flex-shrink:0">
+          <button type="button" class="secondary sm" data-edit-prod="${safe(id)}">Edit</button>
+          <button type="button" class="crimson sm" data-del-prod="${safe(id)}">Delete</button>
+        </div>
       </div>
-      <div style="display:flex;gap:6px;flex-shrink:0">
-        <button type="button" class="secondary sm" data-edit-prod="${safe(id)}">Edit</button>
-        <button type="button" class="crimson sm" data-del-prod="${safe(id)}">Delete</button>
-      </div>
+      ${rStats.list.length ? `
+        <div style="margin-top:8px;padding-top:8px;border-top:1px dashed var(--line);display:grid;gap:5px">
+          ${rStats.list.slice(0, 5).map((r) => `
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:6px 8px">
+              <div style="min-width:0">
+                <b>${safe(r.userName || "Customer")}</b> <span style="color:#f59e0b">★ ${Number(r.rating || 0)}</span> — ${safe(r.comment || "")}
+              </div>
+              <button type="button" class="crimson sm" data-del-review="${safe(id)}|${safe(r.id)}" style="padding:3px 7px;font-size:11px">Delete Review</button>
+            </div>
+          `).join("")}
+        </div>
+      ` : ""}
     </div>`;
   }).join("");
+
+  $("adminProductList").querySelectorAll("[data-del-review]").forEach((b) => {
+    b.onclick = async () => {
+      if (!confirm("Delete this customer review?")) return;
+      const [pid, rid] = b.dataset.delReview.split("|");
+      await remove(ref(db, `reviews/${pid}/${rid}`));
+      toast("Review deleted");
+    };
+  });
 
   $("adminProductList").querySelectorAll("[data-edit-prod]").forEach((b) => {
     b.onclick = () => {
@@ -1024,7 +1142,7 @@ function renderAdminProducts() {
       $("pFreeShipMinQty").value = p.freeDeliveryMinQty || 0;
       $("pStock").value = p.stock ?? 0;
       $("pSoldCount").value = p.soldCount ?? 0;
-      $("pRating").value = p.rating || 4.8;
+      $("pRating").value = getAdminProductRatingStats(id, p).rating;
       $("pColors").value = p.variantColors || "";
       $("pSizes").value = p.variantSizes || "";
       $("pVariants").value = p.variants || "Standard";
@@ -1099,7 +1217,7 @@ function resetProductForm() {
   $("prodFormTitle").textContent = "Add New Product";
   $("pSaveBtn").textContent = "➕ Add Product";
   $("pFeatured").checked = true;
-  $("pRating").value = "4.8";
+  $("pRating").value = "0";
   $("pStock").value = "10";
   $("pSoldCount").value = "0";
   $("pOldPrice").value = "0";
@@ -1434,6 +1552,165 @@ function renderStoreSettingsUI() {
   `;
 }
 
+function renderEmailSettingsUI() {
+  const ec = emailConfig || {};
+  $("esEnabled").checked = ec.enabled !== false;
+  $("esProvider").value = ec.provider || "webhook";
+  $("esWebhookUrl").value = ec.webhookUrl || "";
+  $("esEmailjsService").value = ec.emailjsServiceId || "";
+  $("esEmailjsTemplate").value = ec.emailjsTemplateId || "";
+  $("esEmailjsPublicKey").value = ec.emailjsPublicKey || "";
+  const isEmailJs = ($("esProvider").value === "emailjs");
+  $("esWebhookFields").classList.toggle("hidden", isEmailJs);
+  $("esEmailjsFields").classList.toggle("hidden", !isEmailJs);
+}
+
+function buildConfirmationEmailPayload(orderId, o = {}) {
+  const fin = computeOrderFinancials(o);
+  const st = { ...DEFAULT_STORE_SETTINGS, ...storeSettings };
+  const toEmail = (o.customerEmail || o.customer?.email || customers[o.uid]?.email || "").trim();
+  const toName = o.customer?.name || "Customer";
+  const itemsText = orderProductSummaryText(o);
+  const subject = `[${st.storeName}] Order ${orderId} Confirmed (Cash on Delivery)`;
+  const textBody = [
+    `Hello ${toName},`,
+    ``,
+    `Your Cash on Delivery order ${orderId} has been CONFIRMED by ${st.storeName}!`,
+    ``,
+    `Order Summary:`,
+    `Items: ${itemsText}`,
+    `Subtotal: ${money(fin.subtotal)}`,
+    fin.discount > 0 ? `Discount: -${money(fin.discount)}` : null,
+    `Delivery Fee: ${fin.deliveryFee === 0 ? "FREE" : money(fin.deliveryFee)}`,
+    `Grand Total (Pay on Delivery): ${money(fin.grandTotal)}`,
+    ``,
+    `Delivery Address: ${o.customer?.address || ""}${o.customer?.division ? `, ${o.customer.division}` : ""}`,
+    `Phone: ${o.customer?.phone || ""}`,
+    ``,
+    `Thank you for shopping with ${st.storeName}!`
+  ].filter(Boolean).join("\n");
+
+  const htmlBody = `
+    <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;border:1px solid #dce5df;border-radius:12px;overflow:hidden">
+      <div style="background:#007B3D;color:#fff;padding:18px 22px">
+        <h2 style="margin:0">${safe(st.storeName)} — Order Confirmed!</h2>
+        <div style="font-size:13px;opacity:.9;margin-top:4px">Order ID: ${safe(orderId)} · Cash on Delivery</div>
+      </div>
+      <div style="padding:20px 22px;color:#141c18;font-size:14px;line-height:1.6">
+        <p>Hello <b>${safe(toName)}</b>,</p>
+        <p>Great news! Your Cash on Delivery order <b>${safe(orderId)}</b> is now <b>Confirmed</b> and being prepared for dispatch.</p>
+        <div style="background:#f3f6f4;border-radius:10px;padding:12px 14px;margin:14px 0">
+          <div><b>Items:</b> ${safe(itemsText)}</div>
+          <div><b>Subtotal:</b> ${money(fin.subtotal)}</div>
+          <div><b>Delivery Fee:</b> ${fin.deliveryFee === 0 ? "FREE" : money(fin.deliveryFee)}</div>
+          <div style="font-size:16px;margin-top:6px;color:#E11D48"><b>COD Total: ${money(fin.grandTotal)}</b></div>
+        </div>
+        <p><b>Delivery Address:</b> ${safe(o.customer?.address || "")}${o.customer?.division ? `, ${safe(o.customer.division)}` : ""}<br>
+        <b>Phone:</b> ${safe(o.customer?.phone || "")}</p>
+        <p style="font-size:12px;color:#526059">Thank you for shopping with ${safe(st.storeName)}!</p>
+      </div>
+    </div>
+  `;
+  return { toEmail, toName, subject, textBody, htmlBody, fin, st, itemsText };
+}
+
+async function sendOrderConfirmationEmail(orderId, orderObj = {}, { forceManual = false } = {}) {
+  if (!orderObj) return;
+  if (!forceManual && emailConfig?.enabled === false) return;
+  if (!forceManual && orderObj.confirmationEmailSent) return;
+
+  const payload = buildConfirmationEmailPayload(orderId, orderObj);
+  if (!payload.toEmail) {
+    toast(`Order ${orderId} confirmed (no customer email on order to notify).`);
+    return;
+  }
+
+  const provider = emailConfig?.provider || "webhook";
+  const hasWebhook = provider === "webhook" && Boolean((emailConfig?.webhookUrl || "").trim());
+  const hasEmailJs = provider === "emailjs" && Boolean(
+    (emailConfig?.emailjsServiceId || "").trim() &&
+    (emailConfig?.emailjsTemplateId || "").trim() &&
+    (emailConfig?.emailjsPublicKey || "").trim()
+  );
+
+  if (hasEmailJs) {
+    try {
+      const resp = await fetch("https://api.emailjs.com/api/v1.0/email/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          service_id: emailConfig.emailjsServiceId.trim(),
+          template_id: emailConfig.emailjsTemplateId.trim(),
+          user_id: emailConfig.emailjsPublicKey.trim(),
+          template_params: {
+            to_email: payload.toEmail,
+            to_name: payload.toName,
+            order_id: orderId,
+            order_status: "Confirmed",
+            items_summary: payload.itemsText,
+            subtotal: money(payload.fin.subtotal),
+            delivery_fee: payload.fin.deliveryFee === 0 ? "FREE" : money(payload.fin.deliveryFee),
+            total_amount: money(payload.fin.grandTotal),
+            payment_method: "Cash on Delivery",
+            delivery_address: `${orderObj.customer?.address || ""}, ${orderObj.customer?.division || ""}`,
+            store_name: payload.st.storeName,
+            subject: payload.subject,
+            message: payload.textBody
+          }
+        })
+      });
+      if (!resp.ok) throw new Error(await resp.text());
+      await update(ref(db, "orders/" + orderId), {
+        confirmationEmailSent: true,
+        confirmationEmailSentTo: payload.toEmail,
+        confirmationEmailSentAt: Date.now()
+      });
+      toast(`📧 Confirmation email sent to ${payload.toEmail}!`);
+      return;
+    } catch (err) {
+      toast(`EmailJS error: ${err?.message || "Check EmailJS config"}`);
+    }
+  } else if (hasWebhook) {
+    try {
+      await fetch(emailConfig.webhookUrl.trim(), {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({
+          orderId,
+          to_email: payload.toEmail,
+          to_name: payload.toName,
+          subject: payload.subject,
+          message: payload.textBody,
+          html: payload.htmlBody,
+          total: payload.fin.grandTotal
+        })
+      });
+      await update(ref(db, "orders/" + orderId), {
+        confirmationEmailSent: true,
+        confirmationEmailSentTo: payload.toEmail,
+        confirmationEmailSentAt: Date.now()
+      });
+      toast(`📧 Confirmation email sent to ${payload.toEmail}!`);
+      return;
+    } catch (err) {
+      toast(`Email webhook failed: ${err?.message || "Network error"}`);
+    }
+  } else if (forceManual) {
+    const mailtoUrl = `mailto:${encodeURIComponent(payload.toEmail)}?subject=${encodeURIComponent(payload.subject)}&body=${encodeURIComponent(payload.textBody)}`;
+    window.open(mailtoUrl, "_blank");
+    await update(ref(db, "orders/" + orderId), {
+      confirmationEmailSent: true,
+      confirmationEmailSentTo: payload.toEmail,
+      confirmationEmailSentAt: Date.now()
+    });
+    toast(`Opened email composer for ${payload.toEmail}`);
+    return;
+  } else {
+    toast(`Order ${orderId} confirmed! Configure Email Settings or click "Send Mail" on the order.`);
+  }
+}
+
 function openInvoiceModal(orderId) {
   const o = orders[orderId];
   if (!o) return toast("Order not found");
@@ -1527,6 +1804,7 @@ function openOrderEditModal(orderId = "") {
   $("oeModalTitle").textContent = o ? `✏️ Edit Order ${orderId}` : "➕ Add Manual COD Order";
   $("oeName").value = o?.customer?.name || "";
   $("oePhone").value = o?.customer?.phone || "";
+  $("oeEmail").value = o?.customerEmail || "";
   $("oeDivision").value = defDiv;
   populateDistrictSelect("oeDivision", "oeDistrict", o?.customer?.district || "");
   $("oeStatus").value = o?.status || "Pending";
@@ -1578,7 +1856,7 @@ function renderAdminOrders() {
           <div style="font-size:12px;color:var(--muted)">${new Date(o.createdAt || Date.now()).toLocaleString()}</div>
         </div>
         <div style="font-size:13px;display:grid;gap:4px">
-          <div><b>Customer:</b> ${safe(o.customer?.name || "")} (${safe(o.customer?.phone || "")}) · ${safe(o.customer?.address || "")}, ${safe(o.customer?.division || "")}</div>
+          <div><b>Customer:</b> ${safe(o.customer?.name || "")} (${safe(o.customer?.phone || "")})${o.customerEmail ? ` · ✉️ ${safe(o.customerEmail)}` : ""} · ${safe(o.customer?.address || "")}, ${safe(o.customer?.division || "")}</div>
           <div><b>Products:</b> ${safe(orderProductSummaryText(o))}</div>
           <div><b>Grand Total (COD):</b> <b style="color:var(--crimson)">${money(fin.grandTotal)}</b> (Subtotal: ${money(fin.subtotal)} · Delivery: ${fin.deliveryFee === 0 ? "FREE" : money(fin.deliveryFee)})</div>
         </div>
@@ -1586,11 +1864,14 @@ function renderAdminOrders() {
           ${!confirmedOrLater && status !== "Cancelled"
             ? `<button type="button" class="sm" data-confirm-ord="${safe(id)}">✅ Confirm COD Order</button>`
             : (status !== "Cancelled"
-                ? `<span style="font-size:12px;color:var(--emerald-dark);font-weight:700">🔒 Confirmed (Cancel locked)</span>`
+                ? `<span style="font-size:12px;color:var(--emerald-dark);font-weight:700">🔒 Confirmed (Cancel locked)${o.confirmationEmailSent ? " · 📧 Mail Sent" : ""}</span>`
                 : `<span style="font-size:12px;color:var(--crimson);font-weight:700">Order Cancelled</span>`)}
           <select data-status-ord="${safe(id)}" style="padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-size:12.5px">
             ${["Pending","Confirmed","Packed","Out for Delivery","Delivered","Cancelled"].map((s) => `<option value="${s}" ${s === status ? "selected" : ""}>${s}</option>`).join("")}
           </select>
+          ${status !== "Cancelled" && (o.customerEmail || customers[o.uid]?.email)
+            ? `<button type="button" class="outline sm" data-mail-ord="${safe(id)}">📧 ${o.confirmationEmailSent ? "Resend Mail" : "Send Confirm Mail"}</button>`
+            : ""}
           <button type="button" class="secondary sm" data-print-inv="${safe(id)}">🖨️ Print Invoice</button>
           <button type="button" class="outline sm" data-edit-ord="${safe(id)}">✏️ Edit Order</button>
           <button type="button" class="crimson sm" data-del-ord="${safe(id)}">🗑️ Delete Order</button>
@@ -1604,7 +1885,7 @@ function renderAdminOrders() {
       const id = b.dataset.confirmOrd;
       const o = orders[id];
       const fin = computeOrderFinancials(o);
-      await update(ref(db, "orders/" + id), {
+      const patchData = {
         status: "Confirmed",
         paymentMethod: "Cash on Delivery",
         paymentStatus: "Cash on Delivery (Confirmed)",
@@ -1612,16 +1893,34 @@ function renderAdminOrders() {
         deliveryFee: fin.deliveryFee,
         total: fin.grandTotal,
         updatedAt: Date.now()
-      });
+      };
+      await update(ref(db, "orders/" + id), patchData);
       toast(`COD Order ${id} confirmed!`);
+      await sendOrderConfirmationEmail(id, { ...o, ...patchData });
     };
   });
 
   $("adminOrderList").querySelectorAll("[data-status-ord]").forEach((sel) => {
     sel.onchange = async () => {
       const id = sel.dataset.statusOrd;
-      await update(ref(db, "orders/" + id), { status: sel.value, updatedAt: Date.now() });
-      toast(`Order ${id} updated to ${sel.value}`);
+      const prev = orders[id] || {};
+      const nextStatus = sel.value;
+      const patchData = { status: nextStatus, updatedAt: Date.now() };
+      if (nextStatus === "Confirmed" || nextStatus === "Delivered") {
+        patchData.paymentStatus = "Cash on Delivery (Confirmed)";
+      }
+      await update(ref(db, "orders/" + id), patchData);
+      toast(`Order ${id} updated to ${nextStatus}`);
+      if (nextStatus === "Confirmed" && prev.status !== "Confirmed") {
+        await sendOrderConfirmationEmail(id, { ...prev, ...patchData });
+      }
+    };
+  });
+
+  $("adminOrderList").querySelectorAll("[data-mail-ord]").forEach((b) => {
+    b.onclick = async () => {
+      const id = b.dataset.mailOrd;
+      await sendOrderConfirmationEmail(id, orders[id], { forceManual: true });
     };
   });
 
@@ -1644,14 +1943,15 @@ function renderAdminOrders() {
 
 function renderAdminCustomers() {
   const q = $("adminCustSearch").value.trim().toLowerCase();
-  const entries = Object.entries(customers).filter(([uid, c]) =>
-    !q || `${uid} ${c.name || ""} ${c.email || ""} ${c.phone || ""}`.toLowerCase().includes(q)
+  const allEntries = Object.entries(customers || {}).sort((a, b) => (b[1]?.updatedAt || b[1]?.createdAt || 0) - (a[1]?.updatedAt || a[1]?.createdAt || 0));
+  const entries = allEntries.filter(([uid, c]) =>
+    !q || `${uid} ${c?.name || ""} ${c?.email || ""} ${c?.phone || ""}`.toLowerCase().includes(q)
   );
-  $("custListCount").textContent = Object.keys(customers).length;
+  $("custListCount").textContent = allEntries.length;
 
   const curSelected = $("admAddrCustSelect").value;
-  $("admAddrCustSelect").innerHTML = Object.entries(customers).length
-    ? Object.entries(customers).map(([uid, c]) => `<option value="${safe(uid)}">${safe(c.name || c.email || uid)} (${safe(c.email || uid)})</option>`).join("")
+  $("admAddrCustSelect").innerHTML = allEntries.length
+    ? allEntries.map(([uid, c]) => `<option value="${safe(uid)}">${safe(c?.name || c?.email || uid)} (${safe(c?.email || uid)})</option>`).join("")
     : `<option value="">-- Add a customer profile first --</option>`;
   if (curSelected && customers[curSelected]) $("admAddrCustSelect").value = curSelected;
 
@@ -1778,12 +2078,21 @@ function startAdminListeners() {
 
   onValue(ref(db, "products"), (snap) => { products = snap.val() || {}; updateStats(); renderAdminProducts(); renderAdminHeroSlides(); });
   onValue(ref(db, "categories"), (snap) => { categories = snap.val() || {}; renderAdminCategories(); });
+  onValue(ref(db, "reviews"), (snap) => { reviews = snap.val() || {}; renderAdminProducts(); });
   onValue(ref(db, "deals/sales"), (snap) => { sales = snap.val() || {}; updateStats(); renderAdminSales(); });
   onValue(ref(db, "deals/heroSlides"), (snap) => { heroSlides = snap.val() || {}; renderAdminHeroSlides(); });
   onValue(ref(db, "deals/appNotifications"), (snap) => { appNotifications = snap.val() || {}; renderAdminNotifications(); });
   onValue(ref(db, "coupons"), (snap) => { coupons = snap.val() || {}; renderAdminCoupons(); });
   onValue(ref(db, "orders"), (snap) => { orders = snap.val() || {}; updateStats(); renderAdminOrders(); });
-  onValue(ref(db, "customers"), (snap) => { customers = snap.val() || {}; updateStats(); renderAdminCustomers(); });
+  onValue(ref(db, "customers"), (snap) => {
+    customers = snap.val() || {};
+    $("custSyncStatus").classList.add("hidden");
+    updateStats();
+    renderAdminCustomers();
+  }, (err) => {
+    $("custSyncStatus").textContent = `Could not sync customer profiles from Firebase: ${err?.message || "Permission denied"}`;
+    $("custSyncStatus").classList.remove("hidden");
+  });
   onValue(ref(db, "deals/hero"), (snap) => {
     const v = snap.val() || {};
     $("hBadge").value = v.badge || "সাশ্রয়ে সেরা অনলাইন শপিং সারা বাংলাদেশে!";
@@ -1805,6 +2114,18 @@ function startAdminListeners() {
     storeSettings = { ...DEFAULT_STORE_SETTINGS, ...(snap.val() || {}) };
     renderStoreSettingsUI();
   });
+  onValue(ref(db, "settings/email"), (snap) => {
+    emailConfig = {
+      enabled: true,
+      provider: "webhook",
+      webhookUrl: "",
+      emailjsServiceId: "",
+      emailjsTemplateId: "",
+      emailjsPublicKey: "",
+      ...(snap.val() || {})
+    };
+    renderEmailSettingsUI();
+  });
 
   setInterval(() => {
     if (!$("tab-deals").classList.contains("hidden")) renderAdminSales();
@@ -1812,6 +2133,54 @@ function startAdminListeners() {
 }
 
 /* ---------- Auth ---------- */
+function toggleAdmPassword(inputEl, btnEl) {
+  if (!inputEl || !btnEl) return;
+  const show = inputEl.type === "password";
+  inputEl.type = show ? "text" : "password";
+  btnEl.textContent = show ? "🙈" : "👁️";
+}
+$("toggleAdminPassBtn").onclick = () => toggleAdmPassword($("loginPassword"), $("toggleAdminPassBtn"));
+$("toggleCustPassBtn").onclick = () => toggleAdmPassword($("custPassword"), $("toggleCustPassBtn"));
+
+$("adminForgotPassBtn").onclick = async () => {
+  const email = $("loginEmail").value.trim();
+  if (!email) return toast("Enter your Admin email address first.");
+  try {
+    await sendPasswordResetEmail(auth, email);
+    $("adminResetStatus").classList.remove("hidden");
+    $("adminResetStatus").style.color = "var(--emerald-dark)";
+    $("adminResetStatus").textContent = `✅ Password reset link sent to ${email}. Check Inbox & Spam.`;
+    toast(`Reset email sent to ${email}`);
+  } catch (err) {
+    $("adminResetStatus").classList.remove("hidden");
+    $("adminResetStatus").style.color = "var(--crimson)";
+    $("adminResetStatus").textContent = err?.message || "Failed to send password reset email.";
+  }
+};
+
+$("adminGoogleLoginBtn").onclick = async () => {
+  const provider = new GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: "select_account" });
+  try {
+    await signInWithPopup(auth, provider);
+    pendingAdminLinkCred = null;
+    pendingAdminLinkEmail = "";
+    $("adminLinkNotice").classList.add("hidden");
+    toast("Signed in with Google!");
+  } catch (err) {
+    if (err?.code === "auth/account-exists-with-different-credential") {
+      pendingAdminLinkCred = GoogleAuthProvider.credentialFromError(err);
+      pendingAdminLinkEmail = err?.customData?.email || $("loginEmail").value.trim();
+      if (pendingAdminLinkEmail) $("loginEmail").value = pendingAdminLinkEmail;
+      $("adminLinkNotice").innerHTML = `<b>🔗 Account Linking:</b> Sign in once with your password for <b>${safe(pendingAdminLinkEmail)}</b> to link Google permanently.`;
+      $("adminLinkNotice").classList.remove("hidden");
+      toast("Enter admin password once to link Google account");
+    } else if (err?.code !== "auth/popup-closed-by-user") {
+      toast(err?.message || "Google sign-in failed");
+    }
+  }
+};
+
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
     $("adminLoginGate").classList.remove("hidden");
@@ -1849,7 +2218,15 @@ onAuthStateChanged(auth, async (user) => {
 $("adminLoginForm").onsubmit = async (e) => {
   e.preventDefault();
   try {
-    await signInWithEmailAndPassword(auth, $("loginEmail").value.trim(), $("loginPassword").value);
+    const cred = await signInWithEmailAndPassword(auth, $("loginEmail").value.trim(), $("loginPassword").value);
+    if (pendingAdminLinkCred) {
+      try {
+        await linkWithCredential(cred.user, pendingAdminLinkCred);
+        toast("✅ Google & Password linked for Admin!");
+      } catch (_) {}
+      pendingAdminLinkCred = null;
+      $("adminLinkNotice").classList.add("hidden");
+    }
     toast("Admin signed in!");
   } catch (err) {
     toast(err.message);
@@ -1934,8 +2311,8 @@ $("productForm").onsubmit = async (e) => {
     freeDeliveryMinQty,
     stock: Number($("pStock").value || 0),
     soldCount: Number($("pSoldCount").value || 0),
-    rating: Number($("pRating").value || 4.8),
-    reviewCount: editId && products[editId]?.reviewCount ? products[editId].reviewCount : 0,
+    rating: getAdminProductRatingStats(prodId, null).rating,
+    reviewCount: getAdminProductRatingStats(prodId, null).count,
     variantColors,
     variantSizes,
     variantPrices,
@@ -2091,6 +2468,46 @@ $("ssResetBtn").onclick = async () => {
   toast("Store settings reset");
 };
 
+$("esProvider").onchange = () => {
+  const isEmailJs = $("esProvider").value === "emailjs";
+  $("esWebhookFields").classList.toggle("hidden", isEmailJs);
+  $("esEmailjsFields").classList.toggle("hidden", !isEmailJs);
+};
+
+$("emailSettingsForm").onsubmit = async (e) => {
+  e.preventDefault();
+  const payload = {
+    enabled: $("esEnabled").checked,
+    provider: $("esProvider").value,
+    webhookUrl: $("esWebhookUrl").value.trim(),
+    emailjsServiceId: $("esEmailjsService").value.trim(),
+    emailjsTemplateId: $("esEmailjsTemplate").value.trim(),
+    emailjsPublicKey: $("esEmailjsPublicKey").value.trim(),
+    updatedAt: Date.now()
+  };
+  await set(ref(db, "settings/email"), payload);
+  emailConfig = payload;
+  toast("Order confirmation email settings saved!");
+};
+
+$("esTestBtn").onclick = async () => {
+  const target = storeSettings?.email || ADMIN_EMAIL;
+  await sendOrderConfirmationEmail(
+    "SPR-BD-TEST",
+    {
+      customerEmail: target,
+      customer: { name: "Admin Test", phone: "01700000000", address: "Dhaka", division: "Dhaka" },
+      itemsSummary: "Sample Product x1 @৳1000",
+      subtotal: 1000,
+      discount: 0,
+      deliveryFee: 60,
+      total: 1060,
+      status: "Confirmed"
+    },
+    { forceManual: true }
+  );
+};
+
 function renderAdminNotifications() {
   const entries = Object.entries(appNotifications || {}).sort((a, b) => (b[1]?.createdAt || 0) - (a[1]?.createdAt || 0));
   $("notifCount").textContent = entries.length;
@@ -2228,10 +2645,11 @@ $("orderEditForm").onsubmit = async (e) => {
   const total = parseNum($("oeTotal").value);
   const summary = $("oeItemsSummary").value.trim();
 
-  await update(ref(db, "orders/" + orderId), {
+  const customerEmail = ($("oeEmail").value.trim() || prev.customerEmail || "").trim();
+  const payload = {
     orderId,
     uid: prev.uid || "admin_entry",
-    customerEmail: prev.customerEmail || "",
+    customerEmail,
     customer: {
       name: $("oeName").value.trim(),
       phone: normalizeBdPhone($("oePhone").value),
@@ -2250,10 +2668,15 @@ $("orderEditForm").onsubmit = async (e) => {
     status,
     createdAt: prev.createdAt || Date.now(),
     updatedAt: Date.now()
-  });
+  };
+
+  await update(ref(db, "orders/" + orderId), payload);
 
   closeModal("orderEditModal");
   toast(existingId ? `Order ${orderId} updated!` : `COD Order ${orderId} created!`);
+  if (status === "Confirmed" && prev.status !== "Confirmed") {
+    await sendOrderConfirmationEmail(orderId, { ...prev, ...payload });
+  }
 };
 
 $("customerForm").onsubmit = async (e) => {
@@ -2295,7 +2718,11 @@ $("customerForm").onsubmit = async (e) => {
     resetCustomerForm();
     toast(editUid ? "Customer profile updated!" : "Customer account created & saved to database!");
   } catch (err) {
-    toast(err.message || "Failed to save customer");
+    if (err?.code === "auth/email-already-in-use") {
+      toast("Email already exists in Auth. Enter their Firebase UID above (or have them sign in once) to update RTDB.");
+    } else {
+      toast(err.message || "Failed to save customer");
+    }
   }
 };
 $("custResetBtn").onclick = resetCustomerForm;
@@ -2308,13 +2735,13 @@ $("admAddressForm").onsubmit = async (e) => {
   const aid = existingAid || push(ref(db, `customers/${uid}/addresses`)).key;
   const curAddrs = customers[uid]?.addresses || {};
   const makeDefault = $("admAddrDefault").checked || Object.keys(curAddrs).length === 0;
-  const updates = {};
+  const addrUpdates = {};
   if (makeDefault) {
     Object.keys(curAddrs).forEach((k) => {
-      updates[`customers/${uid}/addresses/${k}/isDefault`] = false;
+      addrUpdates[`${k}/isDefault`] = false;
     });
   }
-  updates[`customers/${uid}/addresses/${aid}`] = {
+  addrUpdates[aid] = {
     label: $("admAddrLabel").value.trim() || "Home",
     recipientName: $("admAddrRecipient").value.trim(),
     phone: normalizeBdPhone($("admAddrPhone").value),
@@ -2325,7 +2752,7 @@ $("admAddressForm").onsubmit = async (e) => {
     isDefault: makeDefault
   };
   try {
-    await update(ref(db), updates);
+    await update(ref(db, `customers/${uid}/addresses`), addrUpdates);
     resetAdmAddrForm();
     toast(existingAid ? "Customer address updated!" : "Customer address added!");
   } catch (err) {

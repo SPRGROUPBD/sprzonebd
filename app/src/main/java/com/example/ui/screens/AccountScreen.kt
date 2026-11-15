@@ -1,5 +1,8 @@
 package com.example.ui.screens
 
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,16 +24,20 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.AddLocationAlt
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -58,30 +65,45 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.credentials.CredentialManager
+import androidx.credentials.CustomCredential
+import androidx.credentials.GetCredentialRequest
+import androidx.credentials.exceptions.GetCredentialCancellationException
+import androidx.credentials.exceptions.GetCredentialException
+import androidx.credentials.exceptions.NoCredentialException
 import com.example.data.model.AddressEntity
 import com.example.data.model.ProductEntity
 import com.example.data.model.StoreConstants
 import com.example.data.model.UserAccountEntity
+import com.example.data.repository.GooglePendingLinkException
 import com.example.notifications.AppPermissionStatus
 import com.example.ui.components.EmptyStatePanel
 import com.example.ui.components.ProductCard
 import com.example.ui.components.SprBrandLogo
 import com.example.ui.theme.DiscountRed
 import com.example.ui.theme.EmeraldPrimary
+import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AccountScreen(
     currentUser: UserAccountEntity?,
+    linkedProviders: List<String>,
     wishlistProducts: List<ProductEntity>,
     addresses: List<AddressEntity>,
     isDarkMode: Boolean,
@@ -94,6 +116,11 @@ fun AccountScreen(
     onOpenAppSettings: () -> Unit,
     onLogin: (email: String, password: String, onResult: (Result<UserAccountEntity>) -> Unit) -> Unit,
     onRegister: (fullName: String, email: String, phone: String, password: String, onResult: (Result<UserAccountEntity>) -> Unit) -> Unit,
+    onForgotPassword: (email: String, onResult: (Result<String>) -> Unit) -> Unit,
+    onGoogleSignIn: (googleIdToken: String, onResult: (Result<UserAccountEntity>) -> Unit) -> Unit,
+    onLoginAndLinkGoogle: (email: String, password: String, googleIdToken: String, onResult: (Result<UserAccountEntity>) -> Unit) -> Unit,
+    onLinkGoogleAccount: (googleIdToken: String, onResult: (Result<List<String>>) -> Unit) -> Unit,
+    onLinkPassword: (newPassword: String, onResult: (Result<List<String>>) -> Unit) -> Unit,
     onUpdateProfile: (fullName: String, phone: String, bio: String, onResult: (Result<UserAccountEntity>) -> Unit) -> Unit,
     onDeleteProfile: (onResult: (Result<Unit>) -> Unit) -> Unit,
     onSignOut: () -> Unit,
@@ -140,7 +167,10 @@ fun AccountScreen(
                 onOpenNotifications = onOpenNotifications,
                 onOpenAppSettings = onOpenAppSettings,
                 onLogin = onLogin,
-                onRegister = onRegister
+                onRegister = onRegister,
+                onForgotPassword = onForgotPassword,
+                onGoogleSignIn = onGoogleSignIn,
+                onLoginAndLinkGoogle = onLoginAndLinkGoogle
             )
             return@Box
         }
@@ -309,6 +339,14 @@ fun AccountScreen(
                                 }
                             }
                         }
+                    }
+
+                    item {
+                        AccountLinkingCard(
+                            linkedProviders = linkedProviders,
+                            onLinkGoogleAccount = onLinkGoogleAccount,
+                            onLinkPassword = onLinkPassword
+                        )
                     }
 
                     item {
@@ -888,6 +926,255 @@ private fun PermissionStatusRow(
     }
 }
 
+private tailrec fun Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
+}
+
+private suspend fun launchGoogleCredentialFlow(context: Context): Result<String> {
+    val activity = context.findActivity()
+        ?: return Result.failure(IllegalStateException("Unable to open Google Sign-In picker from current screen."))
+    return try {
+        val manager = CredentialManager.create(activity)
+        val googleOption = GetSignInWithGoogleOption.Builder(StoreConstants.GOOGLE_WEB_CLIENT_ID)
+            .build()
+        val request = GetCredentialRequest.Builder()
+            .addCredentialOption(googleOption)
+            .build()
+        val result = manager.getCredential(context = activity, request = request)
+        val credential = result.credential
+        if (credential is CustomCredential &&
+            credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
+        ) {
+            val googleCred = GoogleIdTokenCredential.createFrom(credential.data)
+            Result.success(googleCred.idToken)
+        } else {
+            Result.failure(IllegalStateException("Unexpected credential type returned by Google."))
+        }
+    } catch (_: GetCredentialCancellationException) {
+        Result.failure(IllegalStateException("Google Sign-In was cancelled."))
+    } catch (_: NoCredentialException) {
+        Result.failure(IllegalStateException("No Google account available on this device. Please sign in to Google on your device or use Email/Password."))
+    } catch (e: GoogleIdTokenParsingException) {
+        Result.failure(IllegalStateException("Failed to read Google ID token: ${e.message ?: "Invalid token"}"))
+    } catch (e: GetCredentialException) {
+        Result.failure(IllegalStateException("Google Sign-In unavailable: ${e.errorMessage ?: "Check Google Play Services & Firebase SHA-1"}"))
+    } catch (t: Throwable) {
+        Result.failure(IllegalStateException(t.message ?: "Google Sign-In failed"))
+    }
+}
+
+@Composable
+private fun AccountLinkingCard(
+    linkedProviders: List<String>,
+    onLinkGoogleAccount: (googleIdToken: String, onResult: (Result<List<String>>) -> Unit) -> Unit,
+    onLinkPassword: (newPassword: String, onResult: (Result<List<String>>) -> Unit) -> Unit
+) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val hasGoogle = linkedProviders.any { it.equals("google.com", ignoreCase = true) }
+    val hasPassword = linkedProviders.any { it.equals("password", ignoreCase = true) }
+
+    var showSetPasswordDialog by remember { mutableStateOf(false) }
+    var newPassword by remember { mutableStateOf("") }
+    var showNewPassword by remember { mutableStateOf(false) }
+    var statusMsg by remember { mutableStateOf<String?>(null) }
+    var isError by remember { mutableStateOf(false) }
+    var isBusy by remember { mutableStateOf(false) }
+
+    Card(
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        shape = MaterialTheme.shapes.medium,
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("account_linking_card")
+    ) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Icon(Icons.Filled.Link, contentDescription = null, tint = EmeraldPrimary)
+                Text("Sign-In Methods & Account Linking", style = MaterialTheme.typography.titleMedium)
+            }
+            Text(
+                text = "Link both Email/Password and Google so you never run into sign-in errors across the website and mobile app.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                Surface(
+                    color = if (hasPassword) Color(0xFFE8F6EE) else MaterialTheme.colorScheme.surfaceVariant,
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp)
+                    ) {
+                        Icon(
+                            Icons.Filled.CheckCircle,
+                            contentDescription = null,
+                            tint = if (hasPassword) EmeraldPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Text(
+                            text = if (hasPassword) "Password Linked" else "No Password Set",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+                Surface(
+                    color = if (hasGoogle) Color(0xFFE8F6EE) else MaterialTheme.colorScheme.surfaceVariant,
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp)
+                    ) {
+                        Icon(
+                            Icons.Filled.CheckCircle,
+                            contentDescription = null,
+                            tint = if (hasGoogle) EmeraldPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Text(
+                            text = if (hasGoogle) "Google Linked" else "Google Not Linked",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                if (!hasGoogle) {
+                    OutlinedButton(
+                        enabled = !isBusy,
+                        onClick = {
+                            isBusy = true
+                            statusMsg = null
+                            scope.launch {
+                                val credRes = launchGoogleCredentialFlow(context)
+                                if (credRes.isFailure) {
+                                    isBusy = false
+                                    isError = true
+                                    statusMsg = credRes.exceptionOrNull()?.message
+                                } else {
+                                    onLinkGoogleAccount(credRes.getOrThrow()) { res ->
+                                        isBusy = false
+                                        if (res.isSuccess) {
+                                            isError = false
+                                            statusMsg = "Google Sign-In linked to this account!"
+                                        } else {
+                                            isError = true
+                                            statusMsg = res.exceptionOrNull()?.message
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag("link_google_account_button")
+                    ) {
+                        Text(if (isBusy) "Linking..." else "Link Google Account")
+                    }
+                }
+                if (!hasPassword) {
+                    Button(
+                        enabled = !isBusy,
+                        onClick = { showSetPasswordDialog = true },
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag("link_password_button")
+                    ) {
+                        Text("Set Email Password")
+                    }
+                }
+            }
+
+            if (statusMsg != null) {
+                Text(
+                    text = statusMsg!!,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (isError) DiscountRed else EmeraldPrimary
+                )
+            }
+        }
+    }
+
+    if (showSetPasswordDialog) {
+        AlertDialog(
+            onDismissRequest = { showSetPasswordDialog = false },
+            title = { Text("Set Email Password") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        "Add a password to your Google-signed account so you can log in with either Google or Email + Password.",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    OutlinedTextField(
+                        value = newPassword,
+                        onValueChange = { newPassword = it; statusMsg = null },
+                        label = { Text("New Password (min 6 chars)") },
+                        visualTransformation = if (showNewPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                        trailingIcon = {
+                            IconButton(
+                                onClick = { showNewPassword = !showNewPassword },
+                                modifier = Modifier.testTag("link_password_visibility_toggle")
+                            ) {
+                                Icon(
+                                    imageVector = if (showNewPassword) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+                                    contentDescription = if (showNewPassword) "Hide password" else "Show password"
+                                )
+                            }
+                        },
+                        singleLine = true,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("link_new_password_input")
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    enabled = !isBusy,
+                    onClick = {
+                        isBusy = true
+                        onLinkPassword(newPassword) { res ->
+                            isBusy = false
+                            if (res.isSuccess) {
+                                newPassword = ""
+                                showSetPasswordDialog = false
+                                isError = false
+                                statusMsg = "Email password linked successfully!"
+                            } else {
+                                isError = true
+                                statusMsg = res.exceptionOrNull()?.message
+                            }
+                        }
+                    },
+                    modifier = Modifier.testTag("confirm_link_password_button")
+                ) {
+                    Text(if (isBusy) "Saving..." else "Save Password")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showSetPasswordDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+}
+
 @Composable
 private fun AuthCardView(
     permissionStatus: AppPermissionStatus,
@@ -898,14 +1185,27 @@ private fun AuthCardView(
     onOpenNotifications: () -> Unit,
     onOpenAppSettings: () -> Unit,
     onLogin: (email: String, password: String, onResult: (Result<UserAccountEntity>) -> Unit) -> Unit,
-    onRegister: (fullName: String, email: String, phone: String, password: String, onResult: (Result<UserAccountEntity>) -> Unit) -> Unit
+    onRegister: (fullName: String, email: String, phone: String, password: String, onResult: (Result<UserAccountEntity>) -> Unit) -> Unit,
+    onForgotPassword: (email: String, onResult: (Result<String>) -> Unit) -> Unit,
+    onGoogleSignIn: (googleIdToken: String, onResult: (Result<UserAccountEntity>) -> Unit) -> Unit,
+    onLoginAndLinkGoogle: (email: String, password: String, googleIdToken: String, onResult: (Result<UserAccountEntity>) -> Unit) -> Unit
 ) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
     var isRegisterMode by remember { mutableStateOf(false) }
     var fullName by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
+    var pendingGoogleLink by remember { mutableStateOf<GooglePendingLinkException?>(null) }
+    var showForgotDialog by remember { mutableStateOf(false) }
+    var forgotEmail by remember { mutableStateOf("") }
+    var forgotFeedback by remember { mutableStateOf<String?>(null) }
+    var forgotFeedbackIsError by remember { mutableStateOf(false) }
     var errorMsg by remember { mutableStateOf<String?>(null) }
+    var infoMsg by remember { mutableStateOf<String?>(null) }
     var isSubmitting by remember { mutableStateOf(false) }
 
     LazyColumn(
@@ -941,7 +1241,34 @@ private fun AuthCardView(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     modifier = Modifier.padding(18.dp)
                 ) {
-                    if (isRegisterMode) {
+                    if (pendingGoogleLink != null) {
+                        Surface(
+                            color = Color(0xFFFEF3C7),
+                            shape = RoundedCornerShape(10.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag("pending_google_link_banner")
+                        ) {
+                            Column(
+                                verticalArrangement = Arrangement.spacedBy(6.dp),
+                                modifier = Modifier.padding(12.dp)
+                            ) {
+                                Text(
+                                    text = "Link Google Sign-In to ${pendingGoogleLink!!.email}",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = Color(0xFF92400E),
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = "Enter your account password below and tap 'Sign In & Link Google' once so both Google and Email/Password work seamlessly.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color(0xFF78350F)
+                                )
+                            }
+                        }
+                    }
+
+                    if (isRegisterMode && pendingGoogleLink == null) {
                         OutlinedTextField(
                             value = fullName,
                             onValueChange = { fullName = it; errorMsg = null },
@@ -966,7 +1293,7 @@ private fun AuthCardView(
 
                     OutlinedTextField(
                         value = email,
-                        onValueChange = { email = it; errorMsg = null },
+                        onValueChange = { email = it; errorMsg = null; infoMsg = null },
                         label = { Text("Email Address") },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                         singleLine = true,
@@ -980,12 +1307,41 @@ private fun AuthCardView(
                         onValueChange = { password = it; errorMsg = null },
                         label = { Text("Password (min 6 chars)") },
                         leadingIcon = { Icon(Icons.Filled.Lock, contentDescription = null) },
-                        visualTransformation = PasswordVisualTransformation(),
+                        visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                        trailingIcon = {
+                            IconButton(
+                                onClick = { passwordVisible = !passwordVisible },
+                                modifier = Modifier.testTag("auth_password_visibility_toggle")
+                            ) {
+                                Icon(
+                                    imageVector = if (passwordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+                                    contentDescription = if (passwordVisible) "Hide password" else "Show password"
+                                )
+                            }
+                        },
                         singleLine = true,
                         modifier = Modifier
                             .fillMaxWidth()
                             .testTag("auth_password_input")
                     )
+
+                    if (!isRegisterMode) {
+                        Row(
+                            horizontalArrangement = Arrangement.End,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            TextButton(
+                                onClick = {
+                                    forgotEmail = email.trim()
+                                    forgotFeedback = null
+                                    showForgotDialog = true
+                                },
+                                modifier = Modifier.testTag("forgot_password_button")
+                            ) {
+                                Text("Forgot Password?")
+                            }
+                        }
+                    }
 
                     if (errorMsg != null) {
                         Text(
@@ -995,11 +1351,31 @@ private fun AuthCardView(
                         )
                     }
 
+                    if (infoMsg != null) {
+                        Text(
+                            text = infoMsg!!,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = EmeraldPrimary
+                        )
+                    }
+
                     Button(
                         enabled = !isSubmitting,
                         onClick = {
                             isSubmitting = true
-                            if (isRegisterMode) {
+                            errorMsg = null
+                            infoMsg = null
+                            val pending = pendingGoogleLink
+                            if (pending != null) {
+                                onLoginAndLinkGoogle(email, password, pending.googleIdToken) { res ->
+                                    isSubmitting = false
+                                    if (res.isSuccess) {
+                                        pendingGoogleLink = null
+                                    } else {
+                                        errorMsg = res.exceptionOrNull()?.message
+                                    }
+                                }
+                            } else if (isRegisterMode) {
                                 onRegister(fullName, email, phone, password) { res ->
                                     isSubmitting = false
                                     if (res.isFailure) errorMsg = res.exceptionOrNull()?.message
@@ -1018,6 +1394,8 @@ private fun AuthCardView(
                     ) {
                         Text(
                             when {
+                                isSubmitting && pendingGoogleLink != null -> "Verifying & Linking Google..."
+                                pendingGoogleLink != null -> "Sign In & Link Google"
                                 isSubmitting && isRegisterMode -> "Creating Account..."
                                 isSubmitting -> "Signing In..."
                                 isRegisterMode -> "Create Account"
@@ -1026,10 +1404,64 @@ private fun AuthCardView(
                         )
                     }
 
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        HorizontalDivider(modifier = Modifier.weight(1f))
+                        Text(
+                            text = "OR",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        HorizontalDivider(modifier = Modifier.weight(1f))
+                    }
+
+                    OutlinedButton(
+                        enabled = !isSubmitting,
+                        onClick = {
+                            isSubmitting = true
+                            errorMsg = null
+                            infoMsg = null
+                            scope.launch {
+                                val credRes = launchGoogleCredentialFlow(context)
+                                if (credRes.isFailure) {
+                                    isSubmitting = false
+                                    errorMsg = credRes.exceptionOrNull()?.message
+                                } else {
+                                    val gToken = credRes.getOrThrow()
+                                    onGoogleSignIn(gToken) { res ->
+                                        isSubmitting = false
+                                        if (res.isFailure) {
+                                            val ex = res.exceptionOrNull()
+                                            if (ex is GooglePendingLinkException) {
+                                                pendingGoogleLink = ex
+                                                isRegisterMode = false
+                                                if (ex.email.isNotBlank()) email = ex.email
+                                                errorMsg = ex.message
+                                            } else {
+                                                errorMsg = ex?.message
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp)
+                            .testTag("google_signin_button")
+                    ) {
+                        Text("Continue with Google (Login / Sign Up)", fontWeight = FontWeight.SemiBold)
+                    }
+
                     OutlinedButton(
                         onClick = {
                             isRegisterMode = !isRegisterMode
+                            pendingGoogleLink = null
                             errorMsg = null
+                            infoMsg = null
                         },
                         modifier = Modifier.fillMaxWidth()
                     ) {
@@ -1052,5 +1484,65 @@ private fun AuthCardView(
                 onOpenAppSettings = onOpenAppSettings
             )
         }
+    }
+
+    if (showForgotDialog) {
+        var sendingReset by remember { mutableStateOf(false) }
+        AlertDialog(
+            onDismissRequest = { showForgotDialog = false },
+            title = { Text("Reset Password") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(
+                        "Enter your registered email address and Firebase Authentication will email you a secure password reset link.",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    OutlinedTextField(
+                        value = forgotEmail,
+                        onValueChange = { forgotEmail = it; forgotFeedback = null },
+                        label = { Text("Email Address") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                        singleLine = true,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("forgot_password_email_input")
+                    )
+                    if (forgotFeedback != null) {
+                        Text(
+                            text = forgotFeedback!!,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = if (forgotFeedbackIsError) DiscountRed else EmeraldPrimary
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    enabled = !sendingReset,
+                    onClick = {
+                        sendingReset = true
+                        onForgotPassword(forgotEmail) { res ->
+                            sendingReset = false
+                            if (res.isSuccess) {
+                                forgotFeedbackIsError = false
+                                forgotFeedback = res.getOrThrow()
+                                infoMsg = res.getOrThrow()
+                            } else {
+                                forgotFeedbackIsError = true
+                                forgotFeedback = res.exceptionOrNull()?.message ?: "Could not send reset link"
+                            }
+                        }
+                    },
+                    modifier = Modifier.testTag("send_reset_email_button")
+                ) {
+                    Text(if (sendingReset) "Sending..." else "Send Reset Link")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showForgotDialog = false }) {
+                    Text("Close")
+                }
+            }
+        )
     }
 }

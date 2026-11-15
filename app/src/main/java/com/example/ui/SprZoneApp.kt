@@ -4,6 +4,12 @@ import android.Manifest
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -43,6 +49,7 @@ import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -66,6 +73,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
@@ -73,6 +83,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -101,6 +112,7 @@ import com.example.ui.theme.EmeraldPrimary
 import com.example.ui.theme.SprZoneTheme
 import com.example.ui.viewmodel.SprZoneViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -140,9 +152,18 @@ fun SprZoneApp(
     viewModel: SprZoneViewModel,
     openNotificationsNonce: Int = 0,
     deepLinkProductId: String? = null,
-    onDeepLinkConsumed: () -> Unit = {}
+    onDeepLinkConsumed: () -> Unit = {},
+    enableSplash: Boolean = true
 ) {
     val isDarkMode by viewModel.isDarkMode.collectAsStateWithLifecycle()
+    var splashVisible by remember { mutableStateOf(enableSplash) }
+
+    LaunchedEffect(enableSplash) {
+        if (enableSplash) {
+            delay(1350L)
+            splashVisible = false
+        }
+    }
 
     SprZoneTheme(darkTheme = isDarkMode) {
         val context = LocalContext.current
@@ -169,6 +190,7 @@ fun SprZoneApp(
         val readNotificationIds by viewModel.readNotificationIds.collectAsStateWithLifecycle()
         val unreadNotificationCount by viewModel.unreadNotificationCount.collectAsStateWithLifecycle()
         val detectedLocationLabel by viewModel.detectedLocationLabel.collectAsStateWithLifecycle()
+        val linkedProviders by viewModel.linkedProviders.collectAsStateWithLifecycle()
 
         var showNotificationsDialog by remember { mutableStateOf(false) }
         var permissionStatus by remember {
@@ -438,6 +460,7 @@ fun SprZoneApp(
                             composable(SprRoutes.ACCOUNT) {
                                 AccountScreen(
                                     currentUser = currentUser,
+                                    linkedProviders = linkedProviders,
                                     wishlistProducts = wishlistProducts,
                                     addresses = addresses,
                                     isDarkMode = isDarkMode,
@@ -459,6 +482,11 @@ fun SprZoneApp(
                                     onOpenAppSettings = { SprNotificationHelper.openAppPermissionSettings(context) },
                                     onLogin = viewModel::login,
                                     onRegister = viewModel::register,
+                                    onForgotPassword = viewModel::sendPasswordResetEmail,
+                                    onGoogleSignIn = viewModel::signInWithGoogleIdToken,
+                                    onLoginAndLinkGoogle = viewModel::loginAndLinkGoogle,
+                                    onLinkGoogleAccount = viewModel::linkGoogleToCurrentAccount,
+                                    onLinkPassword = viewModel::linkPasswordToCurrentAccount,
                                     onUpdateProfile = viewModel::updateProfile,
                                     onDeleteProfile = viewModel::deleteProfile,
                                     onSignOut = viewModel::signOut,
@@ -549,6 +577,85 @@ fun SprZoneApp(
                         navController.navigate(SprRoutes.productDetail(item.productId))
                     }
                 }
+            )
+        }
+
+        AnimatedVisibility(
+            visible = splashVisible,
+            exit = fadeOut(animationSpec = tween(durationMillis = 380))
+        ) {
+            SprSplashScreen()
+        }
+    }
+}
+
+@Composable
+private fun SprSplashScreen() {
+    val logoScale = remember { Animatable(0.76f) }
+    val contentAlpha = remember { Animatable(0f) }
+
+    LaunchedEffect(Unit) {
+        logoScale.animateTo(1f, animationSpec = tween(durationMillis = 520, easing = FastOutSlowInEasing))
+    }
+    LaunchedEffect(Unit) {
+        contentAlpha.animateTo(1f, animationSpec = tween(durationMillis = 480))
+    }
+
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFF003D1E),
+                        EmeraldPrimary,
+                        Color(0xFF009A4E)
+                    )
+                )
+            )
+            .testTag("spr_splash_screen")
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier
+                .padding(32.dp)
+                .alpha(contentAlpha.value)
+        ) {
+            Surface(
+                color = Color.White,
+                shape = RoundedCornerShape(26.dp),
+                shadowElevation = 14.dp,
+                modifier = Modifier
+                    .size(108.dp)
+                    .scale(logoScale.value)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    SprBrandLogo(size = 86.dp)
+                }
+            }
+            Spacer(modifier = Modifier.height(22.dp))
+            Text(
+                text = "SPR ZONE BD",
+                color = Color.White,
+                fontSize = 28.sp,
+                fontWeight = FontWeight.ExtraBold,
+                letterSpacing = 1.4.sp
+            )
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                text = "Shop Smart • Live Better",
+                color = Color(0xFFDCFCE7),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Medium
+            )
+            Spacer(modifier = Modifier.height(34.dp))
+            CircularProgressIndicator(
+                color = Color(0xFFFEF08A),
+                trackColor = Color.White.copy(alpha = 0.24f),
+                strokeWidth = 3.dp,
+                modifier = Modifier.size(30.dp)
             )
         }
     }

@@ -323,12 +323,13 @@ fun ProductDetailScreen(
                             Icon(
                                 imageVector = Icons.Filled.Star,
                                 contentDescription = null,
-                                tint = StarAmber,
+                                tint = if (reviews.isNotEmpty() || product.reviewCount > 0) StarAmber else MaterialTheme.colorScheme.outlineVariant,
                                 modifier = Modifier.size(18.dp)
                             )
                             Spacer(modifier = Modifier.width(4.dp))
+                            val liveCount = reviews.size.coerceAtLeast(product.reviewCount)
                             Text(
-                                text = "${product.rating} • ${product.reviewCount} verified reviews",
+                                text = if (liveCount > 0) "${product.rating} • $liveCount verified reviews" else "No reviews yet (0)",
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Medium
                             )

@@ -14,8 +14,17 @@ import com.example.data.remote.FirebaseAuthRequest
 import com.example.data.remote.FirebaseAuthResponse
 import com.example.data.remote.FirebaseAuthRestService
 import com.example.data.remote.FirebaseDeleteAccountRequest
+import com.example.data.remote.FirebaseLookupProviderDto
+import com.example.data.remote.FirebaseLookupRequest
+import com.example.data.remote.FirebaseLookupResponse
+import com.example.data.remote.FirebaseLookupUserDto
+import com.example.data.remote.FirebaseSendOobCodeRequest
+import com.example.data.remote.FirebaseSendOobCodeResponse
+import com.example.data.remote.FirebaseSignInWithIdpRequest
+import com.example.data.remote.FirebaseSignInWithIdpResponse
 import com.example.data.remote.FirebaseTokenRefreshResponse
 import com.example.data.remote.FirebaseTokenRefreshService
+import com.example.data.remote.FirebaseUpdateAccountRequest
 import com.example.data.remote.RemoteAppNotificationDto
 import com.example.data.remote.RemoteCouponDto
 import com.example.data.remote.RemoteCustomerAddressDto
@@ -25,9 +34,11 @@ import com.example.data.remote.RemoteDeliveryZoneDto
 import com.example.data.remote.RemoteOrderDto
 import com.example.data.remote.RemotePaymentSettingsDto
 import com.example.data.remote.RemoteProductDto
+import com.example.data.remote.RemoteReviewDto
 import com.example.data.remote.RemoteSmsRecordDto
 import com.example.data.remote.SmsVerifyApiResponse
 import com.example.data.remote.SprZoneRtdbService
+import com.example.data.repository.GooglePendingLinkException
 import com.example.data.repository.SprZoneRepository
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -237,11 +248,118 @@ class SprZoneDatabaseTest {
         val cachedFile = File(URI(resultUri))
         assertTrue("Expected cached file to exist", cachedFile.exists() && cachedFile.length() > 0L)
     }
+
+    @Test
+    fun productsWithoutReviewsDefaultToZeroRatingAndLiveReviewsRecalculate() = runTest {
+        fakeRtdb.products["prod_no_rev"] = RemoteProductDto(
+            name = "Fresh Gadget",
+            category = "Electronics & Gadgets",
+            price = 1500.0,
+            stock = 5
+        )
+        repo.syncRemoteCatalogAndSettings()
+
+        val initialProduct = db.productDao().getProductById("prod_no_rev")!!
+        assertEquals(0.0, initialProduct.rating, 0.01)
+        assertEquals(0, initialProduct.reviewCount)
+
+        val reg = repo.registerUser("Nadia Islam", "nadia@example.com", "01711223355", "secret123")
+        assertTrue(reg.isSuccess)
+
+        val revRes = repo.submitReview("prod_no_rev", "Nadia Islam", "nadia@example.com", 4, "Very nice build quality!")
+        assertTrue(revRes.isSuccess)
+        assertEquals(1, fakeRtdb.reviews["prod_no_rev"]?.size)
+
+        repo.syncReviewsAndRatings()
+        val updatedProduct = db.productDao().getProductById("prod_no_rev")!!
+        assertEquals(4.0, updatedProduct.rating, 0.01)
+        assertEquals(1, updatedProduct.reviewCount)
+    }
+
+    @Test
+    fun syncUserOrdersUsesScopedUidQuery() = runTest {
+        val reg = repo.registerUser("Tariq", "tariq@example.com", "01812345678", "secret123")
+        assertTrue(reg.isSuccess)
+        fakeRtdb.orders["SPR-BD-OWN"] = RemoteOrderDto(orderId = "SPR-BD-OWN", uid = "uid_1", customerEmail = "tariq@example.com", total = 900L, status = "Confirmed")
+        fakeRtdb.orders["SPR-BD-OTHER"] = RemoteOrderDto(orderId = "SPR-BD-OTHER", uid = "uid_999", customerEmail = "other@example.com", total = 500L, status = "Pending")
+
+        repo.syncUserOrdersFromRemote("tariq@example.com")
+        val myOrders = db.orderDao().observeUserOrders("tariq@example.com").first()
+        assertEquals(1, myOrders.size)
+        assertEquals("SPR-BD-OWN", myOrders.single().orderId)
+    }
+
+    @Test
+    fun forgotPasswordSendsResetAndValidatesEmail() = runTest {
+        val email = "resetuser@example.com"
+        assertTrue(repo.registerUser("Reset User", email, "01711002233", "secret123").isSuccess)
+
+        val invalidRes = repo.sendPasswordResetEmail("not-an-email")
+        assertTrue(invalidRes.isFailure)
+
+        val validRes = repo.sendPasswordResetEmail(email)
+        assertTrue(validRes.isSuccess)
+        assertEquals(listOf(email), fakeAuth.resetEmailsSent)
+    }
+
+    @Test
+    fun googleSignInConflictLinksWithPasswordAndSupportsDualLogin() = runTest {
+        val email = "dual@example.com"
+        assertTrue(repo.registerUser("Dual User", email, "01711998877", "pass1234").isSuccess)
+        repo.signOut()
+
+        // First Google sign-in attempt on existing password email triggers GooglePendingLinkException
+        val firstGoogle = repo.signInWithGoogleIdToken("gid_tok_dual@example.com")
+        assertTrue(firstGoogle.isFailure)
+        val pendingEx = firstGoogle.exceptionOrNull() as? GooglePendingLinkException
+        assertTrue("Expected GooglePendingLinkException", pendingEx != null)
+        assertEquals(email, pendingEx?.email)
+
+        // Linking with password signs user in and binds google.com provider
+        val linkedRes = repo.loginAndLinkGoogle(email, "pass1234", pendingEx!!.googleIdToken)
+        assertTrue(linkedRes.isSuccess)
+        val providers = repo.getLinkedProvidersForCurrentUser()
+        assertTrue(providers.contains("password"))
+        assertTrue(providers.contains("google.com"))
+
+        // Signing out and logging in purely with Google now succeeds cleanly!
+        repo.signOut()
+        val secondGoogle = repo.signInWithGoogleIdToken("gid_tok_dual@example.com")
+        assertTrue(secondGoogle.isSuccess)
+        assertEquals("Dual User", secondGoogle.getOrThrow().fullName)
+    }
+
+    @Test
+    fun googleUserCanLinkPasswordForEmailSignIn() = runTest {
+        val googleLogin = repo.signInWithGoogleIdToken("gid_tok_newgoogle@example.com|Nusrat Jahan")
+        assertTrue(googleLogin.isSuccess)
+        assertEquals("Nusrat Jahan", googleLogin.getOrThrow().fullName)
+        assertEquals(listOf("google.com"), repo.getLinkedProvidersForCurrentUser())
+
+        val linkPwd = repo.linkPasswordToCurrentAccount("newpass99")
+        assertTrue(linkPwd.isSuccess)
+        val providers = linkPwd.getOrThrow()
+        assertTrue(providers.contains("google.com"))
+        assertTrue(providers.contains("password"))
+
+        repo.signOut()
+        val emailLogin = repo.loginUser("newgoogle@example.com", "newpass99")
+        assertTrue(emailLogin.isSuccess)
+        assertEquals("Nusrat Jahan", emailLogin.getOrThrow().fullName)
+    }
 }
 
 private class InMemoryFirebaseAuthService : FirebaseAuthRestService {
-    private data class StoredAuthUser(val uid: String, val email: String, val password: String)
+    private data class StoredAuthUser(
+        val uid: String,
+        val email: String,
+        val password: String?,
+        val displayName: String = "",
+        val providers: MutableSet<String> = mutableSetOf()
+    )
+
     private val usersByEmail = mutableMapOf<String, StoredAuthUser>()
+    val resetEmailsSent = mutableListOf<String>()
     private var counter = 0
 
     override suspend fun signUp(apiKey: String, body: FirebaseAuthRequest): Response<FirebaseAuthResponse?> {
@@ -254,7 +372,7 @@ private class InMemoryFirebaseAuthService : FirebaseAuthRestService {
         }
         counter += 1
         val uid = "uid_$counter"
-        usersByEmail[email] = StoredAuthUser(uid, email, body.password)
+        usersByEmail[email] = StoredAuthUser(uid, email, body.password, providers = mutableSetOf("password"))
         return Response.success(
             FirebaseAuthResponse(
                 idToken = "tok_$uid",
@@ -268,7 +386,7 @@ private class InMemoryFirebaseAuthService : FirebaseAuthRestService {
     override suspend fun signInWithPassword(apiKey: String, body: FirebaseAuthRequest): Response<FirebaseAuthResponse?> {
         val email = body.email.trim().lowercase()
         val found = usersByEmail[email]
-        if (found == null || found.password != body.password) {
+        if (found == null || found.password == null || found.password != body.password) {
             return Response.error(
                 400,
                 """{"error":{"message":"INVALID_LOGIN_CREDENTIALS"}}""".toResponseBody("application/json".toMediaType())
@@ -279,7 +397,139 @@ private class InMemoryFirebaseAuthService : FirebaseAuthRestService {
                 idToken = "tok_${found.uid}",
                 email = email,
                 refreshToken = "ref_${found.uid}",
-                localId = found.uid
+                localId = found.uid,
+                displayName = found.displayName
+            )
+        )
+    }
+
+    override suspend fun signInWithIdp(
+        apiKey: String,
+        body: FirebaseSignInWithIdpRequest
+    ): Response<FirebaseSignInWithIdpResponse?> {
+        val decodedPost = java.net.URLDecoder.decode(body.postBody, "UTF-8")
+        val rawToken = decodedPost.substringAfter("id_token=").substringBefore("&")
+        val payload = rawToken.removePrefix("gid_tok_")
+        val gEmail = payload.substringBefore("|").trim().lowercase().ifBlank { "google@example.com" }
+        val gName = payload.substringAfter("|", "").trim().ifBlank { gEmail.substringBefore("@") }
+
+        val linkedUid = body.idToken?.removePrefix("tok_")
+        if (!linkedUid.isNullOrBlank()) {
+            val currentUser = usersByEmail.values.firstOrNull { it.uid == linkedUid }
+                ?: return Response.error(400, """{"error":{"message":"INVALID_ID_TOKEN"}}""".toResponseBody("application/json".toMediaType()))
+            currentUser.providers.add("google.com")
+            return Response.success(
+                FirebaseSignInWithIdpResponse(
+                    localId = currentUser.uid,
+                    email = currentUser.email,
+                    displayName = currentUser.displayName.ifBlank { gName },
+                    idToken = "tok_${currentUser.uid}",
+                    refreshToken = "ref_${currentUser.uid}",
+                    providerId = "google.com",
+                    needConfirmation = false
+                )
+            )
+        }
+
+        val existing = usersByEmail[gEmail]
+        if (existing != null) {
+            if ("google.com" !in existing.providers) {
+                return Response.success(
+                    FirebaseSignInWithIdpResponse(
+                        email = existing.email,
+                        needConfirmation = true,
+                        verifiedProvider = existing.providers.toList()
+                    )
+                )
+            }
+            return Response.success(
+                FirebaseSignInWithIdpResponse(
+                    localId = existing.uid,
+                    email = existing.email,
+                    displayName = existing.displayName.ifBlank { gName },
+                    idToken = "tok_${existing.uid}",
+                    refreshToken = "ref_${existing.uid}",
+                    providerId = "google.com",
+                    needConfirmation = false
+                )
+            )
+        }
+
+        counter += 1
+        val uid = "uid_$counter"
+        usersByEmail[gEmail] = StoredAuthUser(
+            uid = uid,
+            email = gEmail,
+            password = null,
+            displayName = gName,
+            providers = mutableSetOf("google.com")
+        )
+        return Response.success(
+            FirebaseSignInWithIdpResponse(
+                localId = uid,
+                email = gEmail,
+                displayName = gName,
+                idToken = "tok_$uid",
+                refreshToken = "ref_$uid",
+                providerId = "google.com",
+                needConfirmation = false
+            )
+        )
+    }
+
+    override suspend fun sendOobCode(
+        apiKey: String,
+        body: FirebaseSendOobCodeRequest
+    ): Response<FirebaseSendOobCodeResponse?> {
+        val email = body.email.trim().lowercase()
+        resetEmailsSent.add(email)
+        return Response.success(FirebaseSendOobCodeResponse(email = email))
+    }
+
+    override suspend fun lookupAccount(
+        apiKey: String,
+        body: FirebaseLookupRequest
+    ): Response<FirebaseLookupResponse?> {
+        val uid = body.idToken.removePrefix("tok_")
+        val found = usersByEmail.values.firstOrNull { it.uid == uid }
+            ?: return Response.success(FirebaseLookupResponse(users = emptyList()))
+        return Response.success(
+            FirebaseLookupResponse(
+                users = listOf(
+                    FirebaseLookupUserDto(
+                        localId = found.uid,
+                        email = found.email,
+                        displayName = found.displayName,
+                        providerUserInfo = found.providers.map { pid ->
+                            FirebaseLookupProviderDto(providerId = pid, email = found.email)
+                        }
+                    )
+                )
+            )
+        )
+    }
+
+    override suspend fun updateAccount(
+        apiKey: String,
+        body: FirebaseUpdateAccountRequest
+    ): Response<FirebaseAuthResponse?> {
+        val uid = body.idToken.removePrefix("tok_")
+        val found = usersByEmail.values.firstOrNull { it.uid == uid }
+            ?: return Response.error(400, """{"error":{"message":"INVALID_ID_TOKEN"}}""".toResponseBody("application/json".toMediaType()))
+        val updated = found.copy(
+            password = body.password ?: found.password,
+            displayName = body.displayName ?: found.displayName
+        ).apply {
+            if (!body.password.isNullOrBlank()) providers.add("password")
+        }
+        usersByEmail[found.email] = updated
+        return Response.success(
+            FirebaseAuthResponse(
+                idToken = "tok_${updated.uid}",
+                email = updated.email,
+                refreshToken = "ref_${updated.uid}",
+                localId = updated.uid,
+                displayName = updated.displayName
             )
         )
     }
@@ -310,13 +560,30 @@ private class InMemoryTokenRefreshService : FirebaseTokenRefreshService {
 
 private class InMemorySprZoneRtdbService : SprZoneRtdbService {
     val customers = mutableMapOf<String, RemoteCustomerProfileDto>()
+    val products = mutableMapOf<String, RemoteProductDto>()
+    val reviews = mutableMapOf<String, MutableMap<String, RemoteReviewDto>>()
+    val orders = mutableMapOf<String, RemoteOrderDto>()
     var deliveryConfig: RemoteDeliveryConfigDto? = RemoteDeliveryConfigDto()
 
-    override suspend fun getProducts(): Response<Map<String, RemoteProductDto>?> = Response.success(emptyMap())
+    override suspend fun getProducts(): Response<Map<String, RemoteProductDto>?> = Response.success(products.toMap())
     override suspend fun getDeliveryConfig(): Response<RemoteDeliveryConfigDto?> = Response.success(deliveryConfig)
     override suspend fun getPaymentSettings(): Response<RemotePaymentSettingsDto?> = Response.success(RemotePaymentSettingsDto())
     override suspend fun getCoupons(): Response<Map<String, RemoteCouponDto>?> = Response.success(emptyMap())
     override suspend fun getAppNotifications(): Response<Map<String, RemoteAppNotificationDto>?> = Response.success(emptyMap())
+
+    override suspend fun getReviews(): Response<Map<String, Map<String, RemoteReviewDto>>?> =
+        Response.success(reviews.mapValues { it.value.toMap() })
+
+    override suspend fun putReview(
+        productId: String,
+        reviewId: String,
+        authToken: String,
+        review: RemoteReviewDto
+    ): Response<RemoteReviewDto?> {
+        val map = reviews.getOrPut(productId) { mutableMapOf() }
+        map[reviewId] = review
+        return Response.success(review)
+    }
 
     override suspend fun getCustomerProfile(uid: String, authToken: String): Response<RemoteCustomerProfileDto?> =
         Response.success(customers[uid])
@@ -396,10 +663,18 @@ private class InMemorySprZoneRtdbService : SprZoneRtdbService {
 
     override suspend fun getSmsInboxRecord(trxId: String): Response<RemoteSmsRecordDto?> = Response.success(null)
     override suspend fun markSmsRecordMatched(trxId: String, patch: Map<String, String>): Response<Map<String, String>?> = Response.success(patch)
-    override suspend fun putOrder(orderId: String, order: RemoteOrderDto): Response<RemoteOrderDto?> = Response.success(order)
-    override suspend fun getOrder(orderId: String): Response<RemoteOrderDto?> = Response.success(null)
-    override suspend fun getAllOrders(): Response<Map<String, RemoteOrderDto>?> = Response.success(emptyMap())
-    override suspend fun patchOrderStatus(orderId: String, patch: Map<String, Any>): Response<Map<String, Any>?> = Response.success(patch)
+    override suspend fun putOrder(orderId: String, order: RemoteOrderDto): Response<RemoteOrderDto?> {
+        orders[orderId] = order
+        return Response.success(order)
+    }
+    override suspend fun getOrder(orderId: String, authToken: String?): Response<RemoteOrderDto?> =
+        Response.success(orders[orderId])
+    override suspend fun getOrdersByUid(orderBy: String, equalTo: String, authToken: String): Response<Map<String, RemoteOrderDto>?> {
+        val cleanUid = equalTo.trim('"')
+        return Response.success(orders.filterValues { it.uid == cleanUid })
+    }
+    override suspend fun patchOrderStatus(orderId: String, patch: Map<String, Any>, authToken: String?): Response<Map<String, Any>?> =
+        Response.success(patch)
     override suspend fun verifyViaExternalSmsApi(
         url: String,
         sender: String,

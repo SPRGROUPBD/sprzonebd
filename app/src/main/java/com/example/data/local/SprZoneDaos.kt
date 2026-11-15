@@ -162,6 +162,9 @@ interface ReviewDao {
     @Query("SELECT * FROM reviews WHERE productId = :productId")
     suspend fun getReviewsForProduct(productId: String): List<ReviewEntity>
 
+    @Query("SELECT * FROM reviews")
+    suspend fun getAllReviews(): List<ReviewEntity>
+
     @Query("SELECT COUNT(*) FROM reviews")
     suspend fun getReviewCount(): Int
 
@@ -170,4 +173,7 @@ interface ReviewDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(reviews: List<ReviewEntity>)
+
+    @Query("DELETE FROM reviews")
+    suspend fun clearAll()
 }

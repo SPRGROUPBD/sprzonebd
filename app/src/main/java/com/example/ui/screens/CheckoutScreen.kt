@@ -386,6 +386,10 @@ private fun NewAddressCard(
     var label by remember { mutableStateOf("Home") }
     var name by remember { mutableStateOf(defaultName) }
     var phone by remember { mutableStateOf(defaultPhone) }
+    LaunchedEffect(defaultName, defaultPhone) {
+        if (name.isBlank() && defaultName.isNotBlank()) name = defaultName
+        if (phone.isBlank() && defaultPhone.isNotBlank()) phone = defaultPhone
+    }
     var division by remember { mutableStateOf("Dhaka") }
     var showDivisionMenu by remember { mutableStateOf(false) }
     val divisionDistricts = remember(division) { StoreConstants.districtsForDivision(division) }

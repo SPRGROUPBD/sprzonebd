@@ -69,7 +69,8 @@ data class CatalogFilterState(
 @OptIn(ExperimentalCoroutinesApi::class)
 class SprZoneViewModel(
     private val repository: SprZoneRepository,
-    private val onNewNotification: (AppNotificationItem) -> Unit = {}
+    private val onNewNotification: (AppNotificationItem) -> Unit = {},
+    private val enableRealtimeSync: Boolean = true
 ) : ViewModel() {
 
     private val _snackbarEvents = MutableSharedFlow<String>(extraBufferCapacity = 8)
@@ -98,6 +99,9 @@ class SprZoneViewModel(
 
     private val _detectedLocationLabel = MutableStateFlow<String?>(null)
     val detectedLocationLabel: StateFlow<String?> = _detectedLocationLabel.asStateFlow()
+
+    private val _linkedProviders = MutableStateFlow<List<String>>(emptyList())
+    val linkedProviders: StateFlow<List<String>> = _linkedProviders.asStateFlow()
 
     val notifications: StateFlow<List<AppNotificationItem>> = combine(
         repository.allNotifications,
@@ -208,6 +212,10 @@ class SprZoneViewModel(
         viewModelScope.launch {
             repository.ensureSeededAndSync()
             fetchAndDispatchNotifications()
+            loggedInEmail.value?.let { repository.syncUserOrdersFromRemote(it) }
+            if (!loggedInEmail.value.isNullOrBlank()) {
+                _linkedProviders.value = repository.getLinkedProvidersForCurrentUser()
+            }
         }
         viewModelScope.launch {
             while (true) {
@@ -216,10 +224,38 @@ class SprZoneViewModel(
                 _flashCountdownSeconds.value = if (next <= 0L) 6 * 3600L else next
             }
         }
-        viewModelScope.launch {
-            while (true) {
-                delay(25_000L)
-                fetchAndDispatchNotifications()
+        if (enableRealtimeSync) {
+            viewModelScope.launch {
+                repository.observeRealtimeNodeChanges("products.json").collect {
+                    repository.syncRemoteCatalogAndSettings()
+                }
+            }
+            viewModelScope.launch {
+                repository.observeRealtimeNodeChanges("reviews.json").collect {
+                    repository.syncReviewsAndRatings()
+                }
+            }
+            viewModelScope.launch {
+                repository.observeRealtimeNodeChanges("deals/deliveryConfig.json").collect {
+                    repository.syncRemoteCatalogAndSettings()
+                }
+            }
+            viewModelScope.launch {
+                repository.observeRealtimeNodeChanges("coupons.json").collect {
+                    repository.syncRemoteCatalogAndSettings()
+                }
+            }
+            viewModelScope.launch {
+                repository.observeRealtimeNodeChanges("deals/appNotifications.json").collect {
+                    fetchAndDispatchNotifications()
+                }
+            }
+            viewModelScope.launch {
+                while (true) {
+                    delay(12_000L)
+                    loggedInEmail.value?.let { repository.syncUserOrdersFromRemote(it) }
+                    fetchAndDispatchNotifications()
+                }
             }
         }
     }
@@ -375,6 +411,7 @@ class SprZoneViewModel(
         viewModelScope.launch {
             val res = repository.registerUser(fullName, email, phone, password)
             if (res.isSuccess) {
+                _linkedProviders.value = repository.getLinkedProvidersForCurrentUser()
                 _snackbarEvents.tryEmit("Welcome to SPR Zone BD, ${res.getOrThrow().fullName}!")
             }
             onResult(res)
@@ -389,7 +426,89 @@ class SprZoneViewModel(
         viewModelScope.launch {
             val res = repository.loginUser(email, password)
             if (res.isSuccess) {
+                _linkedProviders.value = repository.getLinkedProvidersForCurrentUser()
                 _snackbarEvents.tryEmit("Signed in as ${res.getOrThrow().fullName}")
+            }
+            onResult(res)
+        }
+    }
+
+    fun sendPasswordResetEmail(
+        email: String,
+        onResult: (Result<String>) -> Unit
+    ) {
+        viewModelScope.launch {
+            val res = repository.sendPasswordResetEmail(email)
+            if (res.isSuccess) {
+                _snackbarEvents.tryEmit(res.getOrThrow())
+            }
+            onResult(res)
+        }
+    }
+
+    fun signInWithGoogleIdToken(
+        googleIdToken: String,
+        onResult: (Result<UserAccountEntity>) -> Unit
+    ) {
+        viewModelScope.launch {
+            val res = repository.signInWithGoogleIdToken(googleIdToken)
+            if (res.isSuccess) {
+                _linkedProviders.value = repository.getLinkedProvidersForCurrentUser()
+                _snackbarEvents.tryEmit("Signed in with Google as ${res.getOrThrow().fullName}")
+            }
+            onResult(res)
+        }
+    }
+
+    fun loginAndLinkGoogle(
+        email: String,
+        password: String,
+        googleIdToken: String,
+        onResult: (Result<UserAccountEntity>) -> Unit
+    ) {
+        viewModelScope.launch {
+            val res = repository.loginAndLinkGoogle(email, password, googleIdToken)
+            if (res.isSuccess) {
+                _linkedProviders.value = repository.getLinkedProvidersForCurrentUser()
+                _snackbarEvents.tryEmit("Account linked! Google & Email Sign-In both active.")
+            }
+            onResult(res)
+        }
+    }
+
+    fun refreshLinkedProviders() {
+        viewModelScope.launch {
+            _linkedProviders.value = if (loggedInEmail.value.isNullOrBlank()) {
+                emptyList()
+            } else {
+                repository.getLinkedProvidersForCurrentUser()
+            }
+        }
+    }
+
+    fun linkGoogleToCurrentAccount(
+        googleIdToken: String,
+        onResult: (Result<List<String>>) -> Unit
+    ) {
+        viewModelScope.launch {
+            val res = repository.linkGoogleToCurrentAccount(googleIdToken)
+            if (res.isSuccess) {
+                _linkedProviders.value = res.getOrThrow()
+                _snackbarEvents.tryEmit("Google Sign-In linked to your account!")
+            }
+            onResult(res)
+        }
+    }
+
+    fun linkPasswordToCurrentAccount(
+        newPassword: String,
+        onResult: (Result<List<String>>) -> Unit
+    ) {
+        viewModelScope.launch {
+            val res = repository.linkPasswordToCurrentAccount(newPassword)
+            if (res.isSuccess) {
+                _linkedProviders.value = res.getOrThrow()
+                _snackbarEvents.tryEmit("Email password set! You can now sign in with Password or Google.")
             }
             onResult(res)
         }
@@ -425,6 +544,7 @@ class SprZoneViewModel(
             val res = repository.deleteProfile(email)
             if (res.isSuccess) {
                 _promoCodeInput.value = ""
+                _linkedProviders.value = emptyList()
                 _snackbarEvents.tryEmit("Profile deleted")
             }
             onResult(res)
@@ -435,6 +555,7 @@ class SprZoneViewModel(
         viewModelScope.launch {
             repository.signOut()
             _promoCodeInput.value = ""
+            _linkedProviders.value = emptyList()
             _snackbarEvents.tryEmit("Signed out")
         }
     }
