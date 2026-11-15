@@ -111,8 +111,11 @@ jobs:
       - name: Run unit tests
         run: gradle :app:testDebugUnitTest --no-daemon
 
-      - name: Build Debug & Release APKs
-        run: gradle :app:assembleDebug :app:assembleRelease --no-daemon
+      - name: Build Debug APK
+        run: gradle :app:assembleDebug --no-daemon
+
+      - name: Build Release APK
+        run: gradle :app:assembleRelease --no-daemon
 
       - name: Stage SPR Zone BD.apk artifacts
         run: |

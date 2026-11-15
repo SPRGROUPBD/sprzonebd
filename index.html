@@ -2846,7 +2846,7 @@ $("deliveryZoneForm").onsubmit = (e) => {
   previewDeliveryArea = $("dzArea").value.trim();
   closeModal("deliveryZoneModal");
   if (activePreviewId && products[activePreviewId]) {
-    refreshPreviewDeliveryUI(products[actactivePreviewIdivePreviewId]);
+    refreshPreviewDeliveryUI(products[activePreviewId]);
   }
   toast("Delivery location updated");
 };
