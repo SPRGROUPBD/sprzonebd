@@ -1,0 +1,85 @@
+{
+  "project_info": {
+    "project_number": "799252588942",
+    "firebase_url": "https://e-commarcebd-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "e-commarcebd",
+    "storage_bucket": "e-commarcebd.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:799252588942:android:f689b837a81d41c0c6dcdf",
+        "android_client_info": {
+          "package_name": "com.aistudio.sprzonebd.kxmpzq"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "799252588942-92c18ig3drnrqjk5sk0sngleldvcm7q5.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.aistudio.sprzonebd.kxmpzq",
+            "certificate_hash": "12def33a48fba7d7bb352c6f18a7af231b439f44"
+          }
+        },
+        {
+          "client_id": "799252588942-itnqbin8ck1rpda2hhas07k4953rv0k1.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBIMXy5ydlAEyO8RzXzBRBBTMMUtCVoHiM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "799252588942-itnqbin8ck1rpda2hhas07k4953rv0k1.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:799252588942:android:3b6884d5e6cd27ddc6dcdf",
+        "android_client_info": {
+          "package_name": "com.spr.zone.bd"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "799252588942-bp099ke8hbceh8283i5ieri06oo0k942.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.spr.zone.bd",
+            "certificate_hash": "12def33a48fba7d7bb352c6f18a7af231b439f44"
+          }
+        },
+        {
+          "client_id": "799252588942-itnqbin8ck1rpda2hhas07k4953rv0k1.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBIMXy5ydlAEyO8RzXzBRBBTMMUtCVoHiM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "799252588942-itnqbin8ck1rpda2hhas07k4953rv0k1.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
