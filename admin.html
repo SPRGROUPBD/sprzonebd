@@ -204,7 +204,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
       <button class="tab-btn active" data-tab="products">📦 Products</button>
       <button class="tab-btn" data-tab="categories">🗂️ Categories</button>
       <button class="tab-btn" data-tab="deals">🔥 Sales, Hero Slider &amp; Coupons</button>
-      <button class="tab-btn" data-tab="delivery">🚚 Courier &amp; Free Delivery</button>
+      <button class="tab-btn" data-tab="delivery">🚚 Suppliers &amp; Courier Rates</button>
       <button class="tab-btn" data-tab="store">🏪 Store Settings</button>
       <button class="tab-btn" data-tab="notifications">🔔 App Notifications</button>
       <button class="tab-btn" data-tab="orders">🧾 COD Orders &amp; Invoices</button>
@@ -225,6 +225,21 @@ button:disabled{opacity:.5;cursor:not-allowed}
               <datalist id="categoryOptionsList"></datalist>
             </div>
             <div class="field"><label>Brand</label><input id="pBrand" placeholder="Brand Name"></div>
+          </div>
+          <div class="form-row">
+            <div class="field">
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <label style="margin:0">Supplier (Dropship Courier)</label>
+                <a href="#" id="manageSuppliersLink" style="font-size:11.5px;color:var(--emerald);font-weight:700">+ Manage Suppliers</a>
+              </div>
+              <select id="pSupplier">
+                <option value="">-- Store Default (Zone Rate) --</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Supplier Product Link (Private Ref)</label>
+              <input id="pSourceUrl" type="url" placeholder="https://supplier.com/product-link">
+            </div>
           </div>
           <div class="form-row">
             <div class="field"><label>Regular / Old Price (৳)</label><input id="pOldPrice" type="number" min="0" step="any" value="0"></div>
@@ -431,9 +446,34 @@ button:disabled{opacity:.5;cursor:not-allowed}
       </div>
     </section>
 
-    <!-- TAB 4: ZONE-WISE COURIER RATES & AMOUNT-WISE FREE DELIVERY -->
+    <!-- TAB 4: SUPPLIERS, ZONE-WISE COURIER RATES & FREE DELIVERY -->
     <section id="tab-delivery" class="split-grid hidden">
       <div class="card">
+        <h3 id="supFormTitle" style="margin-bottom:6px">🏭 Add / Edit Dropshipping Supplier</h3>
+        <p class="muted" style="font-size:12px;margin:0 0 12px">
+          Assign each supplier a Pickup Location and Inside/Outside Dhaka courier charge. Orders charge each unique supplier's rate <b>once per order</b> (even for multiple products from that supplier).
+        </p>
+        <form id="supplierForm" novalidate>
+          <input type="hidden" id="supEditId">
+          <div class="form-row">
+            <div class="field"><label>Supplier Name *</label><input id="supName" required placeholder="e.g. A Company"></div>
+            <div class="field"><label>Pickup Location *</label><input id="supPickup" required placeholder="e.g. ঢাকা / চট্টগ্রাম"></div>
+          </div>
+          <div class="form-row">
+            <div class="field"><label>Inside Dhaka Rate (৳) *</label><input id="supInsideRate" type="number" min="0" step="any" value="60" required></div>
+            <div class="field"><label>Outside Dhaka Rate (৳) *</label><input id="supOutsideRate" type="number" min="0" step="any" value="120" required></div>
+          </div>
+          <div class="form-row">
+            <div class="field"><label>Supplier Phone / WhatsApp</label><input id="supPhone" placeholder="01XXXXXXXXX"></div>
+            <div class="field"><label>Notes / Sourcing Portal</label><input id="supNote" placeholder="Optional note or link"></div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button type="submit" style="flex:1" id="supSaveBtn">➕ Add Supplier</button>
+            <button type="button" class="secondary" id="supResetBtn">Clear</button>
+          </div>
+        </form>
+
+        <hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
         <h3 style="margin-bottom:6px">🆓 Amount-wise Free Delivery Rule</h3>
         <p class="muted" style="font-size:12px;margin:0 0 12px">
           When an order reaches this subtotal (or includes a product meeting its Qty-wise Free Delivery threshold), courier charge becomes <b>৳0 (FREE)</b>.
@@ -447,7 +487,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
         </form>
 
         <hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
-        <h3 id="zoneFormTitle" style="margin-bottom:10px">🚚 Add / Edit Zone Courier Rate</h3>
+        <h3 id="zoneFormTitle" style="margin-bottom:10px">🚚 Default Zone Courier Rate (Fallback)</h3>
         <form id="zoneRateForm">
           <input type="hidden" id="zrEditKey">
           <div class="field"><label>Zone / District / Division Name *</label><input id="zrName" required placeholder="e.g. Dhaka City, Gazipur, Chattogram"></div>
@@ -463,9 +503,15 @@ button:disabled{opacity:.5;cursor:not-allowed}
         <button type="button" class="outline sm" id="zrRestoreDefaultsBtn" style="width:100%;margin-top:10px">↻ Seed Default 8 BD Divisions</button>
       </div>
 
-      <div class="card">
-        <h3 style="margin-bottom:12px">Zone-wise Courier Rates (<span id="zonesCount">0</span>)</h3>
-        <div id="adminZoneList"></div>
+      <div style="display:grid;gap:18px">
+        <div class="card">
+          <h3 style="margin-bottom:12px">Suppliers &amp; Pickup Courier Rates (<span id="suppliersCount">0</span>)</h3>
+          <div id="adminSupplierList"></div>
+        </div>
+        <div class="card">
+          <h3 style="margin-bottom:12px">Default Zone Courier Rates (<span id="zonesCount">0</span>)</h3>
+          <div id="adminZoneList"></div>
+        </div>
       </div>
     </section>
 
@@ -818,6 +864,8 @@ const DEFAULT_STORE_SETTINGS = {
 const { app, auth, db, customerCreatorAuth } = getFirebaseClient({ withCustomerCreator: true });
 
 let products = {};
+let suppliers = {};
+let productSources = {};
 let categories = {};
 let reviews = {};
 let sales = {};
@@ -974,6 +1022,64 @@ function populateOrderZoneDropdown() {
   populateDistrictSelect("oeDivision", "oeDistrict");
 }
 
+function computeSupplierWiseCourierForItems(items = [], subtotal = 0, division = "Dhaka") {
+  const isInsideDhaka = /^(dhaka|ঢাকা)/i.test(String(division || "Dhaka").trim());
+  const minAmt = parseNum(deliveryConfig?.freeDeliveryMinAmount ?? 3000);
+  const orderAmountFree = minAmt > 0 && subtotal >= minAmt;
+  const groups = new Map();
+
+  items.forEach((it) => {
+    const p = it.id ? products[it.id] : Object.values(products).find((x) => x.name === it.name);
+    const sid = String(it.supplierId || p?.supplierId || "").trim();
+    const liveSup = sid ? suppliers[sid] : null;
+    const sName = String(liveSup?.name || it.supplierName || p?.supplierName || "").trim();
+    const sPickup = String(liveSup?.pickupLocation || it.supplierPickupLocation || p?.supplierPickupLocation || "").trim();
+    const hasRates = liveSup || (p && p.supplierInsideDhakaRate !== undefined) || (it.supplierInsideDhakaRate !== undefined);
+    const gKey = sid ? `sup:${sid}` : sName ? `name:${sName.toLowerCase()}` : "__default__";
+    const rate = liveSup
+      ? (isInsideDhaka ? Math.max(0, parseNum(liveSup.insideDhakaRate)) : Math.max(0, parseNum(liveSup.outsideDhakaRate)))
+      : (hasRates
+          ? (isInsideDhaka ? Math.max(0, parseNum(it.supplierInsideDhakaRate ?? p?.supplierInsideDhakaRate ?? 60)) : Math.max(0, parseNum(it.supplierOutsideDhakaRate ?? p?.supplierOutsideDhakaRate ?? 120)))
+          : getZoneCourierRate(division));
+    const minQ = parseNum(p?.freeDeliveryMinQty || 0);
+    const itemFree = minQ > 0 && Math.max(1, it.qty || 1) >= minQ;
+
+    if (!groups.has(gKey)) {
+      groups.set(gKey, {
+        supplierId: sid,
+        supplierName: sName || "SPR Zone Store",
+        pickupLocation: sPickup || "Default Store",
+        baseFee: rate,
+        itemCount: 0,
+        anyQtyFree: false
+      });
+    }
+    const grp = groups.get(gKey);
+    grp.itemCount += Math.max(1, it.qty || 1);
+    if (itemFree) grp.anyQtyFree = true;
+  });
+
+  const breakdown = [...groups.values()].map((g) => {
+    const isFree = orderAmountFree || g.anyQtyFree;
+    return {
+      supplierId: g.supplierId,
+      supplierName: g.supplierName,
+      pickupLocation: g.pickupLocation,
+      itemCount: g.itemCount,
+      baseFee: g.baseFee,
+      fee: isFree ? 0 : g.baseFee,
+      isFree
+    };
+  });
+
+  const totalFee = breakdown.reduce((s, b) => s + parseNum(b.fee), 0);
+  const summaryText = breakdown.map((b) =>
+    `${b.supplierName}${b.pickupLocation ? ` (${b.pickupLocation})` : ""}: ${b.fee === 0 ? "FREE" : money(b.fee)}`
+  ).join(" + ");
+
+  return { totalFee, breakdown, summaryText };
+}
+
 function computeOrderFinancials(o) {
   const items = parseOrderItems(o);
   const itemsSubtotal = items.reduce((s, it) => s + parseNum(it.price) * Math.max(1, it.qty), 0);
@@ -986,22 +1092,20 @@ function computeOrderFinancials(o) {
   let subtotal = storedSub > 0 ? storedSub : itemsSubtotal;
   const discount = storedDisc;
   let deliveryFee = storedFee;
+  const calc = computeSupplierWiseCourierForItems(items, subtotal, o?.customer?.division || "Dhaka");
   if (subtotal > 0 && storedSub === 0 && storedTotal === 0 && !hasStoredFee) {
-    const minAmt = parseNum(deliveryConfig?.freeDeliveryMinAmount ?? 3000);
-    const hasQtyFree = items.some((it) => {
-      const p = it.id ? products[it.id] : Object.values(products).find((x) => x.name === it.name);
-      const minQ = parseNum(p?.freeDeliveryMinQty || 0);
-      return minQ > 0 && it.qty >= minQ;
-    });
-    const isFree = (minAmt > 0 && subtotal >= minAmt) || hasQtyFree;
-    deliveryFee = isFree ? 0 : getZoneCourierRate(o?.customer?.division || "Dhaka");
+    deliveryFee = calc.totalFee;
   }
   if (subtotal === 0 && storedTotal > 0) {
     subtotal = Math.max(0, storedTotal + discount - deliveryFee);
   }
+  const deliveryBreakdown = Array.isArray(o?.deliveryBreakdown) && o.deliveryBreakdown.length ? o.deliveryBreakdown : calc.breakdown;
+  const deliveryBreakdownSummary = o?.deliveryBreakdownSummary || (deliveryBreakdown.length ? deliveryBreakdown.map((b) =>
+    `${b.supplierName || "Store"}${b.pickupLocation ? ` (${b.pickupLocation})` : ""}: ${parseNum(b.fee) === 0 ? "FREE" : money(b.fee)}`
+  ).join(" + ") : calc.summaryText);
   const computedGrand = Math.max(0, subtotal - discount + deliveryFee);
   const grandTotal = storedTotal > 0 ? storedTotal : computedGrand;
-  return { items, subtotal, discount, deliveryFee, grandTotal };
+  return { items, subtotal, discount, deliveryFee, grandTotal, deliveryBreakdown, deliveryBreakdownSummary };
 }
 
 function updateStats() {
@@ -1018,6 +1122,17 @@ function updateStats() {
 function renderCategoryDatalist() {
   const names = new Set([...STANDARD_CATEGORIES, ...Object.values(categories).map((c) => c.name).filter(Boolean)]);
   $("categoryOptionsList").innerHTML = [...names].map((n) => `<option value="${safe(n)}">`).join("");
+}
+
+function populateSupplierSelect(preferredId = "") {
+  const sel = $("pSupplier");
+  if (!sel) return;
+  const prev = preferredId !== "" ? preferredId : sel.value;
+  const list = Object.entries(suppliers || {}).sort((a, b) => String(a[1]?.name || "").localeCompare(String(b[1]?.name || "")));
+  sel.innerHTML = `<option value="">-- Store Default (Zone Rate) --</option>` + list.map(([sid, s]) =>
+    `<option value="${safe(sid)}">${safe(s.name)} (📍 ${safe(s.pickupLocation || "Dhaka")} · Dhaka ${money(s.insideDhakaRate)} / Outside ${money(s.outsideDhakaRate)})</option>`
+  ).join("");
+  if (prev && suppliers[prev]) sel.value = prev;
 }
 
 let lastSyncedProductBasePrice = 1;
@@ -1089,6 +1204,12 @@ function renderAdminProducts() {
   $("adminProductList").innerHTML = entries.map(([id, p]) => {
     const freeMinQ = parseNum(p.freeDeliveryMinQty || 0);
     const rStats = getAdminProductRatingStats(id, p);
+    const sup = p.supplierId ? suppliers[p.supplierId] : null;
+    const supName = sup?.name || p.supplierName || "";
+    const supPickup = sup?.pickupLocation || p.supplierPickupLocation || "";
+    const supIn = sup ? parseNum(sup.insideDhakaRate) : parseNum(p.supplierInsideDhakaRate);
+    const supOut = sup ? parseNum(sup.outsideDhakaRate) : parseNum(p.supplierOutsideDhakaRate);
+    const srcUrl = productSources[id]?.sourceUrl || "";
     const ratingBadge = rStats.count > 0
       ? `<span class="badge blue">★ ${rStats.rating.toFixed(1)} (${rStats.count} review${rStats.count > 1 ? "s" : ""})</span>`
       : `<span class="muted" style="font-size:11.5px">No reviews yet (0)</span>`;
@@ -1104,10 +1225,12 @@ function renderAdminProducts() {
               <b style="color:var(--crimson)">${money(p.price)}</b>
               ${p.oldPrice > p.price ? `<span class="muted" style="text-decoration:line-through;font-size:12px">${money(p.oldPrice)}</span>` : ""}
               ${p.discountType && p.discountType !== "none" && p.discountValue > 0 ? `<span class="badge blue">${p.discountType === "percent" ? `-${p.discountValue}% Discount` : `-${money(p.discountValue)} Off`}</span>` : ""}
+              ${supName ? `<span class="badge amber">🏭 ${safe(supName)}${supPickup ? ` (${safe(supPickup)})` : ""} · Dhaka ${money(supIn)} / Out ${money(supOut)}</span>` : ""}
               ${freeMinQ > 0 ? `<span class="badge green">🆓 Free Delivery (Qty ≥ ${freeMinQ})</span>` : ""}
               ${p.isFlashDeal ? `<span class="badge red">Flash Sale</span>` : ""}
               ${p.isFeatured ? `<span class="badge green">Featured</span>` : ""}
               ${ratingBadge}
+              ${srcUrl ? `<a href="${safe(srcUrl)}" target="_blank" rel="noopener" class="badge blue" style="text-decoration:underline">🔗 Source Link</a>` : ""}
             </div>
           </div>
         </div>
@@ -1151,6 +1274,9 @@ function renderAdminProducts() {
       $("pName").value = p.name || "";
       $("pCategory").value = p.category || "";
       $("pBrand").value = p.brand || "";
+      populateSupplierSelect(p.supplierId || "");
+      $("pSupplier").value = p.supplierId && suppliers[p.supplierId] ? p.supplierId : "";
+      $("pSourceUrl").value = productSources[id]?.sourceUrl || "";
       $("pOldPrice").value = p.oldPrice || 0;
       $("pPrice").value = p.price || 0;
       $("pDiscountType").value = p.discountType || "none";
@@ -1258,6 +1384,8 @@ function resetProductForm() {
   $("prodFormTitle").textContent = "Add New Product";
   $("pSaveBtn").textContent = "➕ Add Product";
   $("pSaveBtn").disabled = false;
+  $("pSupplier").value = "";
+  $("pSourceUrl").value = "";
   $("pFeatured").checked = true;
   $("pRating").value = "0";
   $("pStock").value = "10";
@@ -1523,6 +1651,72 @@ function resetHeroSlideForm() {
   $("hsActive").checked = true;
 }
 
+function renderAdminSuppliers() {
+  populateSupplierSelect();
+  const entries = Object.entries(suppliers || {}).sort((a, b) => String(a[1]?.name || "").localeCompare(String(b[1]?.name || "")));
+  $("suppliersCount").textContent = entries.length;
+  $("adminSupplierList").innerHTML = entries.length
+    ? entries.map(([id, s]) => {
+      const prodCount = Object.values(products || {}).filter((p) => p && p.supplierId === id).length;
+      return `
+      <div class="list-item">
+        <div style="min-width:0;flex:1">
+          <div style="font-weight:800;display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+            <span>🏭 ${safe(s.name)}</span>
+            <span class="badge blue">📍 Pickup: ${safe(s.pickupLocation || "Dhaka")}</span>
+            <span class="badge green">Inside Dhaka: ${money(s.insideDhakaRate)}</span>
+            <span class="badge amber">Outside Dhaka: ${money(s.outsideDhakaRate)}</span>
+          </div>
+          <div style="font-size:12px;color:var(--muted);margin-top:4px">
+            Linked Products: <b>${prodCount}</b>
+            ${s.phone ? ` · Phone: <b>${safe(s.phone)}</b>` : ""}
+            ${s.note ? ` · ${safe(s.note)}` : ""}
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0">
+          <button type="button" class="secondary sm" data-edit-sup="${safe(id)}">Edit</button>
+          <button type="button" class="crimson sm" data-del-sup="${safe(id)}">Delete</button>
+        </div>
+      </div>`;
+    }).join("")
+    : `<p class="muted" style="text-align:center;padding:20px 0">No dropshipping suppliers added yet. Add suppliers (e.g. A Company / B Company) on the left to enable supplier-wise courier rates.</p>`;
+
+  $("adminSupplierList").querySelectorAll("[data-edit-sup]").forEach((b) => {
+    b.onclick = () => {
+      const id = b.dataset.editSup;
+      const s = suppliers[id];
+      if (!s) return;
+      $("supEditId").value = id;
+      $("supFormTitle").textContent = "✏️ Edit Dropshipping Supplier";
+      $("supSaveBtn").textContent = "💾 Update Supplier";
+      $("supName").value = s.name || "";
+      $("supPickup").value = s.pickupLocation || "";
+      $("supInsideRate").value = parseNum(s.insideDhakaRate);
+      $("supOutsideRate").value = parseNum(s.outsideDhakaRate);
+      $("supPhone").value = s.phone || "";
+      $("supNote").value = s.note || "";
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+  });
+
+  $("adminSupplierList").querySelectorAll("[data-del-sup]").forEach((b) => {
+    b.onclick = async () => {
+      if (!confirm("Delete this supplier? Products linked to this supplier will revert to fallback courier rules unless reassigned.")) return;
+      await remove(ref(db, "suppliers/" + b.dataset.delSup));
+      toast("Supplier deleted");
+    };
+  });
+}
+
+function resetSupplierForm() {
+  $("supplierForm").reset();
+  $("supEditId").value = "";
+  $("supFormTitle").textContent = "🏭 Add / Edit Dropshipping Supplier";
+  $("supSaveBtn").textContent = "➕ Add Supplier";
+  $("supInsideRate").value = "60";
+  $("supOutsideRate").value = "120";
+}
+
 function renderAdminDeliveryZones() {
   $("delFreeMinAmount").value = parseNum(deliveryConfig?.freeDeliveryMinAmount ?? 3000);
   const zonesObj = deliveryConfig?.zones || {};
@@ -1570,7 +1764,7 @@ function renderAdminDeliveryZones() {
 function resetZoneRateForm() {
   $("zoneRateForm").reset();
   $("zrEditKey").value = "";
-  $("zoneFormTitle").textContent = "🚚 Add / Edit Zone Courier Rate";
+  $("zoneFormTitle").textContent = "🚚 Default Zone Courier Rate (Fallback)";
   $("zrSaveBtn").textContent = "➕ Save Zone Rate";
   $("zrRate").value = "60";
   $("zrEta").value = "2-4 Days";
@@ -1821,10 +2015,16 @@ function openInvoiceModal(orderId) {
     </table>
 
     <div style="display:flex;justify-content:flex-end">
-      <div style="width:min(300px,100%);display:grid;gap:6px;font-size:13.5px">
+      <div style="width:min(340px,100%);display:grid;gap:6px;font-size:13.5px">
         <div style="display:flex;justify-content:space-between"><span>Subtotal</span><b>${money(fin.subtotal)}</b></div>
         ${fin.discount > 0 ? `<div style="display:flex;justify-content:space-between;color:var(--emerald)"><span>Discount ${o.promoCode ? `(${safe(o.promoCode)})` : ""}</span><b>-${money(fin.discount)}</b></div>` : ""}
         <div style="display:flex;justify-content:space-between"><span>Delivery Fee</span><b>${fin.deliveryFee === 0 ? "FREE" : money(fin.deliveryFee)}</b></div>
+        ${fin.deliveryBreakdown?.length > 1 || (fin.deliveryBreakdown?.length === 1 && fin.deliveryBreakdown[0].supplierId) ? `
+          <div style="background:#f8faf9;border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:11.5px;color:var(--muted)">
+            <b style="color:var(--ink)">Supplier Courier Breakdown:</b><br>
+            ${fin.deliveryBreakdown.map((b) => `${safe(b.supplierName || "Store")}${b.pickupLocation ? ` (${safe(b.pickupLocation)})` : ""}: <b>${parseNum(b.fee) === 0 ? "FREE" : money(b.fee)}</b>`).join("<br>")}
+          </div>
+        ` : ""}
         <div style="display:flex;justify-content:space-between;font-size:17px;border-top:2px solid var(--ink);padding-top:6px;margin-top:4px">
           <b>COD Grand Total</b><b style="color:var(--crimson)">${money(fin.grandTotal)}</b>
         </div>
@@ -1901,6 +2101,7 @@ function renderAdminOrders() {
         <div style="font-size:13px;display:grid;gap:4px">
           <div><b>Customer:</b> ${safe(o.customer?.name || "")} (${safe(o.customer?.phone || "")})${o.customerEmail ? ` · ✉️ ${safe(o.customerEmail)}` : ""} · ${safe(o.customer?.address || "")}, ${safe(o.customer?.division || "")}</div>
           <div><b>Products:</b> ${safe(orderProductSummaryText(o))}</div>
+          ${fin.deliveryBreakdownSummary ? `<div style="font-size:12px;color:var(--emerald-dark)"><b>🏭 Supplier Courier:</b> ${safe(fin.deliveryBreakdownSummary)}</div>` : ""}
           <div><b>Grand Total (COD):</b> <b style="color:var(--crimson)">${money(fin.grandTotal)}</b> (Subtotal: ${money(fin.subtotal)} · Delivery: ${fin.deliveryFee === 0 ? "FREE" : money(fin.deliveryFee)})</div>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding-top:8px;border-top:1px solid var(--line)">
@@ -2119,7 +2320,9 @@ function startAdminListeners() {
   if (listenersStarted) return;
   listenersStarted = true;
 
-  onValue(ref(db, "products"), (snap) => { products = snap.val() || {}; updateStats(); renderAdminProducts(); renderAdminHeroSlides(); });
+  onValue(ref(db, "products"), (snap) => { products = snap.val() || {}; updateStats(); renderAdminProducts(); renderAdminSuppliers(); renderAdminHeroSlides(); });
+  onValue(ref(db, "suppliers"), (snap) => { suppliers = snap.val() || {}; renderAdminSuppliers(); renderAdminProducts(); });
+  onValue(ref(db, "settings/productSources"), (snap) => { productSources = snap.val() || {}; renderAdminProducts(); });
   onValue(ref(db, "categories"), (snap) => { categories = snap.val() || {}; renderAdminCategories(); });
   onValue(ref(db, "reviews"), (snap) => { reviews = snap.val() || {}; renderAdminProducts(); });
   onValue(ref(db, "deals/sales"), (snap) => { sales = snap.val() || {}; updateStats(); renderAdminSales(); });
@@ -2310,6 +2513,11 @@ populateDistrictSelect("admAddrDivision", "admAddrDistrict");
 populateDistrictSelect("oeDivision", "oeDistrict");
 $("printInvoiceBtn").onclick = () => window.print();
 
+$("manageSuppliersLink").onclick = (e) => {
+  e.preventDefault();
+  switchAdminTab("delivery");
+  setTimeout(() => $("supName")?.focus(), 80);
+};
 $("pOldPrice").oninput = updateProductDiscountPreview;
 $("pPrice").oninput = updateProductDiscountPreview;
 $("pColors").oninput = () => renderVariantPriceInputs();
@@ -2371,10 +2579,20 @@ $("productForm").onsubmit = async (e) => {
       ? getStructuredVariantKeys().join(", ")
       : ($("pVariants").value.trim() || "Standard");
 
+    const supplierId = $("pSupplier").value.trim();
+    const sup = supplierId ? suppliers[supplierId] : null;
+    const sourceUrl = $("pSourceUrl").value.trim();
+
     await set(ref(db, "products/" + prodId), {
       name,
       category,
       brand: $("pBrand").value.trim() || storeSettings.storeName || "SPR ZONE BD",
+      supplierId,
+      supplierName: sup?.name || "",
+      supplierPickupLocation: sup?.pickupLocation || "",
+      supplierInsideDhakaRate: sup ? Math.max(0, parseNum(sup.insideDhakaRate)) : null,
+      supplierOutsideDhakaRate: sup ? Math.max(0, parseNum(sup.outsideDhakaRate)) : null,
+      sellerName: sup?.name || storeSettings.storeName || "SPR Official Store",
       price,
       oldPrice: oldPrice > price ? oldPrice : 0,
       discountType,
@@ -2396,6 +2614,16 @@ $("productForm").onsubmit = async (e) => {
       isFeatured: $("pFeatured").checked,
       updatedAt: Date.now()
     });
+    if (sourceUrl) {
+      await set(ref(db, `settings/productSources/${prodId}`), {
+        sourceUrl,
+        supplierId,
+        supplierName: sup?.name || "",
+        updatedAt: Date.now()
+      });
+    } else {
+      try { await remove(ref(db, `settings/productSources/${prodId}`)); } catch (_) {}
+    }
     resetProductForm();
     toast(editId ? "Product updated!" : "Product added to live store!");
   } catch (err) {
@@ -2499,6 +2727,46 @@ $("freeDeliveryForm").onsubmit = async (e) => {
   try { await update(ref(db, "settings/delivery"), { freeDeliveryMinAmount: minAmt, updatedAt: Date.now() }); } catch (_) {}
   toast(minAmt > 0 ? `Free delivery enabled for orders over ${money(minAmt)}` : "Amount-wise free delivery disabled");
 };
+
+$("supplierForm").onsubmit = async (e) => {
+  e.preventDefault();
+  const editId = $("supEditId").value.trim();
+  const name = $("supName").value.trim();
+  const pickupLocation = $("supPickup").value.trim();
+  const insideDhakaRate = Math.max(0, parseNum($("supInsideRate").value));
+  const outsideDhakaRate = Math.max(0, parseNum($("supOutsideRate").value));
+  if (!name) {
+    $("supName").focus();
+    return toast("Please enter Supplier Name.");
+  }
+  if (!pickupLocation) {
+    $("supPickup").focus();
+    return toast("Please enter Supplier Pickup Location (e.g. ঢাকা or চট্টগ্রাম).");
+  }
+  const supBtn = $("supSaveBtn");
+  supBtn.disabled = true;
+  supBtn.textContent = editId ? "Updating..." : "Saving...";
+  try {
+    const supId = editId || push(ref(db, "suppliers")).key;
+    await set(ref(db, "suppliers/" + supId), {
+      name,
+      pickupLocation,
+      insideDhakaRate,
+      outsideDhakaRate,
+      phone: $("supPhone").value.trim(),
+      note: $("supNote").value.trim(),
+      updatedAt: Date.now()
+    });
+    resetSupplierForm();
+    toast(editId ? `Supplier "${name}" updated!` : `Supplier "${name}" added!`);
+  } catch (err) {
+    toast(`Failed to save supplier: ${err?.message || "Permission or network error"}`);
+  } finally {
+    supBtn.disabled = false;
+    supBtn.textContent = $("supEditId").value ? "💾 Update Supplier" : "➕ Add Supplier";
+  }
+};
+$("supResetBtn").onclick = resetSupplierForm;
 
 $("zoneRateForm").onsubmit = async (e) => {
   e.preventDefault();

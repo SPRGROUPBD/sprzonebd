@@ -189,6 +189,15 @@ fun CartScreen(
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
+                            if (item.supplierName.isNotBlank()) {
+                                Text(
+                                    text = "Supplier: ${item.supplierName}${if (item.supplierPickupLocation.isNotBlank()) " (${item.supplierPickupLocation})" else ""}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.tertiary,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
                             if (item.freeDeliveryMinQty > 0 && item.quantity >= item.freeDeliveryMinQty) {
                                 Spacer(modifier = Modifier.height(2.dp))
                                 Text(
@@ -331,10 +340,18 @@ fun CartScreen(
                         }
                         val isFreeUnlocked = summary.hasQtyFreeDelivery ||
                             summary.freeDeliveryRemainingBdt == 0L ||
-                            summary.appliedPromo?.freeShipping == true
+                            summary.appliedPromo?.freeShipping == true ||
+                            (summary.estDhakaDeliveryBdt == 0L && summary.estOutsideDhakaDeliveryBdt == 0L)
+                        val courierValue = when {
+                            isFreeUnlocked -> "FREE (৳0)"
+                            summary.estDhakaDeliveryBdt == summary.estOutsideDhakaDeliveryBdt ->
+                                formatBdt(summary.estDhakaDeliveryBdt)
+                            else ->
+                                "Dhaka ${formatBdt(summary.estDhakaDeliveryBdt)} / Out ${formatBdt(summary.estOutsideDhakaDeliveryBdt)}"
+                        }
                         SummaryRow(
-                            label = "Delivery Fee",
-                            value = if (isFreeUnlocked) "FREE (৳0)" else "Calculated at Checkout",
+                            label = if (summary.supplierCount > 1) "Courier Fee (${summary.supplierCount} Suppliers)" else "Delivery Fee",
+                            value = courierValue,
                             valueColor = if (isFreeUnlocked) VerifiedGreen else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))

@@ -788,6 +788,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
                 <div>
                   <div style="color:#212121;font-weight:600">Standard Delivery</div>
                   <div id="ppDeliveryEta" style="color:#757575;font-size:11.5px;margin-top:2px"></div>
+                  <div id="ppSupplierNote" class="hidden" style="color:#005C2D;font-size:11px;font-weight:600;margin-top:3px"></div>
                 </div>
               </div>
               <b id="ppDeliveryFeeBadge" style="color:#212121;white-space:nowrap">৳ 60–120</b>
@@ -1209,6 +1210,7 @@ let currentUser = null;
 let userProfile = null;
 let userAddresses = {};
 let products = {};
+let suppliers = {};
 let categories = {};
 let reviews = {};
 let coupons = {};
@@ -1299,8 +1301,36 @@ function healCartWithProducts() {
     const fixedPrice = live && pPrice > 0 ? pPrice : curPrice;
     const fixedQty = Math.max(1, Math.round(parseNum(x.qty) || 1));
     const fixedFreeQty = live ? Math.max(0, parseNum(live.freeDeliveryMinQty || 0)) : Math.max(0, parseNum(x.freeDeliveryMinQty || 0));
-    if (fixedPrice !== x.price || fixedQty !== x.qty || fixedFreeQty !== x.freeDeliveryMinQty) changed = true;
-    return { ...x, price: fixedPrice, qty: fixedQty, freeDeliveryMinQty: fixedFreeQty };
+    const supId = String(live?.supplierId ?? x.supplierId ?? "").trim();
+    const liveSup = supId ? suppliers[supId] : null;
+    const supName = String(liveSup?.name || live?.supplierName || x.supplierName || "").trim();
+    const supPickup = String(liveSup?.pickupLocation || live?.supplierPickupLocation || x.supplierPickupLocation || "").trim();
+    const supIn = liveSup ? Math.max(0, parseNum(liveSup.insideDhakaRate)) : (live?.supplierInsideDhakaRate !== undefined ? Math.max(0, parseNum(live.supplierInsideDhakaRate)) : x.supplierInsideDhakaRate);
+    const supOut = liveSup ? Math.max(0, parseNum(liveSup.outsideDhakaRate)) : (live?.supplierOutsideDhakaRate !== undefined ? Math.max(0, parseNum(live.supplierOutsideDhakaRate)) : x.supplierOutsideDhakaRate);
+    if (
+      fixedPrice !== x.price ||
+      fixedQty !== x.qty ||
+      fixedFreeQty !== x.freeDeliveryMinQty ||
+      supId !== (x.supplierId || "") ||
+      supName !== (x.supplierName || "") ||
+      supPickup !== (x.supplierPickupLocation || "") ||
+      supIn !== x.supplierInsideDhakaRate ||
+      supOut !== x.supplierOutsideDhakaRate
+    ) {
+      changed = true;
+    }
+    const nextItem = {
+      ...x,
+      price: fixedPrice,
+      qty: fixedQty,
+      freeDeliveryMinQty: fixedFreeQty,
+      supplierId: supId,
+      supplierName: supName,
+      supplierPickupLocation: supPickup
+    };
+    if (supIn !== undefined) nextItem.supplierInsideDhakaRate = supIn;
+    if (supOut !== undefined) nextItem.supplierOutsideDhakaRate = supOut;
+    return nextItem;
   });
   if (changed) saveCart();
 }
@@ -1546,6 +1576,94 @@ function evaluateCoupon(codeRaw, subtotal) {
   return null;
 }
 
+function resolveProductSupplierMeta(p) {
+  if (!p) return null;
+  const sid = String(p.supplierId || "").trim();
+  const liveSup = sid ? suppliers[sid] : null;
+  const name = String(liveSup?.name || p.supplierName || "").trim();
+  const pickupLocation = String(liveSup?.pickupLocation || p.supplierPickupLocation || "").trim();
+  const hasRates = Boolean(liveSup || p.supplierInsideDhakaRate !== undefined || p.supplierOutsideDhakaRate !== undefined);
+  if (!sid && !name && !hasRates) return null;
+  return {
+    supplierId: sid,
+    name: name || "SPR Zone Store",
+    pickupLocation: pickupLocation || "Default Store",
+    insideDhakaRate: liveSup
+      ? Math.max(0, parseNum(liveSup.insideDhakaRate))
+      : Math.max(0, parseNum(p.supplierInsideDhakaRate ?? 60)),
+    outsideDhakaRate: liveSup
+      ? Math.max(0, parseNum(liveSup.outsideDhakaRate))
+      : Math.max(0, parseNum(p.supplierOutsideDhakaRate ?? 120))
+  };
+}
+
+function computeSupplierWiseDelivery(items = [], division = "Dhaka", subtotal = 0, promo = null) {
+  if (!Array.isArray(items) || !items.length || subtotal <= 0) {
+    return { totalFee: 0, breakdown: [], breakdownSummary: "", amountFree: false, couponFree: false, allQtyFree: false, anyQtyFree: false };
+  }
+  const isInsideDhaka = /^(dhaka|ঢাকা)/i.test(String(division || "Dhaka").trim());
+  const minAmt = parseNum(deliveryConfig?.freeDeliveryMinAmount ?? 3000);
+  const amountFree = minAmt > 0 && subtotal >= minAmt;
+  const couponFree = Boolean(promo?.freeShip);
+  const groups = new Map();
+
+  items.forEach((x) => {
+    const live = products[x.id];
+    const sid = String(live?.supplierId ?? x.supplierId ?? "").trim();
+    const liveSup = sid ? suppliers[sid] : null;
+    const sName = String(liveSup?.name || live?.supplierName || x.supplierName || "").trim();
+    const sPickup = String(liveSup?.pickupLocation || live?.supplierPickupLocation || x.supplierPickupLocation || "").trim();
+    const hasSupRates = Boolean(liveSup || (live && live.supplierInsideDhakaRate !== undefined) || (x.supplierInsideDhakaRate !== undefined));
+    const gKey = sid ? `sup:${sid}` : sName ? `name:${sName.toLowerCase()}` : "__default__";
+    const baseFee = liveSup
+      ? (isInsideDhaka ? Math.max(0, parseNum(liveSup.insideDhakaRate)) : Math.max(0, parseNum(liveSup.outsideDhakaRate)))
+      : (hasSupRates
+          ? (isInsideDhaka
+              ? Math.max(0, parseNum(live?.supplierInsideDhakaRate ?? x.supplierInsideDhakaRate ?? 60))
+              : Math.max(0, parseNum(live?.supplierOutsideDhakaRate ?? x.supplierOutsideDhakaRate ?? 120)))
+          : deliveryFeeForDivision(division));
+    const mq = Math.max(0, parseNum(x.freeDeliveryMinQty ?? live?.freeDeliveryMinQty ?? 0));
+    const q = Math.max(1, Math.round(parseNum(x.qty) || 1));
+    const itemQtyFree = mq > 0 && q >= mq;
+
+    if (!groups.has(gKey)) {
+      groups.set(gKey, {
+        supplierId: sid,
+        supplierName: sName || "SPR Zone Store",
+        pickupLocation: sPickup || "Default Store",
+        baseFee,
+        itemCount: 0,
+        anyQtyFree: false
+      });
+    }
+    const grp = groups.get(gKey);
+    grp.itemCount += q;
+    if (itemQtyFree) grp.anyQtyFree = true;
+  });
+
+  const breakdown = [...groups.values()].map((g) => {
+    const isFree = amountFree || couponFree || g.anyQtyFree;
+    return {
+      supplierId: g.supplierId,
+      supplierName: g.supplierName,
+      pickupLocation: g.pickupLocation,
+      itemCount: g.itemCount,
+      baseFee: g.baseFee,
+      fee: isFree ? 0 : g.baseFee,
+      isFree
+    };
+  });
+
+  const totalFee = breakdown.reduce((s, b) => s + parseNum(b.fee), 0);
+  const breakdownSummary = breakdown.map((b) =>
+    `${b.supplierName}${b.pickupLocation ? ` (${b.pickupLocation})` : ""}: ${b.fee === 0 ? "FREE" : money(b.fee)}`
+  ).join(" + ");
+  const allQtyFree = breakdown.length > 0 && breakdown.every((b, idx) => [...groups.values()][idx].anyQtyFree);
+  const anyQtyFree = [...groups.values()].some((g) => g.anyQtyFree);
+
+  return { totalFee, breakdown, breakdownSummary, amountFree, couponFree, allQtyFree, anyQtyFree };
+}
+
 function computeTotals(division = "") {
   const subtotal = cart.reduce((s, x) => {
     const unit = parseNum(x.price) || parseNum(products[x.id]?.price);
@@ -1555,21 +1673,31 @@ function computeTotals(division = "") {
   const promo = evaluateCoupon(appliedPromoCode, subtotal);
   const discount = promo ? promo.discount : 0;
   const minAmt = parseNum(deliveryConfig?.freeDeliveryMinAmount ?? 3000);
-  const amountFree = minAmt > 0 && subtotal >= minAmt;
-  const qtyFree = cart.some((x) => {
-    const mq = Math.max(0, parseNum(x.freeDeliveryMinQty ?? products[x.id]?.freeDeliveryMinQty ?? 0));
-    const q = Math.max(1, Math.round(parseNum(x.qty) || 1));
-    return mq > 0 && q >= mq;
-  });
-  const couponFree = Boolean(promo?.freeShip);
-  const isFreeDelivery = cart.length === 0 || subtotal <= 0 || amountFree || qtyFree || couponFree;
-  const freeReason = qtyFree ? "Qty-wise Free Delivery" : amountFree ? `Order ≥ ${money(minAmt)}` : couponFree ? "Promo Free Delivery" : "";
   const zones = getZonesList();
   const baseDiv = division || zones[0]?.name || "Dhaka";
-  const divFee = deliveryFeeForDivision(baseDiv);
-  const deliveryFee = isFreeDelivery ? 0 : divFee;
+  const supDel = computeSupplierWiseDelivery(cart, baseDiv, subtotal, promo);
+  const deliveryFee = supDel.totalFee;
+  const isFreeDelivery = cart.length === 0 || subtotal <= 0 || deliveryFee === 0;
+  const freeReason = supDel.amountFree
+    ? `Order ≥ ${money(minAmt)}`
+    : supDel.couponFree
+      ? "Promo Free Delivery"
+      : supDel.allQtyFree
+        ? "Qty-wise Free Delivery"
+        : "";
   const total = Math.max(0, subtotal - discount + deliveryFee);
-  return { subtotal, discount, deliveryFee, total, promo, isFreeDelivery, freeReason };
+  return {
+    subtotal,
+    discount,
+    deliveryFee,
+    total,
+    promo,
+    isFreeDelivery,
+    freeReason,
+    breakdown: supDel.breakdown,
+    breakdownSummary: supDel.breakdownSummary,
+    supplierCount: supDel.breakdown.length
+  };
 }
 
 function renderHeroBanner() {
@@ -1894,11 +2022,32 @@ function refreshPreviewDeliveryUI(p, unitPriceOverride = null) {
   const isFreeByQty = freeQtyReq > 0 && qty >= freeQtyReq;
   const isFreeByAmt = minAmt > 0 && lineTotal >= minAmt;
 
+  const supMeta = resolveProductSupplierMeta(p);
+  const isInsideDhaka = activeDiv ? /^(dhaka|ঢাকা)/i.test(activeDiv.trim()) : false;
+
+  if ($("ppSupplierNote")) {
+    if (supMeta) {
+      $("ppSupplierNote").textContent = `🏭 ${supMeta.name} (${supMeta.pickupLocation}) · Dhaka ${money(supMeta.insideDhakaRate)} / Outside ${money(supMeta.outsideDhakaRate)}`;
+      $("ppSupplierNote").classList.remove("hidden");
+    } else {
+      $("ppSupplierNote").textContent = "";
+      $("ppSupplierNote").classList.add("hidden");
+    }
+  }
+
   if (isFreeByQty || isFreeByAmt) {
     $("ppDeliveryFeeBadge").textContent = "FREE";
     $("ppDeliveryFeeBadge").style.color = "var(--emerald-dark)";
   } else if (activeDiv) {
-    $("ppDeliveryFeeBadge").textContent = `৳ ${deliveryFeeForDivision(activeDiv)}`;
+    const fee = supMeta
+      ? (isInsideDhaka ? supMeta.insideDhakaRate : supMeta.outsideDhakaRate)
+      : deliveryFeeForDivision(activeDiv);
+    $("ppDeliveryFeeBadge").textContent = `৳ ${fee}`;
+    $("ppDeliveryFeeBadge").style.color = "#212121";
+  } else if (supMeta) {
+    const minR = Math.min(supMeta.insideDhakaRate, supMeta.outsideDhakaRate);
+    const maxR = Math.max(supMeta.insideDhakaRate, supMeta.outsideDhakaRate);
+    $("ppDeliveryFeeBadge").textContent = minR === maxR ? `৳ ${minR}` : `৳ ${minR}–${maxR}`;
     $("ppDeliveryFeeBadge").style.color = "#212121";
   } else {
     const rates = getZonesList().map((z) => parseNum(z.rate));
@@ -2242,14 +2391,38 @@ function addToCart(id, variant = "", qty = 1, unitPriceOverride = null) {
   const chosen = variant || defaultStructured || String(p.variants || "Standard").split(",")[0].trim() || "Standard";
   const unitPrice = unitPriceOverride !== null ? parseNum(unitPriceOverride) : resolveProductVariantPrice(p, chosen);
   const freeDeliveryMinQty = Math.max(0, parseNum(p.freeDeliveryMinQty || 0));
+  const supMeta = resolveProductSupplierMeta(p);
   const addQty = Math.max(1, Math.round(parseNum(qty) || 1));
   const found = cart.find((x) => x.id === id && x.variant === chosen);
   if (found) {
     found.price = unitPrice;
     found.freeDeliveryMinQty = freeDeliveryMinQty;
+    found.supplierId = supMeta?.supplierId || "";
+    found.supplierName = supMeta?.name || "";
+    found.supplierPickupLocation = supMeta?.pickupLocation || "";
+    if (supMeta) {
+      found.supplierInsideDhakaRate = supMeta.insideDhakaRate;
+      found.supplierOutsideDhakaRate = supMeta.outsideDhakaRate;
+    }
     found.qty = Math.min(stock || 99, found.qty + addQty);
   } else {
-    cart.push({ id, name: p.name, price: unitPrice, freeDeliveryMinQty, image: p.image || "", variant: chosen, qty: Math.min(stock || 99, addQty) });
+    const newItem = {
+      id,
+      name: p.name,
+      price: unitPrice,
+      freeDeliveryMinQty,
+      image: p.image || "",
+      variant: chosen,
+      qty: Math.min(stock || 99, addQty),
+      supplierId: supMeta?.supplierId || "",
+      supplierName: supMeta?.name || "",
+      supplierPickupLocation: supMeta?.pickupLocation || ""
+    };
+    if (supMeta) {
+      newItem.supplierInsideDhakaRate = supMeta.insideDhakaRate;
+      newItem.supplierOutsideDhakaRate = supMeta.outsideDhakaRate;
+    }
+    cart.push(newItem);
   }
   saveCart();
   toast(`Added ${p.name} (×${addQty}) to cart`);
@@ -2263,12 +2436,16 @@ function renderCartDrawer() {
       <p>Your SPR ZONE BD cart is empty.</p>
     </div>`;
   } else {
-    $("cartItems").innerHTML = cart.map((x, idx) => `
+    $("cartItems").innerHTML = cart.map((x, idx) => {
+      const supName = x.supplierName || (x.supplierId && suppliers[x.supplierId]?.name) || "";
+      const supPickup = x.supplierPickupLocation || (x.supplierId && suppliers[x.supplierId]?.pickupLocation) || "";
+      return `
       <div class="cart-row">
         <img src="${safe(x.image || "assets/favicon.svg")}" alt="${safe(x.name)}" onerror="this.src='assets/favicon.svg'">
         <div style="flex:1;min-width:0">
           <div style="font-weight:700;font-size:13px">${safe(x.name)}</div>
           <div style="font-size:11.5px;color:var(--muted)">${safe(x.variant)} · ${money(x.price)}</div>
+          ${supName ? `<div style="font-size:11px;color:#92400e;font-weight:600">🏭 ${safe(supName)}${supPickup ? ` (${safe(supPickup)})` : ""}</div>` : ""}
           <div style="font-weight:800;color:var(--emerald-dark);margin-top:2px">${money(parseNum(x.price) * Math.max(1, parseNum(x.qty) || 1))}</div>
         </div>
         <div style="display:flex;align-items:center;gap:4px">
@@ -2278,7 +2455,8 @@ function renderCartDrawer() {
           <button class="crimson sm" data-del="${idx}">×</button>
         </div>
       </div>
-    `).join("");
+    `;
+    }).join("");
 
     $("cartItems").querySelectorAll("[data-inc]").forEach((b) => b.onclick = () => { cart[+b.dataset.inc].qty++; saveCart(); renderCartDrawer(); });
     $("cartItems").querySelectorAll("[data-dec]").forEach((b) => b.onclick = () => {
@@ -2292,12 +2470,21 @@ function renderCartDrawer() {
 
   const t = computeTotals();
   const cartSubtotalAfterPromo = Math.max(0, t.subtotal - t.discount);
+  const dhakaFee = cart.length ? computeSupplierWiseDelivery(cart, "Dhaka", t.subtotal, t.promo).totalFee : 0;
+  const outsideFee = cart.length ? computeSupplierWiseDelivery(cart, "Chattogram", t.subtotal, t.promo).totalFee : 0;
+  const feeLabel = !cart.length
+    ? "৳0"
+    : (dhakaFee === 0 && outsideFee === 0)
+      ? "FREE (৳0)"
+      : dhakaFee === outsideFee
+        ? `${money(dhakaFee)}`
+        : `Dhaka ${money(dhakaFee)} / Outside ${money(outsideFee)}`;
   $("cartSummaryBox").innerHTML = `
     <div style="display:flex;justify-content:space-between"><span>Subtotal</span><b>${money(t.subtotal)}</b></div>
     ${t.discount > 0 ? `<div style="display:flex;justify-content:space-between;color:var(--emerald)"><span>Promo (${safe(t.promo.code)})</span><b>-${money(t.discount)}</b></div>` : ""}
     <div style="display:flex;justify-content:space-between;color:var(--muted);font-size:12.5px">
-      <span>Delivery Fee</span>
-      <span>${t.isFreeDelivery && cart.length ? "FREE (৳0)" : "Calculated at Checkout"}</span>
+      <span>Courier Fee${t.supplierCount > 1 ? ` (${t.supplierCount} Suppliers)` : ""}</span>
+      <span>${feeLabel}</span>
     </div>
     <div style="display:flex;justify-content:space-between;font-size:16px;padding-top:4px;border-top:1px solid var(--line)"><b>Estimated Total</b><b style="color:var(--crimson)">${money(cartSubtotalAfterPromo)}</b></div>
   `;
@@ -2403,11 +2590,23 @@ function syncCheckoutTotalsUI() {
   const district = $("cDistrict")?.value || "";
   const t = computeTotals(division);
   const placeLabel = district && district !== division ? `${district}, ${division}` : division;
+  const breakdownHtml = t.breakdown.length
+    ? `<div style="display:grid;gap:3px;padding:6px 8px;margin:2px 0;background:#fff;border:1px solid var(--line);border-radius:8px">
+        <div style="font-size:11.5px;font-weight:700;color:var(--emerald-dark)">🚚 Supplier-Wise Courier Breakdown${t.supplierCount > 1 ? ` (${t.supplierCount} Suppliers)` : ""}:</div>
+        ${t.breakdown.map((b) => `
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted)">
+            <span>• ${safe(b.supplierName)}${b.pickupLocation ? ` (${safe(b.pickupLocation)})` : ""} · ${b.itemCount} item${b.itemCount > 1 ? "s" : ""}</span>
+            <b style="color:${b.fee === 0 ? "var(--emerald-dark)" : "var(--ink)"}">${b.fee === 0 ? "FREE (৳0)" : money(b.fee)}</b>
+          </div>
+        `).join("")}
+      </div>`
+    : "";
   $("checkoutTotals").innerHTML = `
     <div style="display:flex;justify-content:space-between"><span>Subtotal (${cart.reduce((s, x) => s + Math.max(1, parseNum(x.qty) || 1), 0)} items)</span><b>${money(t.subtotal)}</b></div>
     ${t.discount > 0 ? `<div style="display:flex;justify-content:space-between;color:var(--emerald)"><span>Discount</span><b>-${money(t.discount)}</b></div>` : ""}
+    ${breakdownHtml}
     <div style="display:flex;justify-content:space-between">
-      <span>Delivery Fee (${safe(placeLabel)}${t.freeReason ? ` · ${safe(t.freeReason)}` : ""})</span>
+      <span>Total Delivery Fee (${safe(placeLabel)}${t.freeReason ? ` · ${safe(t.freeReason)}` : ""})</span>
       <b style="color:${t.deliveryFee === 0 ? "var(--emerald-dark)" : "inherit"}">${t.deliveryFee === 0 ? "FREE (৳0)" : money(t.deliveryFee)}</b>
     </div>
     <div style="display:flex;justify-content:space-between;font-size:16px;margin-top:4px;padding-top:4px;border-top:1px solid var(--line)"><b>Grand Total (Cash on Delivery)</b><b style="color:var(--crimson)">${money(t.total)}</b></div>
@@ -2477,6 +2676,7 @@ function renderSingleOrderCard(id, o) {
     ${renderOrderTimeline(o.status || "Pending")}
     <div style="font-size:13px;border-top:1px solid var(--line);padding-top:8px;display:grid;gap:4px">
       <div><b>Items:</b> ${(o.items || []).map((it) => `${safe(it.name)} ×${it.qty}`).join(", ") || safe(o.itemsSummary || "")}</div>
+      <div><b>Courier (${safe(o.customer?.division || "BD")}):</b> ${parseNum(o.deliveryFee) === 0 ? "FREE (৳0)" : money(o.deliveryFee)}${o.deliveryBreakdownSummary ? ` — <span class="muted">${safe(o.deliveryBreakdownSummary)}</span>` : ""}</div>
       <div><b>Payment:</b> Cash on Delivery · <span style="color:var(--emerald-dark);font-weight:700">${safe(o.paymentStatus || "Pay on Delivery")}</span></div>
       <div><b>Grand Total:</b> <b style="color:var(--crimson)">${money(o.total)}</b></div>
     </div>
@@ -2567,6 +2767,18 @@ function subscribeStoreData() {
       refreshPreviewDeliveryUI(products[activePreviewId]);
       renderRelatedProducts(activePreviewId);
     }
+    if ($("cartDrawer")?.classList.contains("show")) renderCartDrawer();
+    if ($("checkoutModal")?.classList.contains("show")) syncCheckoutTotalsUI();
+  });
+
+  onValue(ref(db, "suppliers"), (snap) => {
+    suppliers = snap.val() || {};
+    healCartWithProducts();
+    if (activePreviewId && products[activePreviewId]) {
+      refreshPreviewDeliveryUI(products[activePreviewId]);
+    }
+    if ($("cartDrawer")?.classList.contains("show")) renderCartDrawer();
+    if ($("checkoutModal")?.classList.contains("show")) syncCheckoutTotalsUI();
   });
 
   onValue(ref(db, "categories"), (snap) => {
@@ -2963,6 +3175,8 @@ $("checkoutForm").onsubmit = async (e) => {
     subtotal: totals.subtotal,
     discount: totals.discount,
     deliveryFee: totals.deliveryFee,
+    deliveryBreakdown: totals.breakdown,
+    deliveryBreakdownSummary: totals.breakdownSummary,
     total: totals.total,
     promoCode: totals.promo?.code || "",
     currency: "BDT",

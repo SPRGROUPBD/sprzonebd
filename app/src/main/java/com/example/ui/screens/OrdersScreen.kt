@@ -276,6 +276,18 @@ private fun OrderTrackingCard(
             SummaryRow("Payment Method", order.paymentMethod.ifBlank { "Cash on Delivery" })
             SummaryRow("Payment Status", order.paymentStatus)
             SummaryRow("Deliver To", "${order.recipientName} • ${order.fullAddress}")
+            SummaryRow(
+                label = "Delivery Fee",
+                value = if (order.deliveryFeeBdt == 0L) "FREE (৳0)" else formatBdt(order.deliveryFeeBdt),
+                valueColor = if (order.deliveryFeeBdt == 0L) VerifiedGreen else MaterialTheme.colorScheme.onSurface
+            )
+            if (order.deliveryBreakdownSummary.isNotBlank()) {
+                Text(
+                    text = "Courier: ${order.deliveryBreakdownSummary}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
             SummaryRow("Total", formatBdt(order.totalBdt), bold = true, valueColor = MaterialTheme.colorScheme.primary)
 
             if (canCancel) {

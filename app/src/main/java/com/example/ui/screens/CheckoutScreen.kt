@@ -66,7 +66,9 @@ import com.example.data.model.DeliveryConfigSummary
 import com.example.data.model.MerchantPaymentSettings
 import com.example.data.model.OrderEntity
 import com.example.data.model.PaymentMethod
+import com.example.data.model.ProductEntity
 import com.example.data.model.StoreConstants
+import com.example.data.model.SupplierEntity
 import com.example.data.model.UserAccountEntity
 import com.example.ui.components.formatBdt
 import com.example.ui.theme.CodTeal
@@ -84,6 +86,8 @@ fun CheckoutScreen(
     summary: CartSummary,
     paymentSettings: MerchantPaymentSettings,
     deliveryConfig: DeliveryConfigSummary = DeliveryConfigSummary(),
+    suppliers: Map<String, SupplierEntity> = emptyMap(),
+    products: List<ProductEntity> = emptyList(),
     onBack: () -> Unit,
     onSaveAddress: (
         label: String,
@@ -122,14 +126,27 @@ fun CheckoutScreen(
     }
 
     val selectedAddress = addresses.find { it.id == selectedAddressId }
-    val qtyFree = cartItems.any { it.freeDeliveryMinQty > 0 && it.quantity >= it.freeDeliveryMinQty }
-    val amtFree = deliveryConfig.freeDeliveryMinAmountBdt > 0L && summary.subtotalBdt >= deliveryConfig.freeDeliveryMinAmountBdt
-    val effectiveDeliveryFee = when {
-        cartItems.isEmpty() -> 0L
-        qtyFree || amtFree || summary.appliedPromo?.freeShipping == true -> 0L
-        selectedAddress != null -> deliveryConfig.feeForDivision(selectedAddress.division)
-        else -> 0L
+    val productsById = remember(products) { products.associateBy { it.id } }
+    val deliveryBreakdown = remember(
+        cartItems,
+        summary.subtotalBdt,
+        selectedAddress?.division,
+        deliveryConfig,
+        suppliers,
+        productsById,
+        summary.appliedPromo
+    ) {
+        StoreConstants.calculateSupplierWiseDelivery(
+            cartItems = cartItems,
+            subtotalBdt = summary.subtotalBdt,
+            division = selectedAddress?.division ?: "Dhaka",
+            deliveryConfig = deliveryConfig,
+            suppliersById = suppliers,
+            productsById = productsById,
+            couponFreeShipping = summary.appliedPromo?.freeShipping == true
+        )
     }
+    val effectiveDeliveryFee = if (cartItems.isEmpty() || selectedAddress == null) 0L else deliveryBreakdown.totalFeeBdt
     val effectiveTotal = (summary.subtotalBdt - summary.discountBdt + effectiveDeliveryFee).coerceAtLeast(0L)
 
     Scaffold(
@@ -326,8 +343,39 @@ fun CheckoutScreen(
                             if (summary.discountBdt > 0) {
                                 SummaryRow("Promo (${summary.appliedPromo?.code})", "-${formatBdt(summary.discountBdt)}", valueColor = VerifiedGreen)
                             }
+                            if (selectedAddress != null && deliveryBreakdown.breakdown.isNotEmpty()) {
+                                Surface(
+                                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f),
+                                    shape = RoundedCornerShape(10.dp),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Column(
+                                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                                        modifier = Modifier.padding(10.dp)
+                                    ) {
+                                        Text(
+                                            text = if (deliveryBreakdown.breakdown.size > 1) {
+                                                "Supplier-Wise Courier (${deliveryBreakdown.breakdown.size} Suppliers · ${selectedAddress.division})"
+                                            } else {
+                                                "Supplier Courier (${selectedAddress.division})"
+                                            },
+                                            style = MaterialTheme.typography.labelMedium,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                        deliveryBreakdown.breakdown.forEach { line ->
+                                            val pickupPart = if (line.pickupLocation.isNotBlank()) " (${line.pickupLocation})" else ""
+                                            SummaryRow(
+                                                label = "• ${line.supplierName}$pickupPart ×${line.itemCount}",
+                                                value = if (line.feeBdt == 0L) "FREE (৳0)" else formatBdt(line.feeBdt),
+                                                valueColor = if (line.feeBdt == 0L) VerifiedGreen else MaterialTheme.colorScheme.onSurface
+                                            )
+                                        }
+                                    }
+                                }
+                            }
                             SummaryRow(
-                                label = "Delivery Fee",
+                                label = if (selectedAddress != null) "Total Delivery Fee (${selectedAddress.division})" else "Delivery Fee",
                                 value = if (effectiveDeliveryFee == 0L) "FREE (৳0)" else formatBdt(effectiveDeliveryFee),
                                 valueColor = if (effectiveDeliveryFee == 0L) VerifiedGreen else MaterialTheme.colorScheme.onSurface
                             )
@@ -572,6 +620,18 @@ private fun OrderSuccessReceipt(
                     valueColor = if (order.paymentStatus.contains("Confirmed", ignoreCase = true)) VerifiedGreen else StarAmber
                 )
                 SummaryRow("Deliver To", "${order.recipientName} (${order.division})")
+                SummaryRow(
+                    label = "Delivery Fee",
+                    value = if (order.deliveryFeeBdt == 0L) "FREE (৳0)" else formatBdt(order.deliveryFeeBdt),
+                    valueColor = if (order.deliveryFeeBdt == 0L) VerifiedGreen else MaterialTheme.colorScheme.onSurface
+                )
+                if (order.deliveryBreakdownSummary.isNotBlank()) {
+                    Text(
+                        text = "Courier: ${order.deliveryBreakdownSummary}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
                 HorizontalDivider()
                 SummaryRow("Total Amount (COD)", formatBdt(order.totalBdt), bold = true, valueColor = MaterialTheme.colorScheme.primary)
             }

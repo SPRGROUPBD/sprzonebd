@@ -19,6 +19,7 @@ import com.example.data.model.PaymentMethod
 import com.example.data.model.ProductEntity
 import com.example.data.model.ReviewEntity
 import com.example.data.model.StoreConstants
+import com.example.data.model.SupplierEntity
 import com.example.data.model.UserAccountEntity
 import com.example.data.repository.PromoResult
 import com.example.data.repository.SprZoneRepository
@@ -56,7 +57,10 @@ data class CartSummary(
     val appliedPromo: PromoResult? = null,
     val freeDeliveryRemainingBdt: Long = StoreConstants.FREE_DELIVERY_THRESHOLD_BDT,
     val hasQtyFreeDelivery: Boolean = false,
-    val freeDeliveryThresholdBdt: Long = StoreConstants.FREE_DELIVERY_THRESHOLD_BDT
+    val freeDeliveryThresholdBdt: Long = StoreConstants.FREE_DELIVERY_THRESHOLD_BDT,
+    val supplierCount: Int = 0,
+    val estDhakaDeliveryBdt: Long = 0L,
+    val estOutsideDhakaDeliveryBdt: Long = 0L
 )
 
 data class CatalogFilterState(
@@ -87,6 +91,7 @@ class SprZoneViewModel(
 
     val paymentSettings: StateFlow<MerchantPaymentSettings> = repository.paymentSettings
     val deliveryConfig: StateFlow<DeliveryConfigSummary> = repository.deliveryConfig
+    val suppliers: StateFlow<Map<String, SupplierEntity>> = repository.suppliers
 
     val availableCoupons: StateFlow<List<String>> = repository.coupons
         .map { map -> map.keys.toList().sorted() }
@@ -180,16 +185,37 @@ class SprZoneViewModel(
     val cartSummary: StateFlow<CartSummary> = combine(
         cartItems,
         repository.deliveryConfig,
+        repository.suppliers,
+        allProducts,
         _promoCodeInput
-    ) { items, delConfig, promoInput ->
+    ) { items, delConfig, suppliersMap, productsList, promoInput ->
         val itemCount = items.sumOf { it.quantity }
         val subtotal = items.sumOf { it.unitPriceBdt * it.quantity }
         val promo = if (promoInput.isNotBlank()) repository.evaluatePromo(promoInput, subtotal) else null
         val discount = promo?.discountBdt ?: 0L
-        val hasQtyFree = items.any { it.freeDeliveryMinQty > 0 && it.quantity >= it.freeDeliveryMinQty }
+        val productsById = productsList.associateBy { it.id }
+        val dhakaDel = StoreConstants.calculateSupplierWiseDelivery(
+            cartItems = items,
+            subtotalBdt = subtotal,
+            division = "Dhaka",
+            deliveryConfig = delConfig,
+            suppliersById = suppliersMap,
+            productsById = productsById,
+            couponFreeShipping = promo?.freeShipping == true
+        )
+        val outsideDel = StoreConstants.calculateSupplierWiseDelivery(
+            cartItems = items,
+            subtotalBdt = subtotal,
+            division = "Chattogram",
+            deliveryConfig = delConfig,
+            suppliersById = suppliersMap,
+            productsById = productsById,
+            couponFreeShipping = promo?.freeShipping == true
+        )
+        val allQtyFree = dhakaDel.allQtyFree
         val threshold = delConfig.freeDeliveryMinAmountBdt
         val totalBeforeCheckout = (subtotal - discount).coerceAtLeast(0L)
-        val remainingForFree = if (hasQtyFree || threshold <= 0L) 0L else (threshold - subtotal).coerceAtLeast(0L)
+        val remainingForFree = if (allQtyFree || threshold <= 0L) 0L else (threshold - subtotal).coerceAtLeast(0L)
         CartSummary(
             itemCount = itemCount,
             subtotalBdt = subtotal,
@@ -198,8 +224,11 @@ class SprZoneViewModel(
             totalBdt = totalBeforeCheckout,
             appliedPromo = promo,
             freeDeliveryRemainingBdt = remainingForFree,
-            hasQtyFreeDelivery = hasQtyFree,
-            freeDeliveryThresholdBdt = threshold
+            hasQtyFreeDelivery = allQtyFree,
+            freeDeliveryThresholdBdt = threshold,
+            supplierCount = dhakaDel.breakdown.size,
+            estDhakaDeliveryBdt = dhakaDel.totalFeeBdt,
+            estOutsideDhakaDeliveryBdt = outsideDel.totalFeeBdt
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), CartSummary())
 
@@ -238,6 +267,11 @@ class SprZoneViewModel(
             }
             viewModelScope.launch {
                 repository.observeRealtimeNodeChanges("deals/deliveryConfig.json").collect {
+                    repository.syncRemoteCatalogAndSettings()
+                }
+            }
+            viewModelScope.launch {
+                repository.observeRealtimeNodeChanges("suppliers.json").collect {
                     repository.syncRemoteCatalogAndSettings()
                 }
             }

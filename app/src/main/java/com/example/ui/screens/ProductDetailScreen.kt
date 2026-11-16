@@ -67,6 +67,7 @@ import androidx.compose.ui.unit.dp
 import com.example.R
 import com.example.data.model.ProductEntity
 import com.example.data.model.ReviewEntity
+import com.example.data.model.SupplierEntity
 import com.example.ui.components.ProductThumbnail
 import com.example.ui.components.formatBdt
 import com.example.ui.theme.DiscountRed
@@ -79,6 +80,7 @@ import com.example.ui.theme.VerifiedGreen
 fun ProductDetailScreen(
     product: ProductEntity?,
     reviews: List<ReviewEntity>,
+    suppliers: Map<String, SupplierEntity> = emptyMap(),
     isWishlisted: Boolean,
     isSignedIn: Boolean,
     onBack: () -> Unit,
@@ -483,6 +485,12 @@ fun ProductDetailScreen(
                             .padding(horizontal = 16.dp)
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
+                            val liveSup = product.supplierId.takeIf { it.isNotBlank() }?.let { suppliers[it] }
+                            val supName = liveSup?.name ?: product.supplierName
+                            val supPickup = liveSup?.pickupLocation ?: product.supplierPickupLocation
+                            val supInRate = liveSup?.insideDhakaRateBdt ?: product.supplierInsideDhakaRateBdt
+                            val supOutRate = liveSup?.outsideDhakaRateBdt ?: product.supplierOutsideDhakaRateBdt
+                            val hasSup = supName.isNotBlank() || supInRate != null || supOutRate != null
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(
                                     imageVector = Icons.Filled.LocalShipping,
@@ -490,11 +498,24 @@ fun ProductDetailScreen(
                                     tint = MaterialTheme.colorScheme.primary
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = "Dhaka Metro ৳60 • All Bangladesh ৳120 (Free over ৳3,000)",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.Medium
-                                )
+                                Column {
+                                    Text(
+                                        text = if (hasSup) {
+                                            "Inside Dhaka ${formatBdt(supInRate ?: 60L)} • Outside Dhaka ${formatBdt(supOutRate ?: 120L)}"
+                                        } else {
+                                            "Dhaka Metro ৳60 • All Bangladesh ৳120 (Free over ৳3,000)"
+                                        },
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                    if (supName.isNotBlank()) {
+                                        Text(
+                                            text = "Supplier: $supName${if (supPickup.isNotBlank()) " (Pickup: $supPickup)" else ""} • Charged once per supplier",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
                             }
                             Spacer(modifier = Modifier.height(12.dp))
                             HorizontalDivider()

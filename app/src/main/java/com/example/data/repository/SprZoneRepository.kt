@@ -15,6 +15,7 @@ import com.example.data.local.WishlistDao
 import com.example.data.model.AddressEntity
 import com.example.data.model.AppNotificationItem
 import com.example.data.model.CartItemEntity
+import com.example.data.model.DeliveryBreakdownSummary
 import com.example.data.model.DeliveryConfigSummary
 import com.example.data.model.DeliveryZone
 import com.example.data.model.MerchantPaymentSettings
@@ -23,6 +24,7 @@ import com.example.data.model.PaymentMethod
 import com.example.data.model.ProductEntity
 import com.example.data.model.ReviewEntity
 import com.example.data.model.StoreConstants
+import com.example.data.model.SupplierEntity
 import com.example.data.model.UserAccountEntity
 import com.example.data.model.WishlistEntity
 import com.example.data.remote.FirebaseAuthRequest
@@ -37,6 +39,7 @@ import com.example.data.remote.RemoteCouponDto
 import com.example.data.remote.RemoteCustomerAddressDto
 import com.example.data.remote.RemoteCustomerDto
 import com.example.data.remote.RemoteCustomerProfileDto
+import com.example.data.remote.RemoteDeliveryBreakdownDto
 import com.example.data.remote.RemoteOrderDto
 import com.example.data.remote.RemoteOrderItemDto
 import com.example.data.remote.RemoteReviewDto
@@ -107,6 +110,11 @@ class SprZoneRepository(
     private val _coupons = MutableStateFlow<Map<String, RemoteCouponDto>>(emptyMap())
     val coupons: StateFlow<Map<String, RemoteCouponDto>> = _coupons.asStateFlow()
 
+    private val _suppliers = MutableStateFlow<Map<String, SupplierEntity>>(emptyMap())
+    val suppliers: StateFlow<Map<String, SupplierEntity>> = _suppliers.asStateFlow()
+
+    private val _productsById = MutableStateFlow<Map<String, ProductEntity>>(emptyMap())
+
     private val _allNotifications = MutableStateFlow<List<AppNotificationItem>>(emptyList())
     val allNotifications: StateFlow<List<AppNotificationItem>> = _allNotifications.asStateFlow()
 
@@ -161,6 +169,28 @@ class SprZoneRepository(
             if (t is CancellationException) throw t
         }
 
+        try {
+            val supResp = rtdb.getSuppliers()
+            if (supResp.isSuccessful) {
+                val rawSups = supResp.body().orEmpty()
+                _suppliers.value = rawSups.entries.mapNotNull { (sid, dto) ->
+                    val cleanId = sid.trim().take(120)
+                    val sName = dto.name?.trim()?.takeIf { it.isNotBlank() }?.take(120) ?: return@mapNotNull null
+                    cleanId to SupplierEntity(
+                        id = cleanId,
+                        name = sName,
+                        pickupLocation = dto.pickupLocation?.trim().orEmpty().take(120).ifBlank { "Dhaka" },
+                        insideDhakaRateBdt = (dto.insideDhakaRate ?: 60.0).roundToInt().toLong().coerceAtLeast(0L),
+                        outsideDhakaRateBdt = (dto.outsideDhakaRate ?: 120.0).roundToInt().toLong().coerceAtLeast(0L),
+                        phone = dto.phone?.trim().orEmpty().take(40),
+                        note = dto.note?.trim().orEmpty().take(300)
+                    )
+                }.toMap()
+            }
+        } catch (t: Throwable) {
+            if (t is CancellationException) throw t
+        }
+
         val reviewStatsByProduct = syncReviewsInternal()
 
         try {
@@ -169,7 +199,9 @@ class SprZoneRepository(
                 val remoteMap = productsResp.body()
                 if (remoteMap.isNullOrEmpty()) {
                     productDao.clearAllProducts()
+                    _productsById.value = emptyMap()
                 } else {
+                    val liveSups = _suppliers.value
                     val mapped = remoteMap.entries.mapNotNull { (id, dto) ->
                         val safeId = id.trim().take(120)
                         if (safeId.isBlank()) return@mapNotNull null
@@ -193,12 +225,19 @@ class SprZoneRepository(
                         val safeImageUrl = persistOrSanitizeImageUrl(safeId, dto.image)
                         val variantPricesStr = serializeVariantPrices(dto.variantPrices)
                         val rStats = reviewStatsByProduct[safeId]
+                        val supId = dto.supplierId?.trim().orEmpty().take(120)
+                        val liveSup = supId.takeIf { it.isNotBlank() }?.let { liveSups[it] }
+                        val supName = liveSup?.name ?: dto.supplierName?.trim().orEmpty().take(120)
+                        val supPickup = liveSup?.pickupLocation ?: dto.supplierPickupLocation?.trim().orEmpty().take(120)
+                        val supInRate = liveSup?.insideDhakaRateBdt ?: dto.supplierInsideDhakaRate?.roundToInt()?.toLong()?.coerceAtLeast(0L)
+                        val supOutRate = liveSup?.outsideDhakaRateBdt ?: dto.supplierOutsideDhakaRate?.roundToInt()?.toLong()?.coerceAtLeast(0L)
                         ProductEntity(
                             id = safeId,
                             name = name,
                             category = cat,
                             brand = dto.brand?.trim()?.takeIf { it.isNotBlank() }?.take(120) ?: "SPR Official",
-                            sellerName = dto.sellerName?.trim()?.takeIf { it.isNotBlank() }?.take(120) ?: "SPR Official Store",
+                            sellerName = dto.sellerName?.trim()?.takeIf { it.isNotBlank() }?.take(120)
+                                ?: supName.ifBlank { "SPR Official Store" },
                             priceBdt = price,
                             originalPriceBdt = if (oldPrice > price) oldPrice else price,
                             discountPercent = discount,
@@ -219,6 +258,11 @@ class SprZoneRepository(
                             variantSizesCsv = dto.variantSizes?.trim()?.take(400).orEmpty(),
                             variantPricesJson = variantPricesStr,
                             freeDeliveryMinQty = (dto.freeDeliveryMinQty ?: 0).coerceAtLeast(0),
+                            supplierId = supId,
+                            supplierName = supName,
+                            supplierPickupLocation = supPickup,
+                            supplierInsideDhakaRateBdt = supInRate,
+                            supplierOutsideDhakaRateBdt = supOutRate,
                             createdAt = dto.updatedAt ?: System.currentTimeMillis()
                         )
                     }
@@ -226,6 +270,7 @@ class SprZoneRepository(
                     if (mapped.isNotEmpty()) {
                         productDao.insertAll(mapped)
                     }
+                    _productsById.value = mapped.associateBy { it.id }
                 }
             }
         } catch (t: Throwable) {
@@ -410,12 +455,23 @@ class SprZoneRepository(
                     val existing = orderDao.getOrderById(orderId)
                     val newStatus = (dto.status ?: existing?.orderStatus ?: "Pending").take(60)
                     val newPayStatus = (dto.paymentStatus ?: existing?.paymentStatus ?: "Pending").take(80)
+                    val remoteBreakdownSummary = dto.deliveryBreakdownSummary?.trim()?.take(1000)
+                        ?: dto.deliveryBreakdown.orEmpty().joinToString(" + ") { b ->
+                            val sup = b.supplierName.orEmpty().ifBlank { "Store" }
+                            val pickup = b.pickupLocation?.takeIf { it.isNotBlank() }?.let { " ($it)" }.orEmpty()
+                            val feeLabel = if ((b.fee ?: 0L) == 0L) "FREE" else "৳${b.fee ?: 0L}"
+                            "$sup$pickup: $feeLabel"
+                        }.take(1000)
                     if (existing != null) {
-                        if (existing.orderStatus != newStatus || existing.paymentStatus != newPayStatus) {
+                        if (existing.orderStatus != newStatus ||
+                            existing.paymentStatus != newPayStatus ||
+                            (remoteBreakdownSummary.isNotBlank() && existing.deliveryBreakdownSummary != remoteBreakdownSummary)
+                        ) {
                             orderDao.insertOrder(
                                 existing.copy(
                                     orderStatus = newStatus,
                                     paymentStatus = newPayStatus,
+                                    deliveryBreakdownSummary = remoteBreakdownSummary.ifBlank { existing.deliveryBreakdownSummary },
                                     updatedAt = dto.updatedAt ?: System.currentTimeMillis()
                                 )
                             )
@@ -437,6 +493,7 @@ class SprZoneRepository(
                                 subtotalBdt = dto.subtotal ?: dto.total ?: 0L,
                                 discountBdt = dto.discount ?: 0L,
                                 deliveryFeeBdt = dto.deliveryFee ?: 0L,
+                                deliveryBreakdownSummary = remoteBreakdownSummary,
                                 totalBdt = dto.total ?: 0L,
                                 promoCode = dto.promoCode.orEmpty().take(40),
                                 paymentMethod = (dto.paymentMethod ?: "Cash on Delivery").take(60),
@@ -476,6 +533,13 @@ class SprZoneRepository(
                 val summaryText = (dto.itemsSummary ?: local?.itemsSummary ?: dto.items.orEmpty().joinToString("||") {
                     "${it.name.orEmpty().take(120)} x${it.qty ?: 1} @৳${it.price ?: 0}"
                 }).take(4000)
+                val remoteBreakdownSummary = dto.deliveryBreakdownSummary?.trim()?.take(1000)
+                    ?: dto.deliveryBreakdown.orEmpty().joinToString(" + ") { b ->
+                        val sup = b.supplierName.orEmpty().ifBlank { "Store" }
+                        val pickup = b.pickupLocation?.takeIf { it.isNotBlank() }?.let { " ($it)" }.orEmpty()
+                        val feeLabel = if ((b.fee ?: 0L) == 0L) "FREE" else "৳${b.fee ?: 0L}"
+                        "$sup$pickup: $feeLabel"
+                    }.take(1000)
                 val entity = OrderEntity(
                     orderId = (dto.orderId ?: cleanId).take(120),
                     userEmail = dto.customerEmail.orEmpty().take(160),
@@ -488,6 +552,7 @@ class SprZoneRepository(
                     subtotalBdt = dto.subtotal ?: dto.total ?: local?.subtotalBdt ?: 0L,
                     discountBdt = dto.discount ?: local?.discountBdt ?: 0L,
                     deliveryFeeBdt = dto.deliveryFee ?: local?.deliveryFeeBdt ?: 0L,
+                    deliveryBreakdownSummary = remoteBreakdownSummary.ifBlank { local?.deliveryBreakdownSummary.orEmpty() },
                     totalBdt = dto.total ?: local?.totalBdt ?: 0L,
                     promoCode = dto.promoCode.orEmpty().take(40),
                     paymentMethod = (dto.paymentMethod ?: local?.paymentMethod ?: "Cash on Delivery").take(60),
@@ -1166,6 +1231,11 @@ class SprZoneRepository(
         }
         val chosenVariant = variant.ifBlank { product.defaultVariantLabel() }
         val unitPrice = unitPriceOverride ?: product.priceForVariant(chosenVariant)
+        val liveSup = product.supplierId.takeIf { it.isNotBlank() }?.let { _suppliers.value[it] }
+        val supName = liveSup?.name ?: product.supplierName
+        val supPickup = liveSup?.pickupLocation ?: product.supplierPickupLocation
+        val supInRate = liveSup?.insideDhakaRateBdt ?: product.supplierInsideDhakaRateBdt
+        val supOutRate = liveSup?.outsideDhakaRateBdt ?: product.supplierOutsideDhakaRateBdt
         val existing = cartDao.findCartItem(userEmail, product.id, chosenVariant)
         if (existing != null) {
             val nextQty = (existing.quantity + quantity).coerceAtMost(product.stock)
@@ -1173,6 +1243,11 @@ class SprZoneRepository(
                 existing.copy(
                     unitPriceBdt = unitPrice,
                     freeDeliveryMinQty = product.freeDeliveryMinQty,
+                    supplierId = product.supplierId,
+                    supplierName = supName,
+                    supplierPickupLocation = supPickup,
+                    supplierInsideDhakaRateBdt = supInRate,
+                    supplierOutsideDhakaRateBdt = supOutRate,
                     quantity = nextQty
                 )
             )
@@ -1188,7 +1263,12 @@ class SprZoneRepository(
                     imageUrl = product.imageUrl,
                     selectedVariant = chosenVariant,
                     quantity = quantity.coerceAtMost(product.stock),
-                    freeDeliveryMinQty = product.freeDeliveryMinQty
+                    freeDeliveryMinQty = product.freeDeliveryMinQty,
+                    supplierId = product.supplierId,
+                    supplierName = supName,
+                    supplierPickupLocation = supPickup,
+                    supplierInsideDhakaRateBdt = supInRate,
+                    supplierOutsideDhakaRateBdt = supOutRate
                 )
             )
         }
@@ -1442,18 +1522,30 @@ class SprZoneRepository(
         }
     }
 
+    fun computeDeliveryBreakdown(
+        cartItems: List<CartItemEntity>,
+        subtotalBdt: Long,
+        division: String,
+        promo: PromoResult?
+    ): DeliveryBreakdownSummary {
+        return StoreConstants.calculateSupplierWiseDelivery(
+            cartItems = cartItems,
+            subtotalBdt = subtotalBdt,
+            division = division,
+            deliveryConfig = _deliveryConfig.value,
+            suppliersById = _suppliers.value,
+            productsById = _productsById.value,
+            couponFreeShipping = promo?.freeShipping == true
+        )
+    }
+
     fun computeEffectiveDeliveryFee(
         cartItems: List<CartItemEntity>,
         subtotalBdt: Long,
         division: String,
         promo: PromoResult?
     ): Long {
-        if (cartItems.isEmpty() || subtotalBdt <= 0L) return 0L
-        val config = _deliveryConfig.value
-        val qtyFree = cartItems.any { it.freeDeliveryMinQty > 0 && it.quantity >= it.freeDeliveryMinQty }
-        val amtFree = config.freeDeliveryMinAmountBdt > 0L && subtotalBdt >= config.freeDeliveryMinAmountBdt
-        if (qtyFree || amtFree || promo?.freeShipping == true) return 0L
-        return config.feeForDivision(division)
+        return computeDeliveryBreakdown(cartItems, subtotalBdt, division, promo).totalFeeBdt
     }
 
     suspend fun placeOrder(
@@ -1472,7 +1564,8 @@ class SprZoneRepository(
         val subtotal = cartItems.sumOf { it.unitPriceBdt * it.quantity }
         val promo = evaluatePromo(promoCode, subtotal)
         val discount = promo?.discountBdt ?: 0L
-        val rawDeliveryFee = computeEffectiveDeliveryFee(cartItems, subtotal, address.division, promo)
+        val deliverySummary = computeDeliveryBreakdown(cartItems, subtotal, address.division, promo)
+        val rawDeliveryFee = deliverySummary.totalFeeBdt
         val total = (subtotal - discount + rawDeliveryFee).coerceAtLeast(0L)
 
         val normalizedSender = ""
@@ -1502,6 +1595,7 @@ class SprZoneRepository(
             subtotalBdt = subtotal,
             discountBdt = discount,
             deliveryFeeBdt = rawDeliveryFee,
+            deliveryBreakdownSummary = deliverySummary.summaryText,
             totalBdt = total,
             promoCode = promo?.code ?: "",
             paymentMethod = paymentMethod.displayName,
@@ -1522,6 +1616,8 @@ class SprZoneRepository(
         try {
             val uid = prefs.firebaseUid.first() ?: userEmail.replace(".", "_")
             val district = address.districtThana.split(",").firstOrNull()?.trim().orEmpty()
+            val liveSups = _suppliers.value
+            val prodMap = _productsById.value
             val remoteDto = RemoteOrderDto(
                 orderId = orderId,
                 uid = uid,
@@ -1533,19 +1629,39 @@ class SprZoneRepository(
                     district = district,
                     division = address.division
                 ),
-                items = cartItems.map {
+                items = cartItems.map { item ->
+                    val prod = prodMap[item.productId]
+                    val sid = (prod?.supplierId?.takeIf { it.isNotBlank() } ?: item.supplierId).trim()
+                    val sup = sid.takeIf { it.isNotBlank() }?.let { liveSups[it] }
                     RemoteOrderItemDto(
-                        id = it.productId,
-                        name = it.productName,
-                        price = it.unitPriceBdt,
-                        qty = it.quantity,
-                        variant = it.selectedVariant
+                        id = item.productId,
+                        name = item.productName,
+                        price = item.unitPriceBdt,
+                        qty = item.quantity,
+                        variant = item.selectedVariant,
+                        supplierId = sid,
+                        supplierName = sup?.name ?: prod?.supplierName ?: item.supplierName,
+                        supplierPickupLocation = sup?.pickupLocation ?: prod?.supplierPickupLocation ?: item.supplierPickupLocation,
+                        supplierInsideDhakaRate = sup?.insideDhakaRateBdt ?: prod?.supplierInsideDhakaRateBdt ?: item.supplierInsideDhakaRateBdt,
+                        supplierOutsideDhakaRate = sup?.outsideDhakaRateBdt ?: prod?.supplierOutsideDhakaRateBdt ?: item.supplierOutsideDhakaRateBdt
                     )
                 },
                 itemsSummary = summary,
                 subtotal = subtotal,
                 discount = discount,
                 deliveryFee = rawDeliveryFee,
+                deliveryBreakdown = deliverySummary.breakdown.map { b ->
+                    RemoteDeliveryBreakdownDto(
+                        supplierId = b.supplierId,
+                        supplierName = b.supplierName,
+                        pickupLocation = b.pickupLocation,
+                        itemCount = b.itemCount,
+                        baseFee = b.baseFeeBdt,
+                        fee = b.feeBdt,
+                        isFree = b.isFree
+                    )
+                },
+                deliveryBreakdownSummary = deliverySummary.summaryText,
                 total = total,
                 promoCode = promo?.code ?: "",
                 currency = "BDT",

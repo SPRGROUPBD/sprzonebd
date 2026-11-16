@@ -45,6 +45,22 @@ data class RemoteProductDto(
     val variantSizes: String? = null,
     val variantPrices: Map<String, Double>? = null,
     val freeDeliveryMinQty: Int? = null,
+    val supplierId: String? = null,
+    val supplierName: String? = null,
+    val supplierPickupLocation: String? = null,
+    val supplierInsideDhakaRate: Double? = null,
+    val supplierOutsideDhakaRate: Double? = null,
+    val updatedAt: Long? = null
+)
+
+@JsonClass(generateAdapter = true)
+data class RemoteSupplierDto(
+    val name: String? = null,
+    val pickupLocation: String? = null,
+    val insideDhakaRate: Double? = null,
+    val outsideDhakaRate: Double? = null,
+    val phone: String? = null,
+    val note: String? = null,
     val updatedAt: Long? = null
 )
 
@@ -115,7 +131,23 @@ data class RemoteOrderItemDto(
     val name: String? = null,
     val price: Long? = null,
     val qty: Int? = null,
-    val variant: String? = null
+    val variant: String? = null,
+    val supplierId: String? = null,
+    val supplierName: String? = null,
+    val supplierPickupLocation: String? = null,
+    val supplierInsideDhakaRate: Long? = null,
+    val supplierOutsideDhakaRate: Long? = null
+)
+
+@JsonClass(generateAdapter = true)
+data class RemoteDeliveryBreakdownDto(
+    val supplierId: String? = null,
+    val supplierName: String? = null,
+    val pickupLocation: String? = null,
+    val itemCount: Int? = null,
+    val baseFee: Long? = null,
+    val fee: Long? = null,
+    val isFree: Boolean? = null
 )
 
 @JsonClass(generateAdapter = true)
@@ -138,6 +170,8 @@ data class RemoteOrderDto(
     val subtotal: Long? = null,
     val discount: Long? = null,
     val deliveryFee: Long? = null,
+    val deliveryBreakdown: List<RemoteDeliveryBreakdownDto>? = null,
+    val deliveryBreakdownSummary: String? = null,
     val total: Long? = null,
     val promoCode: String? = null,
     val currency: String? = null,
@@ -333,6 +367,9 @@ interface FirebaseTokenRefreshService {
 interface SprZoneRtdbService {
     @GET("products.json")
     suspend fun getProducts(): Response<Map<String, RemoteProductDto>?>
+
+    @GET("suppliers.json")
+    suspend fun getSuppliers(): Response<Map<String, RemoteSupplierDto>?>
 
     @GET("deals/deliveryConfig.json")
     suspend fun getDeliveryConfig(): Response<RemoteDeliveryConfigDto?>

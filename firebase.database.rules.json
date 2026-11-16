@@ -4,6 +4,10 @@
       ".read": true,
       ".write": "auth != null && (auth.token.email == 'mail.sajjadahmed@gmail.com' || auth.token.admin === true)"
     },
+    "suppliers": {
+      ".read": true,
+      ".write": "auth != null && (auth.token.email == 'mail.sajjadahmed@gmail.com' || auth.token.admin === true)"
+    },
     "categories": {
       ".read": true,
       ".write": "auth != null && (auth.token.email == 'mail.sajjadahmed@gmail.com' || auth.token.admin === true)"

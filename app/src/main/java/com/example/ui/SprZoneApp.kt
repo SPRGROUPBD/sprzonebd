@@ -186,6 +186,7 @@ fun SprZoneApp(
         val userOrders by viewModel.userOrders.collectAsStateWithLifecycle()
         val paymentSettings by viewModel.paymentSettings.collectAsStateWithLifecycle()
         val deliveryConfig by viewModel.deliveryConfig.collectAsStateWithLifecycle()
+        val suppliers by viewModel.suppliers.collectAsStateWithLifecycle()
         val notifications by viewModel.notifications.collectAsStateWithLifecycle()
         val readNotificationIds by viewModel.readNotificationIds.collectAsStateWithLifecycle()
         val unreadNotificationCount by viewModel.unreadNotificationCount.collectAsStateWithLifecycle()
@@ -511,6 +512,7 @@ fun SprZoneApp(
                                 ProductDetailScreen(
                                     product = product,
                                     reviews = reviews,
+                                    suppliers = suppliers,
                                     isWishlisted = productId in wishlistIds,
                                     isSignedIn = currentUser != null,
                                     onBack = { navController.popBackStack() },
@@ -544,6 +546,8 @@ fun SprZoneApp(
                                     summary = cartSummary,
                                     paymentSettings = paymentSettings,
                                     deliveryConfig = deliveryConfig,
+                                    suppliers = suppliers,
+                                    products = allProducts,
                                     onBack = { navController.popBackStack() },
                                     onSaveAddress = viewModel::saveAddress,
                                     onPlaceOrder = viewModel::placeOrder,

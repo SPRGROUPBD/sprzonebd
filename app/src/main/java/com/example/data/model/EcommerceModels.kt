@@ -41,6 +41,11 @@ data class ProductEntity(
     val variantSizesCsv: String = "",
     val variantPricesJson: String = "{}",
     val freeDeliveryMinQty: Int = 0,
+    val supplierId: String = "",
+    val supplierName: String = "",
+    val supplierPickupLocation: String = "",
+    val supplierInsideDhakaRateBdt: Long? = null,
+    val supplierOutsideDhakaRateBdt: Long? = null,
     val createdAt: Long = System.currentTimeMillis()
 ) {
     val variants: List<String>
@@ -132,6 +137,11 @@ data class CartItemEntity(
     val selectedVariant: String,
     val quantity: Int,
     val freeDeliveryMinQty: Int = 0,
+    val supplierId: String = "",
+    val supplierName: String = "",
+    val supplierPickupLocation: String = "",
+    val supplierInsideDhakaRateBdt: Long? = null,
+    val supplierOutsideDhakaRateBdt: Long? = null,
     val addedAt: Long = System.currentTimeMillis()
 )
 
@@ -184,6 +194,7 @@ data class OrderEntity(
     val subtotalBdt: Long,
     val discountBdt: Long,
     val deliveryFeeBdt: Long,
+    val deliveryBreakdownSummary: String = "",
     val totalBdt: Long,
     val promoCode: String,
     val paymentMethod: String,
@@ -216,6 +227,36 @@ data class MerchantPaymentSettings(
     val smsApiUrl: String = "",
     val smsApiKey: String = "",
     val autoVerifyEnabled: Boolean = true
+)
+
+data class SupplierEntity(
+    val id: String,
+    val name: String,
+    val pickupLocation: String,
+    val insideDhakaRateBdt: Long,
+    val outsideDhakaRateBdt: Long,
+    val phone: String = "",
+    val note: String = ""
+)
+
+data class SupplierDeliveryBreakdownLine(
+    val supplierId: String,
+    val supplierName: String,
+    val pickupLocation: String,
+    val itemCount: Int,
+    val baseFeeBdt: Long,
+    val feeBdt: Long,
+    val isFree: Boolean
+)
+
+data class DeliveryBreakdownSummary(
+    val totalFeeBdt: Long = 0L,
+    val breakdown: List<SupplierDeliveryBreakdownLine> = emptyList(),
+    val summaryText: String = "",
+    val amountFree: Boolean = false,
+    val couponFree: Boolean = false,
+    val allQtyFree: Boolean = false,
+    val anyQtyFree: Boolean = false
 )
 
 data class DeliveryConfigSummary(
@@ -264,7 +305,113 @@ object StoreConstants {
     const val GOOGLE_WEB_CLIENT_ID = "799252588942-itnqbin8ck1rpda2hhas07k4953rv0k1.apps.googleusercontent.com"
 
     fun deliveryFeeForDivision(division: String): Long {
-        return if (division.trim().equals("Dhaka", ignoreCase = true)) 60L else 120L
+        return if (isInsideDhaka(division)) 60L else 120L
+    }
+
+    fun isInsideDhaka(division: String): Boolean {
+        val clean = division.trim().lowercase()
+        return clean.startsWith("dhaka") || clean.startsWith("ঢাকা")
+    }
+
+    private data class MutableSupplierGroup(
+        val supplierId: String,
+        val supplierName: String,
+        val pickupLocation: String,
+        val baseFeeBdt: Long,
+        var itemCount: Int = 0,
+        var anyQtyFree: Boolean = false
+    )
+
+    fun calculateSupplierWiseDelivery(
+        cartItems: List<CartItemEntity>,
+        subtotalBdt: Long,
+        division: String,
+        deliveryConfig: DeliveryConfigSummary,
+        suppliersById: Map<String, SupplierEntity> = emptyMap(),
+        productsById: Map<String, ProductEntity> = emptyMap(),
+        couponFreeShipping: Boolean = false
+    ): DeliveryBreakdownSummary {
+        if (cartItems.isEmpty() || subtotalBdt <= 0L) {
+            return DeliveryBreakdownSummary()
+        }
+        val insideDhaka = isInsideDhaka(division)
+        val amountFree = deliveryConfig.freeDeliveryMinAmountBdt > 0L && subtotalBdt >= deliveryConfig.freeDeliveryMinAmountBdt
+        val groups = linkedMapOf<String, MutableSupplierGroup>()
+
+        for (item in cartItems) {
+            val prod = productsById[item.productId]
+            val sid = (prod?.supplierId?.takeIf { it.isNotBlank() } ?: item.supplierId).trim()
+            val liveSup = sid.takeIf { it.isNotBlank() }?.let { suppliersById[it] }
+            val sName = (liveSup?.name?.takeIf { it.isNotBlank() }
+                ?: prod?.supplierName?.takeIf { it.isNotBlank() }
+                ?: item.supplierName).trim()
+            val sPickup = (liveSup?.pickupLocation?.takeIf { it.isNotBlank() }
+                ?: prod?.supplierPickupLocation?.takeIf { it.isNotBlank() }
+                ?: item.supplierPickupLocation).trim()
+            val hasSupRates = liveSup != null ||
+                prod?.supplierInsideDhakaRateBdt != null ||
+                item.supplierInsideDhakaRateBdt != null
+
+            val gKey = when {
+                sid.isNotBlank() -> "sup:$sid"
+                sName.isNotBlank() -> "name:${sName.lowercase()}"
+                else -> "__default__"
+            }
+
+            val baseRate = when {
+                liveSup != null -> if (insideDhaka) liveSup.insideDhakaRateBdt else liveSup.outsideDhakaRateBdt
+                hasSupRates -> if (insideDhaka) {
+                    (prod?.supplierInsideDhakaRateBdt ?: item.supplierInsideDhakaRateBdt ?: 60L).coerceAtLeast(0L)
+                } else {
+                    (prod?.supplierOutsideDhakaRateBdt ?: item.supplierOutsideDhakaRateBdt ?: 120L).coerceAtLeast(0L)
+                }
+                else -> deliveryConfig.feeForDivision(division).coerceAtLeast(0L)
+            }
+
+            val reqFreeQty = (prod?.freeDeliveryMinQty ?: item.freeDeliveryMinQty).coerceAtLeast(0)
+            val qtyFreeItem = reqFreeQty > 0 && item.quantity >= reqFreeQty
+
+            val group = groups.getOrPut(gKey) {
+                MutableSupplierGroup(
+                    supplierId = sid,
+                    supplierName = sName.ifBlank { "SPR Zone Store" },
+                    pickupLocation = sPickup.ifBlank { "Default Store" },
+                    baseFeeBdt = baseRate
+                )
+            }
+            group.itemCount += item.quantity.coerceAtLeast(1)
+            if (qtyFreeItem) group.anyQtyFree = true
+        }
+
+        val lines = groups.values.map { g ->
+            val lineFree = amountFree || couponFreeShipping || g.anyQtyFree
+            SupplierDeliveryBreakdownLine(
+                supplierId = g.supplierId,
+                supplierName = g.supplierName,
+                pickupLocation = g.pickupLocation,
+                itemCount = g.itemCount,
+                baseFeeBdt = g.baseFeeBdt,
+                feeBdt = if (lineFree) 0L else g.baseFeeBdt,
+                isFree = lineFree
+            )
+        }
+        val totalFee = lines.sumOf { it.feeBdt }
+        val summaryText = lines.joinToString(" + ") { b ->
+            val pickupPart = if (b.pickupLocation.isNotBlank()) " (${b.pickupLocation})" else ""
+            val feePart = if (b.feeBdt == 0L) "FREE" else "৳${b.feeBdt}"
+            "${b.supplierName}$pickupPart: $feePart"
+        }
+        val allQtyFree = groups.isNotEmpty() && groups.values.all { it.anyQtyFree }
+        val anyQtyFree = groups.values.any { it.anyQtyFree }
+        return DeliveryBreakdownSummary(
+            totalFeeBdt = totalFee,
+            breakdown = lines,
+            summaryText = summaryText,
+            amountFree = amountFree,
+            couponFree = couponFreeShipping,
+            allQtyFree = allQtyFree,
+            anyQtyFree = anyQtyFree
+        )
     }
 
     val CATEGORIES = listOf(

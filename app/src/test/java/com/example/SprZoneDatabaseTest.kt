@@ -8,7 +8,9 @@ import androidx.test.core.app.ApplicationProvider
 import com.example.data.local.CatalogSeeder
 import com.example.data.local.SessionPreferences
 import com.example.data.local.SprZoneDatabase
+import com.example.data.model.AddressEntity
 import com.example.data.model.CartItemEntity
+import com.example.data.model.PaymentMethod
 import com.example.data.model.ProductEntity
 import com.example.data.remote.FirebaseAuthRequest
 import com.example.data.remote.FirebaseAuthResponse
@@ -36,6 +38,7 @@ import com.example.data.remote.RemotePaymentSettingsDto
 import com.example.data.remote.RemoteProductDto
 import com.example.data.remote.RemoteReviewDto
 import com.example.data.remote.RemoteSmsRecordDto
+import com.example.data.remote.RemoteSupplierDto
 import com.example.data.remote.SmsVerifyApiResponse
 import com.example.data.remote.SprZoneRtdbService
 import com.example.data.repository.GooglePendingLinkException
@@ -378,6 +381,158 @@ class SprZoneDatabaseTest {
         assertEquals(820L, product.priceForVariant("1.5L"))
         assertEquals(550L, product.priceForVariant("Green / M"))
     }
+
+    @Test
+    fun supplierWiseCourierChargesOncePerUniqueSupplierAcrossMixedCartAndPersistsOrderBreakdown() = runTest {
+        fakeRtdb.deliveryConfig = RemoteDeliveryConfigDto(freeDeliveryMinAmount = 50000.0)
+        fakeRtdb.suppliers["sup_a"] = RemoteSupplierDto(
+            name = "A Company",
+            pickupLocation = "ঢাকা",
+            insideDhakaRate = 60.0,
+            outsideDhakaRate = 120.0
+        )
+        fakeRtdb.suppliers["sup_b"] = RemoteSupplierDto(
+            name = "B Company",
+            pickupLocation = "চট্টগ্রাম",
+            insideDhakaRate = 80.0,
+            outsideDhakaRate = 150.0
+        )
+        fakeRtdb.products["prod_a1"] = RemoteProductDto(
+            name = "Product A1", category = "Electronics & Gadgets", price = 500.0, stock = 10, supplierId = "sup_a"
+        )
+        fakeRtdb.products["prod_a2"] = RemoteProductDto(
+            name = "Product A2", category = "Electronics & Gadgets", price = 700.0, stock = 10, supplierId = "sup_a"
+        )
+        fakeRtdb.products["prod_b1"] = RemoteProductDto(
+            name = "Product B1", category = "Fashion & Apparel", price = 800.0, stock = 10, supplierId = "sup_b"
+        )
+        fakeRtdb.products["prod_b2"] = RemoteProductDto(
+            name = "Product B2", category = "Fashion & Apparel", price = 1000.0, stock = 10, supplierId = "sup_b"
+        )
+
+        repo.syncRemoteCatalogAndSettings()
+
+        val email = "buyer@example.com"
+        assertTrue(repo.registerUser("Buyer One", email, "01711223344", "secret123").isSuccess)
+        val pA1 = db.productDao().getProductById("prod_a1")!!
+        val pA2 = db.productDao().getProductById("prod_a2")!!
+        val pB1 = db.productDao().getProductById("prod_b1")!!
+        val pB2 = db.productDao().getProductById("prod_b2")!!
+
+        assertEquals("A Company", pA1.supplierName)
+        assertEquals(60L, pA1.supplierInsideDhakaRateBdt)
+        assertEquals(150L, pB1.supplierOutsideDhakaRateBdt)
+
+        repo.addToCart(email, pA1, "Standard", 1)
+        repo.addToCart(email, pA2, "Standard", 1)
+        repo.addToCart(email, pB1, "Standard", 1)
+        repo.addToCart(email, pB2, "Standard", 1)
+        val cart = db.cartDao().observeCart(email).first()
+        val subtotal = cart.sumOf { it.unitPriceBdt * it.quantity }
+        assertEquals(3000L, subtotal)
+
+        // Inside Dhaka: A Company (৳60 once) + B Company (৳80 once) = ৳140
+        val dhakaBreakdown = repo.computeDeliveryBreakdown(cart, subtotal, "Dhaka", null)
+        assertEquals(140L, dhakaBreakdown.totalFeeBdt)
+        assertEquals(2, dhakaBreakdown.breakdown.size)
+        assertTrue(dhakaBreakdown.summaryText.contains("A Company"))
+        assertTrue(dhakaBreakdown.summaryText.contains("B Company"))
+
+        // Outside Dhaka: A Company (৳120 once) + B Company (৳150 once) = ৳270
+        val ctgBreakdown = repo.computeDeliveryBreakdown(cart, subtotal, "Chattogram", null)
+        assertEquals(270L, ctgBreakdown.totalFeeBdt)
+
+        val address = AddressEntity(
+            userEmail = email,
+            label = "Home",
+            recipientName = "Buyer One",
+            phone = "01711223344",
+            division = "Dhaka",
+            districtThana = "Dhaka, Mirpur",
+            streetAddress = "House 12",
+            isDefault = true
+        )
+        val orderRes = repo.placeOrder(
+            userEmail = email,
+            address = address,
+            cartItems = cart,
+            promoCode = "",
+            paymentMethod = PaymentMethod.COD,
+            senderNumberInput = "",
+            trxIdInput = ""
+        )
+        assertTrue(orderRes.isSuccess)
+        val placed = orderRes.getOrThrow()
+        assertEquals(140L, placed.deliveryFeeBdt)
+        assertEquals(3140L, placed.totalBdt)
+        assertTrue(placed.deliveryBreakdownSummary.contains("A Company"))
+        assertTrue(placed.deliveryBreakdownSummary.contains("B Company"))
+
+        val remoteOrder = fakeRtdb.orders[placed.orderId]!!
+        assertEquals(140L, remoteOrder.deliveryFee)
+        assertEquals(2, remoteOrder.deliveryBreakdown?.size)
+        assertEquals("sup_a", remoteOrder.items?.firstOrNull { it.id == "prod_a1" }?.supplierId)
+    }
+
+    @Test
+    fun supplierFreeQtyWaivesOnlyMatchingSupplierAndLiveRateUpdatesPropagate() = runTest {
+        fakeRtdb.deliveryConfig = RemoteDeliveryConfigDto(freeDeliveryMinAmount = 5000.0)
+        fakeRtdb.suppliers["sup_a"] = RemoteSupplierDto(
+            name = "A Company", pickupLocation = "ঢাকা", insideDhakaRate = 60.0, outsideDhakaRate = 120.0
+        )
+        fakeRtdb.suppliers["sup_b"] = RemoteSupplierDto(
+            name = "B Company", pickupLocation = "চট্টগ্রাম", insideDhakaRate = 80.0, outsideDhakaRate = 150.0
+        )
+        fakeRtdb.products["prod_a"] = RemoteProductDto(
+            name = "FreeQty A", category = "Fashion & Apparel", price = 400.0, stock = 10, freeDeliveryMinQty = 2, supplierId = "sup_a"
+        )
+        fakeRtdb.products["prod_b"] = RemoteProductDto(
+            name = "Paid B", category = "Fashion & Apparel", price = 500.0, stock = 10, freeDeliveryMinQty = 0, supplierId = "sup_b"
+        )
+        repo.syncRemoteCatalogAndSettings()
+
+        val pA = db.productDao().getProductById("prod_a")!!
+        val pB = db.productDao().getProductById("prod_b")!!
+        val cart = listOf(
+            CartItemEntity(
+                userEmail = "u@test.com",
+                productId = pA.id,
+                productName = pA.name,
+                unitPriceBdt = pA.priceBdt,
+                originalPriceBdt = pA.originalPriceBdt,
+                imageKey = pA.imageKey,
+                selectedVariant = "Standard",
+                quantity = 2, // qualifies for sup_a free delivery
+                freeDeliveryMinQty = pA.freeDeliveryMinQty,
+                supplierId = "sup_a"
+            ),
+            CartItemEntity(
+                userEmail = "u@test.com",
+                productId = pB.id,
+                productName = pB.name,
+                unitPriceBdt = pB.priceBdt,
+                originalPriceBdt = pB.originalPriceBdt,
+                imageKey = pB.imageKey,
+                selectedVariant = "Standard",
+                quantity = 1,
+                freeDeliveryMinQty = 0,
+                supplierId = "sup_b"
+            )
+        )
+
+        // Only sup_a is free (0); sup_b still charges Inside Dhaka rate (80)
+        assertEquals(80L, repo.computeEffectiveDeliveryFee(cart, 1300L, "Dhaka", null))
+
+        // Live supplier rate update propagates cleanly on sync
+        fakeRtdb.suppliers["sup_b"] = RemoteSupplierDto(
+            name = "B Company", pickupLocation = "চট্টগ্রাম", insideDhakaRate = 95.0, outsideDhakaRate = 175.0
+        )
+        repo.syncRemoteCatalogAndSettings()
+        assertEquals(95L, repo.computeEffectiveDeliveryFee(cart, 1300L, "Dhaka", null))
+
+        // Store-wide free delivery min amount (5000) waives all suppliers
+        assertEquals(0L, repo.computeEffectiveDeliveryFee(cart, 5000L, "Chattogram", null))
+    }
 }
 
 private class InMemoryFirebaseAuthService : FirebaseAuthRestService {
@@ -592,11 +747,13 @@ private class InMemoryTokenRefreshService : FirebaseTokenRefreshService {
 private class InMemorySprZoneRtdbService : SprZoneRtdbService {
     val customers = mutableMapOf<String, RemoteCustomerProfileDto>()
     val products = mutableMapOf<String, RemoteProductDto>()
+    val suppliers = mutableMapOf<String, RemoteSupplierDto>()
     val reviews = mutableMapOf<String, MutableMap<String, RemoteReviewDto>>()
     val orders = mutableMapOf<String, RemoteOrderDto>()
     var deliveryConfig: RemoteDeliveryConfigDto? = RemoteDeliveryConfigDto()
 
     override suspend fun getProducts(): Response<Map<String, RemoteProductDto>?> = Response.success(products.toMap())
+    override suspend fun getSuppliers(): Response<Map<String, RemoteSupplierDto>?> = Response.success(suppliers.toMap())
     override suspend fun getDeliveryConfig(): Response<RemoteDeliveryConfigDto?> = Response.success(deliveryConfig)
     override suspend fun getPaymentSettings(): Response<RemotePaymentSettingsDto?> = Response.success(RemotePaymentSettingsDto())
     override suspend fun getCoupons(): Response<Map<String, RemoteCouponDto>?> = Response.success(emptyMap())
